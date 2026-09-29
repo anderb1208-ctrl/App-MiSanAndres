@@ -29,6 +29,13 @@ App móvil de turismo para San Andrés (Colombia) que recomienda destinos según
 | Pruebas         | Jest + Supertest (backend)                              |
 | Despliegue      | Render (backend)                                        |
 
+## Base de datos
+
+- El esquema vive en `supabase/migrations/` como archivos SQL versionados (`AAAAMMDDHHMMSS_descripcion.sql`). Los cambios se hacen siempre con una migración nueva, nunca editando la base a mano.
+- `supabase/seed.sql` carga datos de prueba (destinos, catálogo de preferencias y ocupación simulada). **Borra datos: usarlo solo en desarrollo.**
+- Las migraciones se aplican con el MCP de Supabase, que registra cada una con la marca de tiempo del momento en que se aplicó. Por eso los números de versión que muestra Supabase **no coinciden** con los de los archivos locales; los nombres y el contenido sí. El orden de los archivos en `supabase/migrations/` es el que manda.
+- Los cambios respecto al documento de diseño están en `docs/cambios-al-diseno.md`.
+
 ## Cómo ejecutar
 
 _Esta sección se completará cuando cada subproyecto esté inicializado._
