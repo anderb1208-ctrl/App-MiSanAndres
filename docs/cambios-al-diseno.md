@@ -21,7 +21,7 @@ Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.md` / `.docx
 | --- | --- | --- | --- |
 | nombre | VARCHAR(150), NOT NULL | TEXT, NOT NULL, **UNIQUE** | Evitar destinos duplicados. |
 | categoria | VARCHAR(50), valor controlado | Enum `categoria_destino`: playa, cayo, naturaleza, buceo_snorkel, cultura, gastronomia | El valor controlado queda garantizado por la base de datos. |
-| ubicacion | VARCHAR(255), NOT NULL | `ubicacion_texto` TEXT, **opcional** | Renombrado para distinguirlo de las coordenadas. ⚠️ El entregable lo marca como obligatorio: decidir si se deja NOT NULL (requiere una migración) o se actualiza el documento. |
+| ubicacion | VARCHAR(255), NOT NULL | `ubicacion_texto` TEXT, NOT NULL | Renombrado para distinguirlo de las coordenadas. |
 | latitud | DECIMAL(10,8) | NUMERIC(9,6), CHECK entre -90 y 90 | 6 decimales ≈ 0,1 m de precisión, suficiente para destinos turísticos. |
 | longitud | DECIMAL(11,8) | NUMERIC(9,6), CHECK entre -180 y 180 | Ídem. |
 | estado | VARCHAR(20) (ej: Activo, Inactivo) | Enum `estado_destino`: abierto, cerrado_temporal, inactivo | Se agrega el cierre temporal (mantenimiento, clima, veda). |
