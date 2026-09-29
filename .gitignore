@@ -1,0 +1,109 @@
+# ==========================================
+# Variables de entorno (nunca subir secretos)
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Node.js
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.yarn/*
+!.yarn/releases
+coverage/
+dist/
+build/
+*.tsbuildinfo
+
+# ==========================================
+# React Native / Expo
+# ==========================================
+.expo/
+.expo-shared/
+web-build/
+expo-env.d.ts
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+# Metro
+.metro-health-check*
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.apk
+*.aab
+# iOS
+ios/Pods/
+ios/build/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# ==========================================
+# Python
+# ==========================================
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# ==========================================
+# Supabase CLI (local)
+# ==========================================
+supabase/.branches/
+supabase/.temp/
+
+# ==========================================
+# Herramientas del proyecto
+# ==========================================
+graphify-out/
+.claude/settings.local.json
+
+# ==========================================
+# Logs
+# ==========================================
+logs/
+*.log
+
+# ==========================================
+# Windows
+# ==========================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ==========================================
+# VS Code
+# ==========================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# ==========================================
+# Instrucciones locales de Claude Code (no se suben)
+# ==========================================
+CLAUDE.md
+Graphifyy.md
+MVP.md
+.claude/

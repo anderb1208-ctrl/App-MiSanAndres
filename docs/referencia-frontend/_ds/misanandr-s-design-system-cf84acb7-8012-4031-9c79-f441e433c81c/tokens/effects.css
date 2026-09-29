@@ -1,0 +1,24 @@
+:root{
+/* Elevation (navy-tinted ambient shadows) */
+--shadow-1:0 4px 20px rgba(0,20,48,.04);
+--shadow-2:0 10px 30px rgba(0,20,48,.08);
+--shadow-3:0 16px 40px rgba(0,20,48,.14);
+--shadow-sheet:0 -8px 30px rgba(0,20,48,.10);
+--shadow-bar:0 -4px 20px rgba(0,20,48,.05);
+--shadow-marker:0 4px 6px rgba(0,0,0,.3);
+--shadow-press:inset 0 2px 4px rgba(0,20,48,.25);
+/* Liquid glass recipe */
+--glass-blur:blur(20px) saturate(180%); /* @kind other */
+--glass-blur-sm:blur(12px) saturate(160%); /* @kind other */
+--glass-inner:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -1px 0 rgba(255,255,255,.15); /* @kind shadow */
+--glass-shadow:0 8px 32px rgba(0,20,48,.12),inset 0 1px 0 rgba(255,255,255,.75);
+--glass-shadow-dark:0 8px 32px rgba(0,20,48,.25),inset 0 1px 0 rgba(255,255,255,.25);
+--focus-ring:0 0 0 3px rgba(0,103,125,.25);
+/* Motion */
+--ease-out:cubic-bezier(.22,1,.36,1); /* @kind other */
+--ease-standard:cubic-bezier(.4,0,.2,1); /* @kind other */
+--dur-fast:150ms; /* @kind other */
+--dur-base:220ms; /* @kind other */
+--dur-slow:500ms; /* @kind other */
+--press-scale:.98; /* @kind other */
+}
