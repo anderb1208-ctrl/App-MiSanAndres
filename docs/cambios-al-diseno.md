@@ -103,3 +103,25 @@ La escritura de destinos y ocupación la hace únicamente el backend con la serv
 - **Recomendaciones**: no se guardan en una tabla, se calculan al momento. `GET /recomendaciones/{id}` ("detalle de una recomendación") no tiene sentido y se elimina; el detalle es `GET /destinos/{id}`.
 - **Body de preferencias**: `{categorias, tipoExperiencia, nivelOcupacion}` puede incluir también `tiposGrupo`, ya que el catálogo lo soporta.
 - **Errata**: la tabla de destinos lista el detalle como `GET / destinos` con parámetro `id`; debe ser `GET /destinos/{id}`.
+
+## 8. Endpoints agregados en el MVP
+
+No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
+
+| Método | Endpoint | Descripción | Auth |
+| --- | --- | --- | --- |
+| GET | /health | Estado del servicio | No |
+| GET | /ocupacion/{destinoId}/prediccion/dia?fecha= | Curva prevista de todo el día, hora por hora (gráfico del detalle) | No |
+| GET | /preferencias/catalogo | Catálogo de categorías, experiencias y grupos | No |
+| GET, PUT | /perfil | Ver y cambiar el nombre del usuario del token | Sí |
+| POST, GET | /interacciones | Registrar una interacción y ver el historial propio | Sí |
+
+- `POST /preferencias` se reemplaza por `PUT /preferencias` (crea o reemplaza; idempotente).
+- `POST /recomendaciones` no se implementó: las recomendaciones se calculan con `GET /recomendaciones` a partir de las preferencias guardadas.
+- Todos los errores usan el formato `{ "error": { "codigo", "mensaje", "detalles?" } }` con 400, 401, 404 o 500.
+
+## 9. Predicción de ocupación (MVP, antes del modelo de ML)
+
+- Mientras no exista el servicio de ML, la predicción es el **promedio histórico del porcentaje de ocupación a la misma hora y en el mismo tipo de día** (entre semana / fin de semana), en hora de Colombia. Se separa por tipo de día porque los patrones difieren mucho (al mediodía ≈ 67 % entre semana frente a ≈ 84 % el fin de semana en los datos de prueba).
+- Lo calcula la función SQL `ocupacion_promedio_hora` (migración `20260929200000`), que respeta RLS y solo pueden ejecutar los roles `anon` y `authenticated`.
+- El backend encapsula el cálculo en `prediccionService`; al llegar el modelo Random Forest solo cambia ese servicio.
