@@ -15,6 +15,13 @@ export function nivelDesdePorcentaje(porcentaje: number): NivelOcupacion {
   return 'Alto';
 }
 
+/** Adjetivo concordado con "ocupación": "ocupación baja/media/alta". */
+export const ADJETIVO_OCUPACION: Record<NivelOcupacion, string> = {
+  Bajo: 'baja',
+  Medio: 'media',
+  Alto: 'alta',
+};
+
 /** Distancia entre niveles: 0 iguales, 1 adyacentes, 2 opuestos. */
 export function distanciaNiveles(a: NivelOcupacion, b: NivelOcupacion): number {
   return Math.abs(NIVELES.indexOf(a) - NIVELES.indexOf(b));

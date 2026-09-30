@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as destinoController from '../controllers/destinoController';
+import * as interaccionController from '../controllers/interaccionController';
 import * as ocupacionController from '../controllers/ocupacionController';
+import * as perfilController from '../controllers/perfilController';
 import * as preferenciaController from '../controllers/preferenciaController';
+import * as recomendacionController from '../controllers/recomendacionController';
+import { requerirAuth } from '../middleware/auth';
 import * as e from '../middleware/esquemas';
 import { adjuntarClienteAnonimo } from '../middleware/supabase';
 import { validar } from '../middleware/validar';
@@ -35,5 +39,39 @@ publicas.get(
 
 publicas.get('/preferencias/catalogo', preferenciaController.catalogo);
 
+/**
+ * Rutas autenticadas: `requerirAuth` va en cada ruta (no con router.use) para
+ * que una ruta inexistente responda 404 y no 401. El usuario sale del JWT.
+ */
+const privadas = Router();
+
+privadas.get('/perfil', requerirAuth, perfilController.obtener);
+privadas.put('/perfil', requerirAuth, validar({ body: e.cuerpoPerfil }), perfilController.actualizar);
+
+privadas.get('/preferencias', requerirAuth, preferenciaController.obtener);
+privadas.put(
+  '/preferencias',
+  requerirAuth,
+  validar({ body: e.cuerpoPreferencias }),
+  preferenciaController.reemplazar,
+);
+privadas.delete('/preferencias', requerirAuth, preferenciaController.restablecer);
+
+privadas.post(
+  '/interacciones',
+  requerirAuth,
+  validar({ body: e.cuerpoInteraccion }),
+  interaccionController.registrar,
+);
+privadas.get(
+  '/interacciones',
+  requerirAuth,
+  validar({ query: e.consultaInteracciones }),
+  interaccionController.historial,
+);
+
+privadas.get('/recomendaciones', requerirAuth, recomendacionController.listar);
+
 export const rutasV1 = Router();
 rutasV1.use(publicas);
+rutasV1.use(privadas);

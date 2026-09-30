@@ -41,3 +41,64 @@ GET {{baseUrl}}/ocupacion/1/prediccion/dia?fecha=2026-10-03
 
 ### Catálogo de preferencias (categorías, experiencias y grupos)
 GET {{baseUrl}}/preferencias/catalogo
+
+### ---------------------------------------------------------------
+### Endpoints autenticados
+### El token es el access_token de la sesión de Supabase Auth del usuario
+### (en la app: supabase.auth.getSession()). Pégalo aquí para probar.
+### ---------------------------------------------------------------
+@token = PEGAR_ACCESS_TOKEN_AQUI
+
+### Perfil del usuario del token
+GET {{baseUrl}}/perfil
+Authorization: Bearer {{token}}
+
+### Cambiar el nombre
+PUT {{baseUrl}}/perfil
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Ana Martínez"
+}
+
+### Preferencias del usuario
+GET {{baseUrl}}/preferencias
+Authorization: Bearer {{token}}
+
+### Reemplazar preferencias (códigos del catálogo)
+PUT {{baseUrl}}/preferencias
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "categorias": ["playa", "cayo"],
+  "tiposExperiencia": ["relax", "fotografia"],
+  "tiposGrupo": ["pareja"],
+  "nivelOcupacion": "Bajo"
+}
+
+### Restablecer preferencias (borra todas y el nivel preferido)
+DELETE {{baseUrl}}/preferencias
+Authorization: Bearer {{token}}
+
+### Registrar una interacción (vista, favorito, visita, compartir)
+POST {{baseUrl}}/interacciones
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idDestino": 1,
+  "tipo": "vista"
+}
+
+### Historial de interacciones propias
+GET {{baseUrl}}/interacciones?limite=20
+Authorization: Bearer {{token}}
+
+### Recomendaciones personalizadas para ahora
+GET {{baseUrl}}/recomendaciones
+Authorization: Bearer {{token}}
+
+### Sin token → 401
+GET {{baseUrl}}/recomendaciones
