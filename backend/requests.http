@@ -1,0 +1,43 @@
+# Peticiones de ejemplo para la API de MiSanAndrés.
+# Uso: extensión REST Client de VS Code (humao.rest-client) → "Send Request".
+
+@baseUrl = http://localhost:3000/v1
+
+### Estado del servicio
+GET {{baseUrl}}/health
+
+### ---------------------------------------------------------------
+### Destinos (público)
+### ---------------------------------------------------------------
+
+### Listar destinos con su ocupación predicha para ahora
+GET {{baseUrl}}/destinos
+
+### Filtrar por categoría (playa, cayo, naturaleza, buceo_snorkel, cultura, gastronomia)
+GET {{baseUrl}}/destinos?categoria=playa
+
+### Filtrar por nivel de ocupación actual (Bajo, Medio, Alto)
+GET {{baseUrl}}/destinos?nivelOcupacion=Bajo
+
+### Detalle de un destino
+GET {{baseUrl}}/destinos/1
+
+### ---------------------------------------------------------------
+### Ocupación y predicción (público)
+### ---------------------------------------------------------------
+
+### Registros reales de ocupación de un día (hora de Colombia)
+GET {{baseUrl}}/ocupacion/1?fecha=2026-09-28
+
+### Predicción para una fecha y hora
+GET {{baseUrl}}/ocupacion/1/prediccion?fecha=2026-10-03&hora=12:00
+
+### Curva prevista de todo el día
+GET {{baseUrl}}/ocupacion/1/prediccion/dia?fecha=2026-10-03
+
+### ---------------------------------------------------------------
+### Preferencias (público)
+### ---------------------------------------------------------------
+
+### Catálogo de preferencias (categorías, experiencias y grupos)
+GET {{baseUrl}}/preferencias/catalogo
