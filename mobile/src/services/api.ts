@@ -62,10 +62,12 @@ export async function solicitud<T>(ruta: string, opciones: Opciones = {}): Promi
       signal: controlador.signal,
     });
   } catch {
+    // En desarrollo se muestra la URL usada, para detectar un EXPO_PUBLIC_API_URL mal configurado.
+    const detalle = __DEV__ ? ` (Servidor: ${API_BASE_URL})` : '';
     throw new ErrorApi(
       0,
       'SIN_CONEXION',
-      'No pudimos conectar con el servidor. Verifica tu conexión e intenta de nuevo.',
+      `No pudimos conectar con el servidor. Verifica tu conexión e intenta de nuevo.${detalle}`,
     );
   } finally {
     clearTimeout(temporizador);
