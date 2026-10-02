@@ -35,11 +35,21 @@ export function aFechaHoraLocal(iso: string): FechaHoraLocal {
   return ahoraEnColombia(new Date(iso));
 }
 
+/** Día de la semana ISO de una fecha (YYYY-MM-DD): 1 = lunes … 7 = domingo. */
+export function diaSemanaIso(fecha: string): number {
+  const dia = new Date(`${fecha}T12:00:00Z`).getUTCDay();
+  return dia === 0 ? 7 : dia;
+}
+
 /** Verdadero si la fecha (YYYY-MM-DD) cae sábado o domingo. */
 export function esFinDeSemana(fecha: string): boolean {
-  const dia = new Date(`${fecha}T12:00:00Z`).getUTCDay();
-  return dia === 0 || dia === 6;
+  return diaSemanaIso(fecha) >= 6;
 }
+
+const NOMBRES_DIA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+
+/** Nombre del día de la semana ISO ("martes"). */
+export const nombreDia = (diaIso: number) => NOMBRES_DIA[diaIso - 1] ?? '';
 
 /** Instantes UTC (ISO) de inicio y fin (exclusivo) de un día de Colombia. */
 export function rangoDelDia(fecha: string): { desde: string; hasta: string } {

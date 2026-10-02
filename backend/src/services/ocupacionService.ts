@@ -45,10 +45,10 @@ export async function prediccion(db: Db, destinoId: number, fecha: string, hora:
   return resultado;
 }
 
-/** Curva prevista de todo el día, hora por hora. */
+/** Ocupación típica de cada hora para el día de la semana de la fecha. */
 export async function prediccionDelDia(db: Db, destinoId: number, fecha: string) {
   const destino = await destinoService.obtenerOFallar(db, destinoId);
-  const { tipoDia, horas } = await prediccionService.predecirDia(db, destino, fecha);
-  if (horas.length === 0) throw noEncontrado(SIN_HISTORIAL);
-  return { destinoId, fecha, tipoDia, fuente: prediccionService.FUENTE_PREDICCION, horas };
+  const tipica = await prediccionService.ocupacionTipicaDelDia(db, destino, fecha);
+  if (tipica.horas.length === 0) throw noEncontrado(SIN_HISTORIAL);
+  return { destinoId, fecha, ...tipica, fuente: prediccionService.FUENTE_PREDICCION };
 }

@@ -26,16 +26,24 @@ export async function listarRegistros(
   return verificarLista(resultado, 'Listar registros de ocupación');
 }
 
+export interface FiltrosPromedio {
+  /** Solo fines de semana (true) o solo entre semana (false). */
+  finDeSemana?: boolean;
+  /** Solo un día de la semana ISO: 1 = lunes … 7 = domingo. */
+  diaSemana?: number;
+  hora?: number;
+  idDestino?: number;
+}
+
 /**
- * Promedio histórico de ocupación por destino y hora (hora de Colombia) para
- * un tipo de día. Sin `hora` devuelve las 24 horas; sin `idDestino`, todos.
+ * Promedio histórico de ocupación por destino y hora (hora de Colombia), filtrando
+ * por tipo de día o por día de la semana. Sin `hora` devuelve las 24 horas; sin
+ * `idDestino`, todos los destinos.
  */
-export async function promedioPorHora(
-  db: Db,
-  filtros: { finDeSemana: boolean; hora?: number; idDestino?: number },
-): Promise<PromedioHora[]> {
+export async function promedioPorHora(db: Db, filtros: FiltrosPromedio): Promise<PromedioHora[]> {
   const resultado = await db.rpc('ocupacion_promedio_hora', {
-    p_fin_de_semana: filtros.finDeSemana,
+    ...(filtros.finDeSemana !== undefined && { p_fin_de_semana: filtros.finDeSemana }),
+    ...(filtros.diaSemana !== undefined && { p_dia_semana: filtros.diaSemana }),
     ...(filtros.hora !== undefined && { p_hora: filtros.hora }),
     ...(filtros.idDestino !== undefined && { p_id_destino: filtros.idDestino }),
   });

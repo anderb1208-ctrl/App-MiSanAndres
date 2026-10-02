@@ -1,4 +1,4 @@
-import { ahoraEnColombia, esFinDeSemana, rangoDelDia } from '../utils/fecha';
+import { ahoraEnColombia, diaSemanaIso, esFinDeSemana, nombreDia, rangoDelDia } from '../utils/fecha';
 import { distanciaNiveles, nivelDesdePorcentaje } from '../utils/nivelOcupacion';
 
 describe('nivelDesdePorcentaje', () => {
@@ -23,6 +23,14 @@ describe('nivelDesdePorcentaje', () => {
 describe('fechas en hora de Colombia', () => {
   it('convierte un instante UTC a fecha y hora de Bogotá', () => {
     expect(ahoraEnColombia(new Date('2026-09-29T03:30:00Z'))).toEqual({ fecha: '2026-09-28', hora: '22:30' });
+  });
+
+  it('calcula el día de la semana ISO y su nombre', () => {
+    expect(diaSemanaIso('2026-09-28')).toBe(1); // lunes
+    expect(diaSemanaIso('2026-09-29')).toBe(2);
+    expect(diaSemanaIso('2026-09-27')).toBe(7); // domingo
+    expect(nombreDia(2)).toBe('martes');
+    expect(nombreDia(6)).toBe('sábado');
   });
 
   it('distingue fin de semana', () => {

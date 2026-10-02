@@ -226,24 +226,43 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
 });
 
 describe('GET /v1/ocupacion/:destinoId/prediccion/dia', () => {
-  it('devuelve la curva prevista ordenada por hora', async () => {
+  it('devuelve la ocupación típica de ese día de la semana, ordenada por hora', async () => {
     ocupacionM.promedioPorHora.mockResolvedValue([
-      { id_destino: 1, hora: 13, promedio: 81, muestras: 8 },
-      { id_destino: 1, hora: 9, promedio: 30, muestras: 8 },
+      { id_destino: 1, hora: 13, promedio: 81, muestras: 4 },
+      { id_destino: 1, hora: 9, promedio: 30, muestras: 4 },
     ]);
+    // 2026-09-29 es martes.
     const res = await request(app).get('/v1/ocupacion/1/prediccion/dia?fecha=2026-09-29');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       destinoId: 1,
       fecha: '2026-09-29',
-      tipoDia: 'entre_semana',
+      diaSemana: 2,
+      nombreDia: 'martes',
+      base: 'dia_semana',
       fuente: 'promedio_historico',
       horas: [
         { hora: '09:00', porcentaje: 30, nivel: 'Bajo', personasEstimadas: 240 },
         { hora: '13:00', porcentaje: 81, nivel: 'Alto', personasEstimadas: 648 },
       ],
     });
-    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), { finDeSemana: false, idDestino: 1 });
+    expect(ocupacionM.promedioPorHora).toHaveBeenCalledTimes(1);
+    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), { diaSemana: 2, idDestino: 1 });
+  });
+
+  it('usa el histórico del tipo de día si no hay datos de ese día de la semana', async () => {
+    ocupacionM.promedioPorHora
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id_destino: 1, hora: 12, promedio: 90, muestras: 8 }]);
+    // 2026-10-04 es domingo.
+    const res = await request(app).get('/v1/ocupacion/1/prediccion/dia?fecha=2026-10-04');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ diaSemana: 7, nombreDia: 'domingo', base: 'fin_de_semana' });
+    expect(res.body.horas).toHaveLength(1);
+    expect(ocupacionM.promedioPorHora).toHaveBeenLastCalledWith(expect.anything(), {
+      finDeSemana: true,
+      idDestino: 1,
+    });
   });
 
   it('400 sin fecha', async () => {

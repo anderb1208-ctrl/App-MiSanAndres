@@ -1,12 +1,12 @@
 import { solicitud } from './api';
-import type { OcupacionDelDia, PrediccionDelDia } from './tipos';
+import type { OcupacionDelDia, OcupacionTipicaDelDia } from './tipos';
 
 /** Registros reales de ocupación de un día (YYYY-MM-DD, hora de Colombia). */
 export function obtenerOcupacionDelDia(destinoId: number, fecha: string) {
   return solicitud<OcupacionDelDia>(`/ocupacion/${destinoId}`, { consulta: { fecha } });
 }
 
-/** Curva prevista de todo el día, hora por hora. */
-export function obtenerPrediccionDelDia(destinoId: number, fecha: string) {
-  return solicitud<PrediccionDelDia>(`/ocupacion/${destinoId}/prediccion/dia`, { consulta: { fecha } });
+/** Ocupación típica de cada hora para ese día de la semana (la calcula prediccionService). */
+export function obtenerOcupacionTipica(destinoId: number, fecha: string) {
+  return solicitud<OcupacionTipicaDelDia>(`/ocupacion/${destinoId}/prediccion/dia`, { consulta: { fecha } });
 }

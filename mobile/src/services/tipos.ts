@@ -57,10 +57,16 @@ export interface PuntoPrevision {
   personasEstimadas: number;
 }
 
-export interface PrediccionDelDia {
+/** Ocupación típica de cada hora para el día de la semana de la fecha. */
+export interface OcupacionTipicaDelDia {
   destinoId: number;
   fecha: string;
-  tipoDia: 'entre_semana' | 'fin_de_semana';
+  /** 1 = lunes … 7 = domingo. */
+  diaSemana: number;
+  /** "martes". */
+  nombreDia: string;
+  /** Histórico usado: el de ese día de la semana o, como respaldo, el del tipo de día. */
+  base: 'dia_semana' | 'entre_semana' | 'fin_de_semana';
   fuente: string;
   horas: PuntoPrevision[];
 }

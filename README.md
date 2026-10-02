@@ -106,4 +106,4 @@ Verificación de tipos: `npm run typecheck`.
 
 - **"No pudimos conectar con el servidor"**: revisa que el backend esté corriendo, que `EXPO_PUBLIC_API_URL` use la IP del PC y que el celular esté en la misma Wi-Fi. Prueba abrir `http://<IP-del-PC>:3000/v1/health` desde el navegador del celular.
 - **El registro pide confirmar el correo**: si Supabase tiene activa la confirmación de correo (Authentication → Providers → Email), confirma desde el enlace del correo y luego inicia sesión. Al entrar por primera vez la app lleva a Configurar preferencias.
-- **La gráfica de ocupación de hoy no tiene puntos reales**: la curva prevista siempre se muestra; los puntos de hoy solo aparecen si hay registros de ocupación del día (el seed genera datos hasta el momento en que se ejecutó).
+- **La gráfica no muestra la línea "Real de hoy"**: la ocupación típica del día siempre se muestra; la serie real solo aparece si hay registros de ocupación de hoy (el seed genera datos hasta el momento en que se ejecutó).

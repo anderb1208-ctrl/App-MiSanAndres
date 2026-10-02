@@ -230,7 +230,8 @@ export type Database = {
       es_categoria_destino: { Args: { valor: string }; Returns: boolean };
       ocupacion_promedio_hora: {
         Args: {
-          p_fin_de_semana: boolean;
+          p_dia_semana?: number;
+          p_fin_de_semana?: boolean;
           p_hora?: number;
           p_id_destino?: number;
         };

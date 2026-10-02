@@ -18,21 +18,36 @@ import type { AppScreenProps } from '../navigation/types';
 import { ErrorApi } from '../services/api';
 import { obtenerDestino } from '../services/destinos';
 import { registrarInteraccion } from '../services/interacciones';
-import { obtenerOcupacionDelDia, obtenerPrediccionDelDia } from '../services/ocupacion';
+import { obtenerOcupacionDelDia, obtenerOcupacionTipica } from '../services/ocupacion';
+import type { OcupacionTipicaDelDia } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA } from '../utils/categorias';
 import { horaEnColombia, hoyEnColombia } from '../utils/fecha';
 import { imagenDestino } from '../utils/imagenes';
 import { NOTA_NIVEL } from '../utils/ocupacion';
 
-/** Previsión del día y registros reales de hoy; los reales son opcionales. */
+/** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
 async function cargarCurva(id: number) {
   const fecha = hoyEnColombia();
-  const [prevision, reales] = await Promise.all([
-    obtenerPrediccionDelDia(id, fecha),
+  const [tipica, reales] = await Promise.all([
+    obtenerOcupacionTipica(id, fecha),
     obtenerOcupacionDelDia(id, fecha).catch(() => null),
   ]);
-  return { prevision, registros: reales?.registros ?? [], horaActual: horaEnColombia() };
+  return { tipica, registros: reales?.registros ?? [], horaActual: horaEnColombia() };
+}
+
+/** "los martes", "los sábados" (lunes a viernes no cambian en plural). */
+const pluralDia = (dia: string) => (dia.endsWith('s') ? dia : `${dia}s`);
+
+/** Explica de dónde sale la curva y qué se ve encima. */
+function leyendaCurva(tipica: OcupacionTipicaDelDia, hayReales: boolean): string {
+  const dias = pluralDia(tipica.nombreDia);
+  const respaldo = tipica.base === 'fin_de_semana' ? 'de fin de semana' : 'entre semana';
+  const base =
+    tipica.base === 'dia_semana'
+      ? `Promedio histórico de cada hora de los ${dias}`
+      : `Aún no hay historial de los ${dias}; se usa el de los días ${respaldo}`;
+  return `${base}.${hayReales ? ' La línea oscura es lo registrado hoy.' : ''} Resaltada, la hora actual.`;
 }
 
 export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'DetalleDestino'>) {
@@ -158,19 +173,19 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
             </>
           )}
 
-          <Text style={styles.subtitulo}>Ocupación durante el día</Text>
+          <Text style={styles.subtitulo}>
+            {curva.datos ? `Ocupación típica de un ${curva.datos.tipica.nombreDia}` : 'Ocupación durante el día'}
+          </Text>
           {curva.cargando ? (
-            <EstadoCargando mensaje="Calculando la previsión…" />
+            <EstadoCargando mensaje="Calculando la ocupación típica…" />
           ) : curva.datos ? (
             <>
               <Text style={styles.leyendaGrafico}>
-                Hoy ({curva.datos.prevision.tipoDia === 'fin_de_semana' ? 'fin de semana' : 'entre semana'}) · curva
-                prevista según el histórico
-                {curva.datos.registros.length > 0 ? ' con los registros reales de hoy' : ''}
+                {leyendaCurva(curva.datos.tipica, curva.datos.registros.length > 0)}
               </Text>
               <GlassPanel tono="strong" radius={radius.xl} padding={spacing.gutter}>
                 <OcupacionChart
-                  prevision={curva.datos.prevision.horas}
+                  tipica={curva.datos.tipica.horas}
                   registros={curva.datos.registros}
                   horaActual={curva.datos.horaActual}
                 />
@@ -179,8 +194,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
           ) : (
             <Text style={styles.descripcion}>
               {curva.error instanceof ErrorApi && curva.error.status === 404
-                ? 'Aún no hay datos suficientes para prever la ocupación de este destino.'
-                : 'No pudimos cargar la previsión del día. Desliza hacia abajo para reintentar.'}
+                ? 'Aún no hay datos suficientes para calcular la ocupación típica de este destino.'
+                : 'No pudimos cargar la ocupación típica. Desliza hacia abajo para reintentar.'}
             </Text>
           )}
         </View>

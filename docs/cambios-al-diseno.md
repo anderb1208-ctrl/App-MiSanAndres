@@ -111,7 +111,7 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 | Método | Endpoint | Descripción | Auth |
 | --- | --- | --- | --- |
 | GET | /health | Estado del servicio | No |
-| GET | /ocupacion/{destinoId}/prediccion/dia?fecha= | Curva prevista de todo el día, hora por hora (gráfico del detalle) | No |
+| GET | /ocupacion/{destinoId}/prediccion/dia?fecha= | Ocupación típica de cada hora para el día de la semana de la fecha (gráfico del detalle) | No |
 | GET | /preferencias/catalogo | Catálogo de categorías, experiencias y grupos | No |
 | GET, PUT | /perfil | Ver y cambiar el nombre del usuario del token | Sí |
 | POST, GET | /interacciones | Registrar una interacción y ver el historial propio | Sí |
@@ -123,5 +123,6 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 ## 9. Predicción de ocupación (MVP, antes del modelo de ML)
 
 - Mientras no exista el servicio de ML, la predicción es el **promedio histórico del porcentaje de ocupación a la misma hora y en el mismo tipo de día** (entre semana / fin de semana), en hora de Colombia. Se separa por tipo de día porque los patrones difieren mucho (al mediodía ≈ 67 % entre semana frente a ≈ 84 % el fin de semana en los datos de prueba).
-- Lo calcula la función SQL `ocupacion_promedio_hora` (migración `20260929200000`), que respeta RLS y solo pueden ejecutar los roles `anon` y `authenticated`.
+- El gráfico del detalle muestra la **ocupación típica** de cada hora para ese día de la semana (p. ej. "Ocupación típica de un martes"), con los registros reales de hoy superpuestos. Si aún no hay historial de ese día, se usa el del tipo de día.
+- Ambos cálculos usan la función SQL `ocupacion_promedio_hora` (migraciones `20260929200000` y `20261001120000`), que es `security invoker` (respeta RLS) y solo pueden ejecutar los roles `anon` y `authenticated`.
 - El backend encapsula el cálculo en `prediccionService`; al llegar el modelo Random Forest solo cambia ese servicio.

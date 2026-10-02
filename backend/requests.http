@@ -32,7 +32,7 @@ GET {{baseUrl}}/ocupacion/1?fecha=2026-09-28
 ### Predicción para una fecha y hora
 GET {{baseUrl}}/ocupacion/1/prediccion?fecha=2026-10-03&hora=12:00
 
-### Curva prevista de todo el día
+### Ocupación típica de cada hora para ese día de la semana (2026-10-03 es sábado)
 GET {{baseUrl}}/ocupacion/1/prediccion/dia?fecha=2026-10-03
 
 ### ---------------------------------------------------------------

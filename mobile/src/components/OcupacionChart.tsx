@@ -1,33 +1,35 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, Line, LinearGradient, Path, Polyline, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import type { PuntoPrevision, RegistroOcupacion } from '../services/tipos';
 import { colors, fonts, occupancyColors, spacing, typography } from '../theme';
+import { formatearPorcentaje } from '../utils/ocupacion';
 
 interface Props {
-  /** Curva prevista (una entrada por hora "HH:00"). */
-  prevision: PuntoPrevision[];
-  /** Registros reales de hoy, que se superponen a la curva. */
+  /** Ocupación típica de cada hora para ese día de la semana ("HH:00"). */
+  tipica: PuntoPrevision[];
+  /** Registros reales de hoy: segunda serie, encima de la típica. */
   registros?: RegistroOcupacion[];
-  /** Hora actual (0–23) para marcarla; se omite si el día mostrado no es hoy. */
+  /** Hora actual (0–23) que se resalta. */
   horaActual?: number;
   alto?: number;
 }
 
-const MARGEN = { izquierda: 30, derecha: 8, arriba: 10, abajo: 22 };
+const MARGEN = { izquierda: 30, derecha: 10, arriba: 26, abajo: 22 };
 const ETIQUETAS_EJE = [0, 6, 12, 18, 23];
 const LIMITES = [
   { valor: 40, color: occupancyColors.Medio.main },
   { valor: 70, color: occupancyColors.Alto.main },
 ];
+const ANCHO_ETIQUETA_AHORA = 76;
 
 const hora = (texto: string) => Number(texto.slice(0, 2));
 
 /**
- * OcupacionChart: curva prevista de ocupación durante el día (área turquesa)
- * con los registros reales de hoy superpuestos (puntos navy) y la hora actual marcada.
+ * OcupacionChart: ocupación típica de cada hora (área turquesa), registros reales de
+ * hoy superpuestos (línea y puntos navy) y la hora actual resaltada con su valor.
  */
-export function OcupacionChart({ prevision, registros = [], horaActual, alto = 170 }: Props) {
+export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 }: Props) {
   const [ancho, setAncho] = useState(0);
   const anchoUtil = Math.max(0, ancho - MARGEN.izquierda - MARGEN.derecha);
   const altoUtil = alto - MARGEN.arriba - MARGEN.abajo;
@@ -36,7 +38,7 @@ export function OcupacionChart({ prevision, registros = [], horaActual, alto = 1
   const y = (p: number) => MARGEN.arriba + (1 - Math.min(100, Math.max(0, p)) / 100) * altoUtil;
   const base = y(0);
 
-  const puntos = prevision.map((p) => ({ x: x(hora(p.hora)), y: y(p.porcentaje) }));
+  const puntos = tipica.map((p) => ({ x: x(hora(p.hora)), y: y(p.porcentaje) }));
   const primero = puntos[0];
   const ultimo = puntos[puntos.length - 1];
   const linea = puntos.map((p) => `${p.x},${p.y}`).join(' ');
@@ -47,9 +49,23 @@ export function OcupacionChart({ prevision, registros = [], horaActual, alto = 1
 
   const reales = registros.map((r) => ({ x: x(hora(r.hora)), y: y(r.porcentaje), clave: r.fechaHora }));
 
-  const resumen = `Curva prevista de ocupación durante el día${
-    registros.length > 0 ? ` con ${registros.length} registros reales de hoy` : ''
-  }.`;
+  // Valor resaltado de la hora actual: el real de hoy si existe, si no el típico.
+  const realAhora = registros.find((r) => hora(r.hora) === horaActual);
+  const tipicaAhora = tipica.find((p) => hora(p.hora) === horaActual);
+  const valorAhora = realAhora?.porcentaje ?? tipicaAhora?.porcentaje;
+  const xAhora = horaActual !== undefined ? x(horaActual) : 0;
+  const xEtiqueta = Math.min(
+    Math.max(xAhora - ANCHO_ETIQUETA_AHORA / 2, MARGEN.izquierda),
+    ancho - MARGEN.derecha - ANCHO_ETIQUETA_AHORA,
+  );
+
+  const resumen = [
+    'Ocupación típica de cada hora del día',
+    registros.length > 0 ? `con ${registros.length} registros reales de hoy` : '',
+    valorAhora !== undefined ? `Ahora: ${formatearPorcentaje(valorAhora)}` : '',
+  ]
+    .filter(Boolean)
+    .join('. ');
 
   return (
     <View>
@@ -95,15 +111,15 @@ export function OcupacionChart({ prevision, registros = [], horaActual, alto = 1
               />
             ))}
 
+            {/* Franja de la hora actual, detrás de las series. */}
             {horaActual !== undefined && (
-              <Line
-                x1={x(horaActual)}
-                x2={x(horaActual)}
-                y1={MARGEN.arriba}
-                y2={base}
-                stroke={colors.primary}
-                strokeOpacity={0.35}
-                strokeWidth={1.5}
+              <Rect
+                x={xAhora - anchoUtil / 46}
+                y={MARGEN.arriba}
+                width={anchoUtil / 23}
+                height={altoUtil}
+                fill={colors.primary}
+                fillOpacity={0.07}
               />
             )}
 
@@ -122,13 +138,46 @@ export function OcupacionChart({ prevision, registros = [], horaActual, alto = 1
                 points={reales.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="none"
                 stroke={colors.primary}
-                strokeWidth={1.5}
-                strokeOpacity={0.6}
+                strokeWidth={2}
+                strokeLinejoin="round"
               />
             )}
             {reales.map((p) => (
-              <Circle key={p.clave} cx={p.x} cy={p.y} r={3.5} fill={colors.primary} stroke={colors.white} strokeWidth={1.5} />
+              <Circle key={p.clave} cx={p.x} cy={p.y} r={3} fill={colors.primary} stroke={colors.white} strokeWidth={1.5} />
             ))}
+
+            {horaActual !== undefined && valorAhora !== undefined && (
+              <>
+                <Line
+                  x1={xAhora}
+                  x2={xAhora}
+                  y1={MARGEN.arriba - 4}
+                  y2={base}
+                  stroke={colors.primary}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 3"
+                />
+                <Circle
+                  cx={xAhora}
+                  cy={y(valorAhora)}
+                  r={6}
+                  fill={realAhora ? colors.primary : colors.secondary}
+                  stroke={colors.white}
+                  strokeWidth={2.5}
+                />
+                <Rect x={xEtiqueta} y={0} width={ANCHO_ETIQUETA_AHORA} height={20} rx={10} fill={colors.primary} />
+                <SvgText
+                  x={xEtiqueta + ANCHO_ETIQUETA_AHORA / 2}
+                  y={14}
+                  fontSize={11}
+                  fontFamily={fonts.bold}
+                  fill={colors.white}
+                  textAnchor="middle"
+                >
+                  {`Ahora · ${formatearPorcentaje(valorAhora)}`}
+                </SvgText>
+              </>
+            )}
 
             {ETIQUETAS_EJE.map((h) => (
               <SvgText
@@ -136,8 +185,8 @@ export function OcupacionChart({ prevision, registros = [], horaActual, alto = 1
                 x={x(h)}
                 y={alto - 6}
                 fontSize={10}
-                fontFamily={fonts.medium}
-                fill={colors.textSubtle}
+                fontFamily={h === horaActual ? fonts.bold : fonts.medium}
+                fill={h === horaActual ? colors.primary : colors.textSubtle}
                 textAnchor="middle"
               >
                 {`${String(h).padStart(2, '0')}h`}
@@ -148,9 +197,8 @@ export function OcupacionChart({ prevision, registros = [], horaActual, alto = 1
       </View>
 
       <View style={styles.leyenda}>
-        <Leyenda color={colors.secondary} texto="Prevista" linea />
-        {registros.length > 0 && <Leyenda color={colors.primary} texto="Registrada hoy" />}
-        {horaActual !== undefined && <Leyenda color="rgba(0,20,48,0.35)" texto="Ahora" linea />}
+        <Leyenda color={colors.secondary} texto="Ocupación típica" linea />
+        {registros.length > 0 && <Leyenda color={colors.primary} texto="Real de hoy" linea />}
       </View>
     </View>
   );
