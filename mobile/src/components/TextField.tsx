@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme';
 import { Icon } from './Icon';
@@ -17,11 +17,17 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
 ) {
   const [enfocado, setEnfocado] = useState(false);
   const [visible, setVisible] = useState(false);
+  // Ref interna para enfocar al tocar el recuadro; se expone la misma instancia hacia afuera.
+  const input = useRef<TextInput>(null);
+  useImperativeHandle(ref, () => input.current as TextInput, []);
 
   return (
     <View style={styles.contenedor}>
       <Text style={styles.etiqueta}>{etiqueta}</Text>
-      <View
+      {/* Todo el recuadro enfoca el campo, no solo la línea de texto. */}
+      <Pressable
+        onPress={() => input.current?.focus()}
+        accessible={false}
         style={[
           styles.campo,
           enfocado && styles.campoEnfocado,
@@ -29,7 +35,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
         ]}
       >
         <TextInput
-          ref={ref}
+          ref={input}
           {...resto}
           accessibilityLabel={etiqueta}
           secureTextEntry={contrasena && !visible}
@@ -54,7 +60,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
             <Icon name={visible ? 'visibility-off' : 'visibility'} size={20} color={colors.textSubtle} />
           </Pressable>
         )}
-      </View>
+      </Pressable>
       {error ? (
         <Text style={styles.error}>{error}</Text>
       ) : ayuda ? (
@@ -86,7 +92,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   campoError: { borderColor: colors.error },
-  input: { flex: 1, ...typography.bodyLg, color: colors.textBody, paddingVertical: 0 },
+  // Ocupa todo el alto del recuadro; sin lineHeight, que en Android desalinea el cursor.
+  input: {
+    flex: 1,
+    alignSelf: 'stretch',
+    fontFamily: typography.bodyLg.fontFamily,
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.textBody,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+  },
   error: { ...typography.labelMd, color: colors.error, paddingLeft: spacing.xs },
   ayuda: { ...typography.labelMd, color: colors.textSubtle, paddingLeft: spacing.xs },
 });
