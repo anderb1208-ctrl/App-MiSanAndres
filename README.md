@@ -11,14 +11,19 @@ App móvil de turismo para San Andrés (Colombia) que recomienda destinos según
 │  Presentación        │  API REST  /v1    │  Lógica de negocio   │        │  Datos               │
 │  App móvil           │ ────────────────▶ │  Backend Express     │ ─────▶ │  Supabase            │
 │  (React Native/Expo) │  Bearer <JWT>     │  (Node.js, Render)   │        │  (PostgreSQL + RLS)  │
-└──────────┬───────────┘                   └──────────────────────┘        └──────────▲───────────┘
+└──────────┬───────────┘                   └──────────┬───────────┘        └──────────▲───────────┘
+           │                                          │ clima por hora                │
+           │                                          ▼ (sin clave, caché 30 min)     │
+           │                               ┌──────────────────────┐                   │
+           │                               │  Open-Meteo          │                   │
+           │                               └──────────────────────┘                   │
            │              inicio de sesión y registro (Supabase Auth)                 │
            └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 1. **Presentación (`mobile/`)**: pantallas, navegación y estado de la sesión. No accede a la base de datos: todos los datos llegan por la API REST. Solo habla directamente con Supabase Auth para iniciar sesión, registrarse y renovar el token.
-2. **Lógica de negocio (`backend/`)**: valida las entradas, aplica las reglas (recomendaciones, predicción de ocupación) y responde JSON con errores en un formato consistente.
-3. **Datos (Supabase)**: PostgreSQL con las tablas `usuario`, `destino`, `preferencia`, `usuario_preferencia`, `interaccion` y `ocupacion`, y políticas RLS.
+2. **Lógica de negocio (`backend/`)**: valida las entradas, aplica las reglas (recomendaciones, predicción de ocupación con clima y calendario) y responde JSON con errores en un formato consistente. Consulta el clima a [Open-Meteo](https://open-meteo.com/) (gratis para uso no comercial, sin clave).
+3. **Datos (Supabase)**: PostgreSQL con las tablas `usuario`, `destino`, `preferencia`, `destino_preferencia`, `usuario_preferencia`, `interaccion`, `ocupacion` y `clima_hora`, y políticas RLS.
 
 **Autenticación:** la app envía el JWT de Supabase en `Authorization: Bearer <token>`. El backend obtiene el usuario **del token** (nunca de un ID enviado por el cliente) y consulta la base con ese mismo token para que se apliquen las políticas RLS. Por eso el backend solo necesita la publishable key, no la secret key.
 
@@ -35,10 +40,10 @@ routes → middleware → controllers → services → models → Supabase
 | Rutas | `routes/` | Solo asocian método + URL con su middleware y controller. |
 | Middleware | `middleware/` | Autenticación (`requerirAuth`), validación con zod (IDs, `fecha` YYYY-MM-DD, `hora` HH:MM, `nivelOcupacion`) y manejo central de errores (400, 401, 404, 500). |
 | Controllers | `controllers/` | Leen la petición ya validada, llaman a un service y responden. Sin lógica de negocio ni consultas. |
-| Services | `services/` | Lógica de negocio: recomendaciones, predicción, armado de las respuestas. |
+| Services | `services/` | Lógica de negocio: recomendaciones, predicción, clima (`clima/climaService`), calendario (`calendarioService`), armado de las respuestas. |
 | Models | `models/` | Únicos que consultan Supabase (`.from`, `.rpc`). |
 
-La predicción de ocupación vive solo en `services/prediccionService.ts`. En el MVP es un promedio histórico por hora; para usar el modelo de ML (`POST /predict`) basta con reimplementar ese service conservando sus firmas, sin tocar controllers, rutas ni la app.
+La predicción de ocupación vive solo en `services/prediccionService.ts`: parte del promedio histórico de esa hora en ese día de la semana y lo ajusta con factores de clima y calendario (ver [Predicción de ocupación](#predicción-de-ocupación)). Para usar el modelo de ML (`POST /predict`) basta con reimplementar ese service conservando sus firmas y enviarle las `FeaturesPrediccion`, sin tocar controllers, rutas ni la app.
 
 ### Monorepo
 
@@ -51,6 +56,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 | App móvil | React Native + Expo, TypeScript, React Navigation (Android primero, luego iOS) |
 | Backend | Node.js + Express 5, TypeScript, zod — API REST bajo `/v1` |
 | Base de datos | Supabase (PostgreSQL) con RLS |
+| Clima | [Open-Meteo](https://open-meteo.com/) (pronóstico por hora; datos CC BY 4.0) |
 | Autenticación | Supabase Auth (JWT) |
 | Pruebas | Jest + Supertest (backend) |
 | Despliegue | Render (backend) |
@@ -63,17 +69,19 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 .
 ├── backend/                     # API REST (Node.js + Express), desplegada en Render
 │   ├── src/
-│   │   ├── config/              # Variables de entorno y cliente de Supabase
+│   │   ├── config/              # Entorno, Supabase, factores de la predicción y temporadas
 │   │   ├── routes/              # Definición de endpoints
 │   │   ├── middleware/          # Autenticación, validación y errores
 │   │   ├── controllers/         # Request / response
-│   │   ├── services/            # Lógica de negocio (recomendaciones, predicción)
+│   │   ├── services/            # Lógica de negocio (recomendaciones, predicción, calendario)
+│   │   │   └── clima/           # ProveedorClima, OpenMeteoProvider y climaService (caché)
 │   │   ├── models/              # Consultas a Supabase y tipos de la base
 │   │   ├── utils/               # Fechas en hora de Colombia, niveles de ocupación, errores
 │   │   ├── types/               # Tipos de Express (res.locals)
 │   │   ├── tests/               # Pruebas Jest + Supertest (modelos mockeados)
 │   │   ├── app.ts               # Configuración de Express
 │   │   └── server.ts            # Punto de entrada
+│   ├── scripts/                 # generarClimaHistorico.ts → supabase/clima_hora.sql
 │   └── requests.http            # Una petición de ejemplo por endpoint
 ├── mobile/                      # App móvil (React Native + Expo)
 │   └── src/
@@ -89,10 +97,14 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 ├── ml/                          # Modelo de predicción de ocupación (fase posterior)
 ├── supabase/
 │   ├── migrations/              # Migraciones SQL versionadas
-│   └── seed.sql                 # Datos de prueba de San Andrés
+│   ├── seed.sql                 # Datos de prueba de San Andrés (ocupación sintética)
+│   └── clima_hora.sql           # Clima real de las últimas 4 semanas (generado)
 └── docs/
     ├── Entregable2_MiSanAndres.docx  # Documento de diseño (entregable)
-    └── cambios-al-diseno.md          # Diferencias entre el diseño y lo implementado
+    ├── cambios-al-diseno.md          # Diferencias entre el diseño y lo implementado
+    ├── datos-sinteticos.md           # Supuestos de la ocupación sintética
+    ├── datos-por-verificar.md        # Datos de los destinos que hay que confirmar
+    └── creditos-imagenes.md          # Autor y licencia de las fotos
 ```
 
 ## API
@@ -102,10 +114,12 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 | Método | Ruta | Descripción |
 | --- | --- | --- |
 | GET | `/health` | Estado del servicio |
-| GET | `/destinos` | Destinos con su ocupación actual; filtros `categoria` y `nivelOcupacion` |
+| GET | `/destinos` | Destinos con su ocupación actual; búsqueda `q` y filtros `categoria` y `nivelOcupacion` |
 | GET | `/destinos/:id` | Detalle de un destino |
+| GET | `/destinos/:id/clima?horas=` | Clima actual y de las próximas horas en el destino |
+| GET | `/clima?horas=` | Clima del centro de la isla |
 | GET | `/ocupacion/:destinoId?fecha=` | Registros de ocupación de un día |
-| GET | `/ocupacion/:destinoId/prediccion?fecha=&hora=` | Predicción para una fecha y hora |
+| GET | `/ocupacion/:destinoId/prediccion?fecha=&hora=` | Predicción para una fecha y hora, con el clima usado y los factores aplicados |
 | GET | `/ocupacion/:destinoId/prediccion/dia?fecha=` | Ocupación típica por hora de ese día de la semana |
 | GET | `/preferencias/catalogo` | Catálogo de preferencias |
 | GET / PUT / DELETE | `/preferencias` 🔒 | Preferencias del usuario |
@@ -118,7 +132,22 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 - El esquema vive en `supabase/migrations/` como archivos SQL versionados (`AAAAMMDDHHMMSS_descripcion.sql`). Los cambios se hacen siempre con una migración nueva, nunca editando la base a mano.
 - `supabase/seed.sql` carga datos de prueba (destinos, catálogo de preferencias y ocupación simulada). **Borra datos: usarlo solo en desarrollo.**
 - Las migraciones se aplican con el MCP de Supabase, que registra cada una con la marca de tiempo del momento en que se aplicó. Por eso los números de versión que muestra Supabase **no coinciden** con los de los archivos locales; los nombres y el contenido sí. El orden de los archivos en `supabase/migrations/` es el que manda.
+- `supabase/clima_hora.sql` carga el clima real por hora de las últimas 4 semanas (datos para entrenar el modelo). Se regenera con `npm run clima:historico` en `backend/`; el orden de carga está en `docs/datos-sinteticos.md`.
 - Los cambios respecto al documento de diseño están en `docs/cambios-al-diseno.md`.
+
+## Predicción de ocupación
+
+1. **Base**: promedio histórico de la ocupación a esa hora en ese día de la semana (si hay al menos 3 registros; si no, el del tipo de día).
+2. **Variables** (`services/featuresPrediccion.ts`, `FeaturesPrediccion`): hora, día de la semana, fin de semana, festivo, puente, temporada y clima. Son las mismas que recibirá el modelo de ML.
+3. **Factores** multiplicativos, todos en `config/factoresPrediccion.ts`: lluvia probable (baja playas, cayos y actividades; sube un poco restaurantes y cultura), tormenta, festivo, puente y temporada alta. El resultado se limita a 0–100 % y se clasifica en Bajo / Medio / Alto. Fuera del horario del destino la respuesta es "Cerrado".
+
+**Calendario** (`calendarioService`, sin API externa): festivos de Colombia calculados con la Ley 51 de 1983 (Ley Emiliani), incluidos los que dependen de la Pascua; puentes (bloques de 3 o más días no laborales) y temporadas. Las fechas de temporada alta son **supuestos configurables** en `config/calendario.ts`: 15 dic – 15 ene, Semana Santa y 15 jun – 15 jul.
+
+**Clima** (`services/clima/`): la interfaz `ProveedorClima` aísla al proveedor; `OpenMeteoProvider` pide temperatura, probabilidad de precipitación, precipitación, código WMO y viento por hora (zona `America/Bogota`), con todos los destinos en una sola llamada y un timeout de 4 s. `climaService` guarda cada destino en caché 30 minutos y, si la API falla, no reintenta durante 1 minuto. Si no hay clima (API caída o fecha a más de 16 días), la predicción sigue funcionando sin él y lo indica en `motivoSinClima`.
+
+### Atribución del clima
+
+Los datos del clima son de **[Open-Meteo.com](https://open-meteo.com/)**, con licencia [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). La API es gratuita para uso no comercial (hasta 10.000 llamadas al día) y no requiere clave. La app muestra "Datos del clima: Open-Meteo.com (CC BY 4.0)" con enlace en el detalle de cada destino y en el resumen del clima de Inicio. Los datos se usan sin modificar, salvo el redondeo para mostrarlos.
 
 ## Cómo ejecutar
 

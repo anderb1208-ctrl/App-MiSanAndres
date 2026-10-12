@@ -96,7 +96,7 @@ Agregar una sección sobre **Row Level Security** (activado en todas las tablas)
 
 | Tabla | Visitante (anon) | Usuario autenticado |
 | --- | --- | --- |
-| destino, destino_preferencia, preferencia, ocupacion | Leer | Leer |
+| destino, destino_preferencia, preferencia, ocupacion, clima_hora | Leer | Leer |
 | usuario | — | Ver y editar solo su perfil |
 | usuario_preferencia | — | Ver, agregar y quitar solo las propias |
 | interaccion | — | Ver, registrar y borrar solo las propias (no se editan: son histórico para el modelo) |
@@ -121,6 +121,8 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 | GET | /preferencias/catalogo | Catálogo de categorías, experiencias y grupos | No |
 | GET, PUT | /perfil | Ver y cambiar el nombre del usuario del token | Sí |
 | POST, GET | /interacciones | Registrar una interacción y ver el historial propio | Sí |
+| GET | /destinos/{id}/clima?horas= | Clima actual y de las próximas horas (1–48, por defecto 12) en el destino, con la atribución de Open-Meteo | No |
+| GET | /clima?horas= | Clima del centro de la isla (resumen de Inicio) | No |
 
 - `POST /preferencias` se reemplaza por `PUT /preferencias` (crea o reemplaza; idempotente).
 - `POST /recomendaciones` no se implementó: las recomendaciones se calculan con `GET /recomendaciones` a partir de las preferencias guardadas.
@@ -128,7 +130,7 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 
 ## 9. Predicción de ocupación (MVP, antes del modelo de ML)
 
-- Mientras no exista el servicio de ML, la predicción es el **promedio histórico del porcentaje de ocupación a la misma hora y en el mismo tipo de día** (entre semana / fin de semana), en hora de Colombia. Se separa por tipo de día porque los patrones difieren mucho (al mediodía ≈ 67 % entre semana frente a ≈ 84 % el fin de semana en los datos de prueba).
+- Mientras no exista el servicio de ML, la predicción parte del **promedio histórico del porcentaje de ocupación a la misma hora y en el mismo día de la semana** (si hay al menos 3 registros; si no, el del tipo de día: entre semana / fin de semana), en hora de Colombia, y lo ajusta con factores de clima y calendario (sección 11).
 - El gráfico del detalle muestra la **ocupación típica** de cada hora para ese día de la semana (p. ej. "Ocupación típica de un martes"), con los registros reales de hoy superpuestos. Si aún no hay historial de ese día, se usa el del tipo de día.
 - Ambos cálculos usan la función SQL `ocupacion_promedio_hora` (migraciones `20260929200000` y `20261001120000`), que es `security invoker` (respeta RLS) y solo pueden ejecutar los roles `anon` y `authenticated`.
 - El backend encapsula el cálculo en `prediccionService`; al llegar el modelo Random Forest solo cambia ese servicio.
@@ -137,3 +139,47 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 ## 10. Búsqueda de destinos
 
 `GET /destinos` acepta `q` (texto, 1 a 100 caracteres): filtra por nombre sin distinguir mayúsculas. Se combina con `categoria` y `nivelOcupacion`.
+
+## 11. Clima y calendario en la predicción
+
+El entregable menciona la predicción por hora y día, pero no las variables de contexto. Se agregan dos módulos al backend y una tabla:
+
+**Módulos nuevos (`backend/src/services/`)**
+
+| Módulo | Responsabilidad |
+| --- | --- |
+| `clima/climaService` | Clima por hora de cada destino con caché en memoria (30 min por destino; 1 min de espera tras un fallo). Depende de la interfaz `ProveedorClima`; la implementación actual es `OpenMeteoProvider` (Open-Meteo, sin clave, timeout de 4 s, todos los destinos en una llamada). |
+| `calendarioService` | Día de la semana, fin de semana, festivos de Colombia (Ley 51 de 1983, "Ley Emiliani", calculados sin API ni paquete externo), puentes (3 o más días no laborales seguidos) y temporada (alta / normal). |
+| `featuresPrediccion` | Define en un solo lugar las variables de entrada (`FeaturesPrediccion`): hora, díaSemana, esFinDeSemana, esFestivo, esPuente, temporada y clima opcional (temperatura, probLluvia, precipitacion, codigoClima, viento). El modelo de ML recibirá exactamente estas. |
+| `factoresPrediccion` | Convierte las variables en factores multiplicativos con su explicación ("Lluvia probable: -20 %"). Los valores viven en `config/factoresPrediccion.ts`. |
+
+**Factores (supuestos del prototipo, configurables)**
+
+| Factor | Condición | Efecto |
+| --- | --- | --- |
+| Lluvia probable | Probabilidad ≥ 60 % o ≥ 0,5 mm en la hora | Playa −20 %, cayo −25 %, actividad −15 %, naturaleza −10 %, restaurante +10 %, cultura +10 % |
+| Tormenta (reemplaza a lluvia) | Código WMO 95, 96 o 99 | Playa −35 %, cayo −50 %, actividad −30 %, naturaleza −20 %, restaurante y cultura +10 % |
+| Festivo | El día es festivo | +25 % |
+| Puente | Sábado o domingo de un puente | +10 % |
+| Temporada alta | 15 dic – 15 ene, Semana Santa, 15 jun – 15 jul (`config/calendario.ts`) | +20 % |
+
+El resultado se limita a 0–100 % y se reclasifica en Bajo / Medio / Alto. Fuera del horario es "Cerrado" sin factores.
+
+**Respuesta de `GET /ocupacion/{destinoId}/prediccion`**: además de porcentaje y nivel, incluye `base` (promedio histórico usado), `features`, `clima` (o `null`), `motivoSinClima` (`fuera_de_rango`, `proveedor_no_disponible` o `sin_datos`) y `factores` (lista legible). **Degradación elegante**: si Open-Meteo falla o la fecha está a más de 16 días, la predicción funciona sin clima.
+
+**Tabla nueva `Clima_Hora`** (datos de entrenamiento del modelo):
+
+| Campo | Tipo | Restricciones |
+| --- | --- | --- |
+| id_clima_hora | BIGINT | PK, identity |
+| id_destino | INT | NOT NULL, FK → Destino (ON DELETE CASCADE) |
+| fecha_hora | TIMESTAMPTZ | NOT NULL, UNIQUE (id_destino, fecha_hora) |
+| temperatura | NUMERIC(4,1) | °C |
+| prob_lluvia | SMALLINT | 0–100 |
+| precipitacion | NUMERIC(5,1) | ≥ 0, mm |
+| codigo_clima | SMALLINT | 0–99, código WMO |
+| viento | NUMERIC(5,1) | ≥ 0, km/h |
+
+Relación: Destino → Clima_Hora (1:N). Lectura pública por RLS, sin escritura desde el cliente. Se llena con el clima real de las últimas 4 semanas (`backend/scripts/generarClimaHistorico.ts` → `supabase/clima_hora.sql`). La ocupación de prueba es **sintética** y responde a ese clima: ver `docs/datos-sinteticos.md`.
+
+**Servicio externo y atribución**: los datos del clima son de Open-Meteo.com con licencia CC BY 4.0 (gratis para uso no comercial, hasta 10.000 llamadas al día). La app muestra "Datos del clima: Open-Meteo.com (CC BY 4.0)" con enlace donde aparece el clima. Agregar Open-Meteo al diagrama de arquitectura del entregable como servicio externo del backend.
