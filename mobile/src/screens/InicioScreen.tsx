@@ -35,7 +35,7 @@ async function cargarInicio() {
 
 function contarPorNivel(destinos: Destino[]): Record<NivelOcupacion, number> {
   const conteo: Record<NivelOcupacion, number> = { Bajo: 0, Medio: 0, Alto: 0 };
-  for (const d of destinos) if (d.ocupacionActual) conteo[d.ocupacionActual.nivel]++;
+  for (const d of destinos) if (d.ocupacionActual?.nivel) conteo[d.ocupacionActual.nivel]++;
   return conteo;
 }
 

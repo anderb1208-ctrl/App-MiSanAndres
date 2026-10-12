@@ -8,18 +8,20 @@ import { ScreenBackground } from '../components/ScreenBackground';
 import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateView';
 import { useAsync } from '../hooks/useAsync';
 import { useBarraEstado } from '../hooks/useBarraEstado';
+import { useValorDiferido } from '../hooks/useValorDiferido';
 import { useEspacioTabBar } from '../navigation/TabBar';
 import type { TabScreenProps } from '../navigation/types';
 import { listarDestinos } from '../services/destinos';
-import type { CategoriaDestino } from '../services/tipos';
+import type { CategoriaDestino, Destino } from '../services/tipos';
 import { colors, radius, spacing, typography } from '../theme';
 import { CATEGORIAS, LISTA_CATEGORIAS } from '../utils/categorias';
 
-const normalizar = (texto: string) =>
-  texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase();
+/** Orden: abiertos de menor a mayor ocupación, luego sin datos y al final los cerrados. */
+const claveOrden = (d: Destino) => {
+  const o = d.ocupacionActual;
+  if (o?.estado === 'Cerrado') return 300;
+  return o ? o.porcentaje : 200;
+};
 
 export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
   useBarraEstado('dark');
@@ -27,20 +29,16 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
   const [categoria, setCategoria] = useState<CategoriaDestino>();
   const [soloBaja, setSoloBaja] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  // La API busca por nombre (q) y aplica los filtros; se espera a que el usuario deje de escribir.
+  const q = useValorDiferido(busqueda.trim()).slice(0, 100);
 
   const { datos, error, cargando, refrescando, recargar } = useAsync(
-    () => listarDestinos({ categoria, nivelOcupacion: soloBaja ? 'Bajo' : undefined }),
-    [categoria, soloBaja],
+    () => listarDestinos({ q: q || undefined, categoria, nivelOcupacion: soloBaja ? 'Bajo' : undefined }),
+    [q, categoria, soloBaja],
     { recargarAlEnfocar: true },
   );
 
-  // La búsqueda por nombre es local; los filtros de categoría y ocupación los aplica la API.
-  const destinos = useMemo(() => {
-    const q = normalizar(busqueda.trim());
-    return [...(datos ?? [])]
-      .filter((d) => !q || normalizar(d.nombre).includes(q))
-      .sort((a, b) => (a.ocupacionActual?.porcentaje ?? 101) - (b.ocupacionActual?.porcentaje ?? 101));
-  }, [datos, busqueda]);
+  const destinos = useMemo(() => [...(datos ?? [])].sort((a, b) => claveOrden(a) - claveOrden(b)), [datos]);
 
   const hayFiltros = Boolean(categoria || soloBaja || busqueda.trim());
 
@@ -51,7 +49,13 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
       <EstadoMensaje
         icono="travel-explore"
         titulo="Sin resultados"
-        mensaje={hayFiltros ? 'Prueba con otra categoría o quita los filtros.' : 'Aún no hay destinos disponibles.'}
+        mensaje={
+          busqueda.trim()
+            ? `No hay destinos que coincidan con "${busqueda.trim()}".`
+            : hayFiltros
+              ? 'Prueba con otra categoría o quita los filtros.'
+              : 'Aún no hay destinos disponibles.'
+        }
         accion={
           hayFiltros
             ? {
@@ -79,7 +83,7 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
           <TextInput
             value={busqueda}
             onChangeText={setBusqueda}
-            placeholder="Buscar destinos"
+            placeholder="Buscar por nombre"
             placeholderTextColor={colors.textSubtle}
             style={styles.buscadorInput}
             accessibilityLabel="Buscar destinos"

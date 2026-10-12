@@ -1,11 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
-import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { IconButton } from '../components/IconButton';
+import { ImagenDestino } from '../components/ImagenDestino';
 import { IndicadorOcupacion } from '../components/IndicadorOcupacion';
 import { OcupacionChart } from '../components/OcupacionChart';
 import { Overline } from '../components/ScreenHeader';
@@ -21,9 +22,9 @@ import { registrarInteraccion } from '../services/interacciones';
 import { obtenerOcupacionDelDia, obtenerOcupacionTipica } from '../services/ocupacion';
 import type { OcupacionTipicaDelDia } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
-import { CATEGORIAS, ICONOS_PREFERENCIA } from '../utils/categorias';
+import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
+import { creditoFoto, ETIQUETA_PRECIO, formatearHorario } from '../utils/contenido';
 import { horaEnColombia, hoyEnColombia } from '../utils/fecha';
-import { imagenDestino } from '../utils/imagenes';
 import { NOTA_NIVEL } from '../utils/ocupacion';
 
 /** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
@@ -47,7 +48,18 @@ function leyendaCurva(tipica: OcupacionTipicaDelDia, hayReales: boolean): string
     tipica.base === 'dia_semana'
       ? `Promedio histórico de cada hora de los ${dias}`
       : `Aún no hay historial de los ${dias}; se usa el de los días ${respaldo}`;
-  return `${base}.${hayReales ? ' La línea oscura es lo registrado hoy.' : ''} Resaltada, la hora actual.`;
+  const cerradas = tipica.horas.some((h) => !h.abierto) ? ' Las franjas grises son horas en que está cerrado.' : '';
+  return `${base}.${hayReales ? ' La línea oscura es lo registrado hoy.' : ''} Resaltada, la hora actual.${cerradas}`;
+}
+
+/** Dato con ícono bajo el nombre (ubicación, horario, precio), como en la referencia. */
+function Dato({ icono, children }: { icono: NombreIcono; children: string }) {
+  return (
+    <View style={styles.dato}>
+      <Icon name={icono} size={18} color={colors.secondary} />
+      <Text style={styles.datoTexto}>{children}</Text>
+    </View>
+  );
 }
 
 export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'DetalleDestino'>) {
@@ -104,6 +116,9 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
 
   const categoria = CATEGORIAS[d.categoria];
   const etiquetas = [...d.etiquetas.experiencias, ...d.etiquetas.grupos];
+  const credito = creditoFoto(d.imagen);
+  const fuenteFoto = d.imagen?.fuente;
+  const cerradoAhora = d.ocupacionActual?.estado === 'Cerrado';
   const recargarTodo = () => {
     destino.recargar();
     curva.recargar();
@@ -116,8 +131,22 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
         refreshControl={<RefreshControl refreshing={destino.refrescando} onRefresh={recargarTodo} tintColor={colors.white} />}
       >
         <View style={styles.hero}>
-          <Image source={imagenDestino(d)} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityLabel={d.nombre} />
+          <ImagenDestino destino={d} style={StyleSheet.absoluteFill} tamanoIcono={72} />
           <LinearGradient colors={colors.scrimTop} style={styles.scrimSuperior} />
+          {credito && (
+            <Pressable
+              onPress={fuenteFoto ? () => void Linking.openURL(fuenteFoto) : undefined}
+              disabled={!fuenteFoto}
+              accessibilityRole={fuenteFoto ? 'link' : 'text'}
+              accessibilityLabel={`${credito}${fuenteFoto ? '. Abrir la página de la foto' : ''}`}
+              hitSlop={8}
+              style={styles.credito}
+            >
+              <Text style={styles.creditoTexto} numberOfLines={1}>
+                {credito}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.hoja}>
@@ -134,9 +163,14 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
           <Text style={styles.nombre} accessibilityRole="header">
             {d.nombre}
           </Text>
-          <View style={styles.ubicacion}>
-            <Icon name="location-on" size={18} />
-            <Text style={styles.ubicacionTexto}>{d.ubicacion}</Text>
+          <View style={styles.datos}>
+            <Dato icono="location-on">{d.ubicacion}</Dato>
+            {d.horario && (
+              <Dato icono="schedule">
+                {`${formatearHorario(d.horario)}${d.ocupacionActual ? (cerradoAhora ? ' · Cerrado ahora' : ' · Abierto ahora') : ''}`}
+              </Dato>
+            )}
+            {d.rangoPrecio && <Dato icono="payments">{ETIQUETA_PRECIO[d.rangoPrecio]}</Dato>}
           </View>
 
           <LinearGradient
@@ -150,13 +184,23 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
               {d.ocupacionActual && <Text style={styles.hora}>{d.ocupacionActual.hora}</Text>}
             </View>
             <IndicadorOcupacion ocupacion={d.ocupacionActual} variante="barra" capacidad={d.capacidad} />
-            {d.ocupacionActual && <Text style={styles.nota}>{NOTA_NIVEL[d.ocupacionActual.nivel]}</Text>}
+            {d.ocupacionActual?.nivel && <Text style={styles.nota}>{NOTA_NIVEL[d.ocupacionActual.nivel]}</Text>}
           </LinearGradient>
 
           {d.descripcion ? (
             <>
               <Text style={styles.subtitulo}>Descripción</Text>
               <Text style={styles.descripcion}>{d.descripcion}</Text>
+            </>
+          ) : null}
+
+          {d.comoLlegar ? (
+            <>
+              <Text style={styles.subtitulo}>Cómo llegar</Text>
+              <View style={styles.comoLlegar}>
+                <Icon name="directions" size={22} color={colors.secondary} />
+                <Text style={[styles.descripcion, styles.comoLlegarTexto]}>{d.comoLlegar}</Text>
+              </View>
             </>
           ) : null}
 
@@ -232,6 +276,17 @@ const styles = StyleSheet.create({
   volver: { position: 'absolute', left: spacing.screen, zIndex: 5 },
   hero: { height: 360, backgroundColor: colors.navy950 },
   scrimSuperior: { position: 'absolute', top: 0, left: 0, right: 0, height: 130 },
+  credito: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 44, alignItems: 'flex-start' },
+  creditoTexto: {
+    ...typography.labelMd,
+    fontSize: 11,
+    color: colors.white,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+    backgroundColor: colors.glassDark,
+  },
   hoja: {
     marginTop: -32,
     borderTopLeftRadius: radius.sheet,
@@ -243,8 +298,19 @@ const styles = StyleSheet.create({
   etiquetasFila: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm, flexWrap: 'wrap' },
   tagCerrado: { backgroundColor: colors.errorContainer },
   nombre: { ...typography.display, color: colors.textStrong },
-  ubicacion: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: spacing.sm },
-  ubicacionTexto: { ...typography.bodyMd, color: colors.textMuted, flex: 1 },
+  datos: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.md, rowGap: 4, marginTop: spacing.sm },
+  dato: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, maxWidth: '100%' },
+  datoTexto: { ...typography.bodyMd, color: colors.textMuted, flexShrink: 1 },
+  comoLlegar: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.panel,
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.borderCard,
+  },
+  comoLlegarTexto: { flex: 1 },
   ocupacion: {
     marginTop: spacing.screen,
     padding: spacing.md,

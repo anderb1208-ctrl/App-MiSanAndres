@@ -106,6 +106,20 @@ export const colors = {
 } as const;
 
 /**
+ * Degradados de los placeholders de imagen por categoría (cuando el destino no tiene
+ * foto o no carga). Tonos de la paleta: mar, arena y verde manglar.
+ */
+export const placeholderColors = {
+  playa: ['#50d9fe', '#00677d'],
+  cayo: ['#00677d', '#001b3d'],
+  gastronomia: ['#e6e3d0', '#9a7b4f'],
+  actividad: ['#b3ebff', '#005c70'],
+  naturaleza: ['#7cc8a4', '#1f5c45'],
+  cultura: ['#e6e3d0', '#002855'],
+  buceo_snorkel: ['#b3ebff', '#005c70'],
+} as const;
+
+/**
  * Espectro de ocupación: reservado para Bajo / Medio / Alto.
  * Nunca se usa para otros significados ni se muestra sin la palabra.
  */

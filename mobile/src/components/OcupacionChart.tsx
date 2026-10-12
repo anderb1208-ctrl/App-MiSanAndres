@@ -21,7 +21,7 @@ const LIMITES = [
   { valor: 40, color: occupancyColors.Medio.main },
   { valor: 70, color: occupancyColors.Alto.main },
 ];
-const ANCHO_ETIQUETA_AHORA = 76;
+const ANCHO_ETIQUETA_AHORA = 96;
 
 const hora = (texto: string) => Number(texto.slice(0, 2));
 
@@ -53,6 +53,12 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
   const realAhora = registros.find((r) => hora(r.hora) === horaActual);
   const tipicaAhora = tipica.find((p) => hora(p.hora) === horaActual);
   const valorAhora = realAhora?.porcentaje ?? tipicaAhora?.porcentaje;
+  const cerradoAhora = !realAhora && tipicaAhora?.abierto === false;
+  const etiquetaAhora = cerradoAhora ? 'Ahora · Cerrado' : `Ahora · ${formatearPorcentaje(valorAhora ?? 0)}`;
+
+  // Franjas de las horas en que el destino está cerrado.
+  const horasCerradas = tipica.filter((p) => !p.abierto).map((p) => hora(p.hora));
+  const anchoColumna = anchoUtil / 23;
   const xAhora = horaActual !== undefined ? x(horaActual) : 0;
   const xEtiqueta = Math.min(
     Math.max(xAhora - ANCHO_ETIQUETA_AHORA / 2, MARGEN.izquierda),
@@ -62,7 +68,8 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
   const resumen = [
     'Ocupación típica de cada hora del día',
     registros.length > 0 ? `con ${registros.length} registros reales de hoy` : '',
-    valorAhora !== undefined ? `Ahora: ${formatearPorcentaje(valorAhora)}` : '',
+    horasCerradas.length > 0 ? `Cerrado ${horasCerradas.length} horas del día` : '',
+    valorAhora !== undefined ? (cerradoAhora ? 'Ahora: cerrado' : `Ahora: ${formatearPorcentaje(valorAhora)}`) : '',
   ]
     .filter(Boolean)
     .join('. ');
@@ -110,6 +117,14 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
                 strokeDasharray="4 4"
               />
             ))}
+
+            {horasCerradas.map((h) => {
+              const x0 = Math.max(MARGEN.izquierda, x(h) - anchoColumna / 2);
+              const x1 = Math.min(ancho - MARGEN.derecha, x(h) + anchoColumna / 2);
+              return (
+                <Rect key={`cerrado-${h}`} x={x0} y={MARGEN.arriba} width={x1 - x0} height={altoUtil} fill={colors.track} />
+              );
+            })}
 
             {/* Franja de la hora actual, detrás de las series. */}
             {horaActual !== undefined && (
@@ -174,7 +189,7 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
                   fill={colors.white}
                   textAnchor="middle"
                 >
-                  {`Ahora · ${formatearPorcentaje(valorAhora)}`}
+                  {etiquetaAhora}
                 </SvgText>
               </>
             )}
@@ -199,6 +214,7 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
       <View style={styles.leyenda}>
         <Leyenda color={colors.secondary} texto="Ocupación típica" linea />
         {registros.length > 0 && <Leyenda color={colors.primary} texto="Real de hoy" linea />}
+        {horasCerradas.length > 0 && <Leyenda color={colors.track} texto="Cerrado" />}
       </View>
     </View>
   );

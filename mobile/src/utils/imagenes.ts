@@ -1,6 +1,6 @@
-import type { ImageSourcePropType } from 'react-native';
-import type { CategoriaDestino, Destino } from '../services/tipos';
+import type { ImageSourcePropType, ImageURISource } from 'react-native';
 
+/** Fotos locales de las pantallas de bienvenida, autenticación e inicio. */
 export const IMAGENES = {
   acuario: require('../assets/images/acuario.jpg'),
   heroAerial: require('../assets/images/hero-aerial.jpg'),
@@ -13,28 +13,17 @@ export const IMAGENES = {
 } satisfies Record<string, ImageSourcePropType>;
 
 /**
- * Fotos locales para los destinos del seed mientras `destino.imagen_url` esté vacío.
- * Cuando la base tenga imágenes, `imagenDestino` usa la URL y esto deja de aplicarse.
+ * Wikimedia responde 403 a las peticiones sin un User-Agent identificable, como el
+ * `okhttp` por defecto de Android. Su política pide uno con nombre y contacto.
  */
-const POR_NOMBRE: Record<string, ImageSourcePropType> = {
-  'Johnny Cay': IMAGENES.johnnyCay,
-  'Acuario (Haynes Cay)': IMAGENES.acuario,
-  'Hoyo Soplador': IMAGENES.hoyoSoplador,
-  'West View': IMAGENES.westView,
-  'La Piscinita': IMAGENES.piscinita,
-  'Playa Spratt Bight': IMAGENES.loginBeach,
-};
+const USER_AGENT = 'MiSanAndres/1.0 (app de turismo de San Andres; proyecto academico)';
 
-const POR_CATEGORIA: Record<CategoriaDestino, ImageSourcePropType> = {
-  playa: IMAGENES.loginBeach,
-  cayo: IMAGENES.johnnyCayHero,
-  naturaleza: IMAGENES.hoyoSoplador,
-  buceo_snorkel: IMAGENES.piscinita,
-  cultura: IMAGENES.heroAerial,
-  gastronomia: IMAGENES.westView,
-};
+// `URL.hostname` no está implementado en React Native: se compara el texto.
+const ES_WIKIMEDIA = /^https?:\/\/([\w-]+\.)*wikimedia\.org\//i;
 
-export function imagenDestino(destino: Pick<Destino, 'nombre' | 'categoria' | 'imagenUrl'>): ImageSourcePropType {
-  if (destino.imagenUrl) return { uri: destino.imagenUrl };
-  return POR_NOMBRE[destino.nombre] ?? POR_CATEGORIA[destino.categoria];
+/** Fuente remota de la foto de un destino, con las cabeceras que exige el servidor. */
+export function fuenteImagenRemota(url: string): ImageURISource {
+  return ES_WIKIMEDIA.test(url)
+    ? { uri: url, headers: { 'User-Agent': USER_AGENT } }
+    : { uri: url };
 }

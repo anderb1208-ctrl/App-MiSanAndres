@@ -30,9 +30,28 @@ export function IndicadorOcupacion({ ocupacion, variante = 'badge', mostrarPorce
     );
   }
 
-  const c = occupancyColors[ocupacion.nivel];
-  const etiqueta = ETIQUETA_NIVEL[ocupacion.nivel];
-  const accesible = `Ocupación ${ADJETIVO_NIVEL[ocupacion.nivel]}, ${formatearPorcentaje(ocupacion.porcentaje)}`;
+  // Cerrado: sin color de ocupación (ese espectro es solo para Bajo / Medio / Alto).
+  if (ocupacion.estado === 'Cerrado' || !ocupacion.nivel) {
+    return variante === 'badge' ? (
+      <View accessible accessibilityLabel="Cerrado ahora" style={[styles.badge, styles.sinDatos]}>
+        <Icon name="schedule" size={14} color={colors.textMuted} />
+        <Text style={[styles.badgeTexto, { color: colors.textMuted }]}>Cerrado ahora</Text>
+      </View>
+    ) : (
+      <View accessible accessibilityLabel="Cerrado ahora" style={styles.barraContenedor}>
+        <View style={styles.barraTitulo}>
+          <Icon name="schedule" size={22} color={colors.textMuted} />
+          <Text style={[styles.nivel, { color: colors.textMuted }]}>Cerrado ahora</Text>
+        </View>
+        <Text style={styles.aforo}>Fuera del horario de atención: no hay ocupación prevista.</Text>
+      </View>
+    );
+  }
+
+  const nivel = ocupacion.nivel;
+  const c = occupancyColors[nivel];
+  const etiqueta = ETIQUETA_NIVEL[nivel];
+  const accesible = `Ocupación ${ADJETIVO_NIVEL[nivel]}, ${formatearPorcentaje(ocupacion.porcentaje)}`;
 
   if (variante === 'badge') {
     return (
@@ -54,8 +73,8 @@ export function IndicadorOcupacion({ ocupacion, variante = 'badge', mostrarPorce
     <View accessible accessibilityLabel={accesible} style={styles.barraContenedor}>
       <View style={styles.barraCabecera}>
         <View style={styles.barraTitulo}>
-          <Icon name={ICONO_NIVEL[ocupacion.nivel]} size={22} color={c.fg} />
-          <Text style={[styles.nivel, { color: c.fg }]}>Ocupación {ADJETIVO_NIVEL[ocupacion.nivel]}</Text>
+          <Icon name={ICONO_NIVEL[nivel]} size={22} color={c.fg} />
+          <Text style={[styles.nivel, { color: c.fg }]}>Ocupación {ADJETIVO_NIVEL[nivel]}</Text>
         </View>
         <Text style={[styles.porcentaje, { color: c.fg }]}>{formatearPorcentaje(ocupacion.porcentaje)}</Text>
       </View>

@@ -1,7 +1,10 @@
 import { solicitud } from './api';
 import type { CategoriaDestino, Destino, DestinoDetalle, NivelOcupacion } from './tipos';
 
-export function listarDestinos(filtros: { categoria?: CategoriaDestino; nivelOcupacion?: NivelOcupacion } = {}) {
+/** `q` busca por nombre (coincidencia parcial, sin distinguir mayúsculas). */
+export function listarDestinos(
+  filtros: { q?: string; categoria?: CategoriaDestino; nivelOcupacion?: NivelOcupacion } = {},
+) {
   return solicitud<Destino[]>('/destinos', { consulta: filtros });
 }
 

@@ -1,11 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Destino } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
-import { imagenDestino } from '../utils/imagenes';
 import { GlassPanel } from './GlassPanel';
 import { Icon } from './Icon';
+import { ImagenDestino } from './ImagenDestino';
 import { IndicadorOcupacion } from './IndicadorOcupacion';
 import { PressableScale } from './PressableScale';
 
@@ -36,7 +36,7 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress
         accessibilityLabel={accesible}
         style={[styles.featured, shadows.md, style]}
       >
-        <Image source={imagenDestino(destino)} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <ImagenDestino destino={destino} style={StyleSheet.absoluteFill} tamanoIcono={56} />
         <LinearGradient colors={colors.scrimBottom} locations={[0.35, 0.7, 1]} style={StyleSheet.absoluteFill} />
         <View style={styles.featuredArriba}>
           <IndicadorOcupacion ocupacion={destino.ocupacionActual} mostrarPorcentaje />
@@ -67,7 +67,7 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress
   return (
     <GlassPanel tono="strong" padding={12} radius={radius.xl} onPress={onPress} accessibilityLabel={accesible} style={style}>
       <View style={styles.fila}>
-        <Image source={imagenDestino(destino)} style={styles.miniatura} resizeMode="cover" />
+        <ImagenDestino destino={destino} style={styles.miniatura} tamanoIcono={26} />
         <View style={styles.info}>
           <View style={styles.filaNombre}>
             <Text style={styles.nombre} numberOfLines={1}>

@@ -1,16 +1,42 @@
 /** Tipos de las respuestas del backend (/v1). */
 
 export type NivelOcupacion = 'Bajo' | 'Medio' | 'Alto';
-export type CategoriaDestino = 'playa' | 'cayo' | 'naturaleza' | 'buceo_snorkel' | 'cultura' | 'gastronomia';
+export type CategoriaDestino =
+  | 'playa'
+  | 'cayo'
+  | 'naturaleza'
+  | 'buceo_snorkel'
+  | 'cultura'
+  | 'gastronomia'
+  | 'actividad';
+export type RangoPrecio = 'Gratis' | '$' | '$$' | '$$$';
+/** "Cerrado" fuera del horario del destino o si está cerrado temporalmente. */
+export type EstadoAtencion = 'Abierto' | 'Cerrado';
 export type EstadoDestino = 'abierto' | 'cerrado_temporal' | 'inactivo';
 export type TipoInteraccion = 'vista' | 'favorito' | 'visita' | 'compartir';
 
 export interface OcupacionActual {
   fecha: string;
   hora: string;
+  estado: EstadoAtencion;
   porcentaje: number;
-  nivel: NivelOcupacion;
+  /** null cuando está cerrado. */
+  nivel: NivelOcupacion | null;
   personasEstimadas: number;
+}
+
+/** Horario en hora de Colombia (HH:MM; el cierre es exclusivo). */
+export interface Horario {
+  apertura: string;
+  cierre: string;
+}
+
+export interface ImagenDestino {
+  url: string;
+  autor: string | null;
+  licencia: string | null;
+  /** Página de la foto (crédito). */
+  fuente: string | null;
 }
 
 export interface Destino {
@@ -23,7 +49,12 @@ export interface Destino {
   longitud: number;
   capacidad: number;
   estado: EstadoDestino;
+  /** null = sin horario (siempre accesible). */
+  horario: Horario | null;
+  rangoPrecio: RangoPrecio | null;
+  comoLlegar: string | null;
   imagenUrl: string | null;
+  imagen: ImagenDestino | null;
   ocupacionActual: OcupacionActual | null;
 }
 
@@ -52,6 +83,8 @@ export interface OcupacionDelDia {
 
 export interface PuntoPrevision {
   hora: string;
+  /** false si a esa hora el destino está fuera de su horario. */
+  abierto: boolean;
   porcentaje: number;
   nivel: NivelOcupacion;
   personasEstimadas: number;
