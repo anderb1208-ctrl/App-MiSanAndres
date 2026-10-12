@@ -65,6 +65,18 @@ export const colors = {
 
   error: palette.red600,
   errorContainer: palette.red100,
+  errorBorder: 'rgba(186,26,26,0.2)',
+  /** Fondo del círculo del estado de error (rojo de ocupación Alta, suave). */
+  dangerSoft: 'rgba(217,48,37,0.12)',
+
+  /** Fondos turquesa translúcidos (etiquetas y avisos). */
+  turquoiseTint: 'rgba(179,235,255,0.45)',
+  turquoiseTintSoft: 'rgba(179,235,255,0.4)',
+
+  /** Velo navy al presionar una fila y pista de las barras de progreso. */
+  pressedOverlay: 'rgba(0,20,48,0.04)',
+  track: 'rgba(0,20,48,0.08)',
+  textOnDarkStrong: 'rgba(255,255,255,0.9)',
 
   /** Superficies "liquid glass". */
   glass: 'rgba(255,255,255,0.62)',
@@ -72,14 +84,25 @@ export const colors = {
   glassDark: 'rgba(0,20,48,0.38)',
   glassBorder: 'rgba(255,255,255,0.55)',
   glassBorderDark: 'rgba(255,255,255,0.18)',
+  /** Hoja de autenticación, barras de acciones flotantes y cabecera de Explorar. */
+  glassSheet: 'rgba(255,255,255,0.94)',
+  glassBar: 'rgba(255,255,255,0.9)',
+  glassBarBorder: 'rgba(255,255,255,0.7)',
+  glassHeader: 'rgba(243,246,248,0.85)',
 
   /** Tintes ambientales del fondo (turquesa arriba, arena a la derecha). */
   ambientTurquoise: 'rgba(179,235,255,0.75)',
+  ambientTurquoiseClear: 'rgba(179,235,255,0)',
   ambientSand: 'rgba(230,227,208,0.8)',
+  ambientSandClear: 'rgba(230,227,208,0)',
+
+  /** Degradado turquesa → arena del recuadro de ocupación en el detalle. */
+  gradientOcupacion: ['rgba(179,235,255,0.35)', 'rgba(230,227,208,0.35)'] as const,
 
   /** Degradados de protección para texto sobre fotos. */
   scrimBottom: ['rgba(0,20,48,0)', 'rgba(0,20,48,0.5)', '#001430'] as const,
   scrimTop: ['rgba(0,20,48,0.5)', 'rgba(0,20,48,0)'] as const,
+  scrimHero: ['rgba(0,20,48,0.35)', 'rgba(0,20,48,0)', 'rgba(0,20,48,0.2)', 'rgba(0,20,48,0.85)'] as const,
 } as const;
 
 /**

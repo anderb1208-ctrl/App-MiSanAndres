@@ -14,7 +14,7 @@ interface Props {
 
 const TONOS: Record<Tono, { fondo: string; texto: string; borde: string }> = {
   neutral: { fondo: colors.surfaceLow, texto: colors.textMuted, borde: colors.borderCard },
-  turquoise: { fondo: 'rgba(179,235,255,0.45)', texto: colors.turq700, borde: 'transparent' },
+  turquoise: { fondo: colors.turquoiseTint, texto: colors.turq700, borde: 'transparent' },
   glass: { fondo: colors.glassDark, texto: colors.white, borde: colors.glassBorderDark },
 };
 

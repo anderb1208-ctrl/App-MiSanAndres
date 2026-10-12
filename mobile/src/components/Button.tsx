@@ -24,7 +24,7 @@ const VARIANTES: Record<Variante, { fondo: string; texto: string; borde: string 
   secondary: { fondo: colors.secondary, texto: colors.onPrimary, borde: colors.secondary },
   glass: { fondo: colors.glassStrong, texto: colors.textStrong, borde: colors.glassBorder },
   light: { fondo: colors.white, texto: colors.primary, borde: colors.white },
-  danger: { fondo: colors.errorContainer, texto: colors.error, borde: 'rgba(186,26,26,0.2)' },
+  danger: { fondo: colors.errorContainer, texto: colors.error, borde: colors.errorBorder },
 };
 
 /** Botón principal (CustomButton del diagrama de componentes). */

@@ -11,14 +11,14 @@ export function ScreenBackground({ children }: { children: ReactNode }) {
   return (
     <View style={styles.fondo}>
       <LinearGradient
-        colors={[colors.ambientTurquoise, 'rgba(179,235,255,0)']}
+        colors={[colors.ambientTurquoise, colors.ambientTurquoiseClear]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.7, y: 0.45 }}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['rgba(230,227,208,0)', colors.ambientSand, 'rgba(230,227,208,0)']}
+        colors={[colors.ambientSandClear, colors.ambientSand, colors.ambientSandClear]}
         locations={[0.3, 0.6, 0.95]}
         start={{ x: 0.4, y: 0.3 }}
         end={{ x: 1, y: 0.7 }}

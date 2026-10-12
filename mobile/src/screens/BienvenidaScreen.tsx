@@ -17,7 +17,7 @@ export function BienvenidaScreen({ navigation }: AuthScreenProps<'Bienvenida'>) 
     <View style={styles.fondo}>
       <Image source={IMAGENES.johnnyCayHero} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <LinearGradient
-        colors={['rgba(0,20,48,0.35)', 'rgba(0,20,48,0)', 'rgba(0,20,48,0.2)', 'rgba(0,20,48,0.85)']}
+        colors={colors.scrimHero}
         locations={[0, 0.35, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: colors.navy950 },
   contenido: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: spacing.lg, gap: 28 },
   marca: { ...typography.hero, color: colors.white },
-  lema: { ...typography.bodyLg, fontSize: 18, lineHeight: 26, color: 'rgba(255,255,255,0.9)', marginTop: 10, maxWidth: 280 },
+  lema: { ...typography.bodyLg, fontSize: 18, lineHeight: 26, color: colors.textOnDarkStrong, marginTop: 10, maxWidth: 280 },
   panel: { gap: spacing.gutter },
   fila: { flexDirection: 'row', gap: 10 },
   texto: { ...typography.bodyMd, color: colors.white, flex: 1 },

@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   barraTitulo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   nivel: typography.headlineSm,
   porcentaje: { ...typography.headlineSm, fontFamily: typography.display.fontFamily },
-  pista: { height: 10, borderRadius: radius.full, backgroundColor: 'rgba(0,20,48,0.08)', overflow: 'hidden' },
+  pista: { height: 10, borderRadius: radius.full, backgroundColor: colors.track, overflow: 'hidden' },
   relleno: { height: '100%', borderRadius: radius.full },
   aforo: { ...typography.bodyMd, color: colors.textMuted },
 });

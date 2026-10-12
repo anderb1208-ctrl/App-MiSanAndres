@@ -37,7 +37,7 @@ export function EstadoMensaje({ icono, titulo, mensaje, accion, tono = 'turquois
   const peligro = tono === 'danger';
   return (
     <View style={[styles.contenedor, style]}>
-      <View style={[styles.circulo, { backgroundColor: peligro ? 'rgba(217,48,37,0.12)' : colors.secondarySoft }]}>
+      <View style={[styles.circulo, { backgroundColor: peligro ? colors.dangerSoft : colors.secondarySoft }]}>
         <Icon name={icono} size={34} color={peligro ? occupancyColors.Alto.fg : colors.secondary} />
       </View>
       <View style={styles.textos}>

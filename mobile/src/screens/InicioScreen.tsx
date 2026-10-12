@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.7)',
+    borderColor: colors.glassBarBorder,
     backgroundColor: colors.glassDark,
     alignItems: 'center',
     justifyContent: 'center',

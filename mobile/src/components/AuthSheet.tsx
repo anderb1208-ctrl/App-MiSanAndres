@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     minHeight: '66%',
     borderTopLeftRadius: radius.auth,
     borderTopRightRadius: radius.auth,
-    backgroundColor: 'rgba(255,255,255,0.94)',
+    backgroundColor: colors.glassSheet,
     borderTopWidth: 1,
     borderColor: colors.white,
     shadowColor: colors.navy950,

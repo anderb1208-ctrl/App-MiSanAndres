@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: spacing.gutter,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(179,235,255,0.4)',
+    backgroundColor: colors.turquoiseTintSoft,
     marginBottom: spacing.md,
   },
   avisoTexto: { ...typography.bodyMd, color: colors.turq800, flex: 1 },

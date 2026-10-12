@@ -143,9 +143,9 @@ const styles = StyleSheet.create({
   cabecera: {
     paddingHorizontal: spacing.screen,
     paddingBottom: spacing.gutter,
-    backgroundColor: 'rgba(243,246,248,0.85)',
+    backgroundColor: colors.glassHeader,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.7)',
+    borderBottomColor: colors.glassBarBorder,
   },
   titulo: {
     ...typography.headlineMd,

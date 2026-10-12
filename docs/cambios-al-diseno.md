@@ -1,6 +1,6 @@
 # Cambios al diseño (Entregable 2)
 
-Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.md` / `.docx`) y la base de datos implementada en `supabase/migrations/`. Sirve como lista de pendientes para actualizar el entregable.
+Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.docx`) y la base de datos implementada en `supabase/migrations/`. Sirve como lista de pendientes para actualizar el entregable.
 
 ## 1. Tabla Usuario
 

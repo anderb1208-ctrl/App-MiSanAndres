@@ -140,7 +140,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
           </View>
 
           <LinearGradient
-            colors={['rgba(179,235,255,0.35)', 'rgba(230,227,208,0.35)']}
+            colors={colors.gradientOcupacion}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ocupacion}
@@ -268,9 +268,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: 10,
     borderRadius: radius.sheet,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: colors.glassBar,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
+    borderColor: colors.glassBarBorder,
   },
   accion: { flex: 1, borderRadius: radius.panel },
 });

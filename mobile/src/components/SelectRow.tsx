@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
   },
-  presionada: { backgroundColor: 'rgba(0,20,48,0.04)' },
+  presionada: { backgroundColor: colors.pressedOverlay },
   divisor: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   circulo: { width: 40, height: 40, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
   textos: { flex: 1, gap: 2 },

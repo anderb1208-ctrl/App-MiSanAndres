@@ -70,10 +70,32 @@ supabase/.branches/
 supabase/.temp/
 
 # ==========================================
-# Herramientas del proyecto
+# Herramientas locales (Claude Code, MCP, graphify)
 # ==========================================
+.claude/
+CLAUDE.md
+Graphifyy.md
+MVP.md
+.mcp.json
 graphify-out/
-.claude/settings.local.json
+
+# ==========================================
+# Material local que no forma parte del repositorio
+# ==========================================
+# Prototipo visual de referencia y plantilla del entregable convertida a Markdown
+docs/referencia-frontend/
+docs/Entregable2_MiSanAndres.md
+
+# ==========================================
+# Archivos temporales
+# ==========================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+~$*
+.DS_Store
 
 # ==========================================
 # Logs
@@ -99,11 +121,4 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 *.code-workspace
 .history/
-
-# ==========================================
-# Instrucciones locales de Claude Code (no se suben)
-# ==========================================
-CLAUDE.md
-Graphifyy.md
-MVP.md
 .claude/
