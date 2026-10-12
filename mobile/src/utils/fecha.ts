@@ -17,6 +17,12 @@ export function horaEnColombia(ahora = new Date()): number {
   return Number(partes(ahora, { hour: '2-digit', hourCycle: 'h23' }).hour);
 }
 
+/** Hora y minutos actuales en Colombia, HH:MM (la que espera la API). */
+export function horaMinutoEnColombia(ahora = new Date()): string {
+  const p = partes(ahora, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  return `${p.hour}:${p.minute}`;
+}
+
 /** "29 sep, 3:45 p. m." en hora de Colombia. */
 export function formatearFechaHora(iso: string): string {
   return new Intl.DateTimeFormat('es-CO', {

@@ -146,6 +146,84 @@ export interface Recomendacion extends Destino {
   razon: string;
 }
 
+// ---- Clima (Open-Meteo, CC BY 4.0) ----
+
+/** Clima de una hora. Cualquier valor puede faltar. */
+export interface ClimaHora {
+  /** Hora local de Colombia: YYYY-MM-DDTHH:00 */
+  fechaHora: string;
+  temperatura: number | null;
+  /** Probabilidad de lluvia, %. */
+  probLluvia: number | null;
+  /** mm en la hora. */
+  precipitacion: number | null;
+  /** Código WMO. */
+  codigoClima: number | null;
+  /** km/h */
+  viento: number | null;
+}
+
+export type MotivoSinClima = 'fuera_de_rango' | 'proveedor_no_disponible' | 'sin_datos';
+
+export interface AtribucionClima {
+  texto: string;
+  url: string;
+  licencia: string;
+  urlLicencia: string;
+}
+
+export interface PronosticoClima {
+  disponible: boolean;
+  motivoSinClima: MotivoSinClima | null;
+  actual: ClimaHora | null;
+  proximasHoras: ClimaHora[];
+  atribucion: AtribucionClima;
+}
+
+export interface ClimaDestino extends PronosticoClima {
+  destinoId: number;
+  nombre: string;
+}
+
+export interface ClimaIsla extends PronosticoClima {
+  lugar: string;
+}
+
+// ---- Predicción ----
+
+export interface FactorPrediccion {
+  codigo: 'tormenta' | 'lluvia' | 'festivo' | 'puente' | 'temporada_alta';
+  multiplicador: number;
+  /** Efecto en %: −20, +25. */
+  efecto: number;
+  /** "Lluvia probable: -20 %" */
+  texto: string;
+  detalle: string | null;
+}
+
+export interface PrediccionOcupacion {
+  destinoId: number;
+  fecha: string;
+  hora: string;
+  estado: EstadoAtencion;
+  porcentaje: number;
+  nivel: NivelOcupacion | null;
+  personasEstimadas: number;
+  /** Promedio histórico antes de los factores (null si está cerrado). */
+  base: { porcentaje: number; origen: 'dia_semana' | 'entre_semana' | 'fin_de_semana'; muestras: number } | null;
+  features: {
+    hora: number;
+    diaSemana: number;
+    esFinDeSemana: boolean;
+    esFestivo: boolean;
+    esPuente: boolean;
+    temporada: 'alta' | 'normal';
+  };
+  clima: ClimaHora | null;
+  motivoSinClima: MotivoSinClima | null;
+  factores: FactorPrediccion[];
+}
+
 export interface ResultadoRecomendaciones {
   fecha: string;
   hora: string;

@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClimaIsla } from '../components/ClimaIsla';
 import { DestinoCard } from '../components/DestinoCard';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
@@ -153,6 +154,7 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
             </Pressable>
           </View>
           <View style={styles.saludo}>
+            <ClimaIsla style={styles.clima} />
             <Text style={styles.hola} accessibilityRole="header">
               {nombre ? `Hola, ${nombre}` : 'Hola'}
             </Text>
@@ -232,6 +234,7 @@ const styles = StyleSheet.create({
   },
   avatarTexto: { ...typography.titleMd, color: colors.white },
   saludo: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 64 },
+  clima: { marginBottom: spacing.sm },
   hola: { ...typography.headlineMd, color: colors.white },
   holaSub: { ...typography.bodyMd, color: colors.textOnDarkMuted, marginTop: 2 },
   resumen: { marginTop: -44, marginHorizontal: spacing.screen },

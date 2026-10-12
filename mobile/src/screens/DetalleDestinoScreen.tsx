@@ -12,19 +12,22 @@ import { OcupacionChart } from '../components/OcupacionChart';
 import { Overline } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { EstadoCargando, EstadoError } from '../components/StateView';
+import { FactoresPrediccion } from '../components/FactoresPrediccion';
 import { Tag } from '../components/Tag';
+import { TarjetaClima } from '../components/TarjetaClima';
 import { useAsync } from '../hooks/useAsync';
 import { useBarraEstado } from '../hooks/useBarraEstado';
 import type { AppScreenProps } from '../navigation/types';
 import { ErrorApi } from '../services/api';
 import { obtenerDestino } from '../services/destinos';
 import { registrarInteraccion } from '../services/interacciones';
-import { obtenerOcupacionDelDia, obtenerOcupacionTipica } from '../services/ocupacion';
+import { obtenerClimaDestino } from '../services/clima';
+import { obtenerOcupacionDelDia, obtenerOcupacionTipica, obtenerPrediccion } from '../services/ocupacion';
 import type { OcupacionTipicaDelDia } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
 import { creditoFoto, ETIQUETA_PRECIO, formatearHorario } from '../utils/contenido';
-import { horaEnColombia, hoyEnColombia } from '../utils/fecha';
+import { horaEnColombia, horaMinutoEnColombia, hoyEnColombia } from '../utils/fecha';
 import { NOTA_NIVEL } from '../utils/ocupacion';
 
 /** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
@@ -70,6 +73,9 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
 
   const destino = useAsync(() => obtenerDestino(id), [id]);
   const curva = useAsync(() => cargarCurva(id), [id]);
+  // Clima y factores son opcionales: si fallan, el resto del detalle funciona igual.
+  const clima = useAsync(() => obtenerClimaDestino(id), [id]);
+  const prediccion = useAsync(() => obtenerPrediccion(id, hoyEnColombia(), horaMinutoEnColombia()), [id]);
 
   // Registro automático de la vista (una vez por destino abierto; si falla, no molesta al usuario).
   useEffect(() => {
@@ -122,6 +128,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
   const recargarTodo = () => {
     destino.recargar();
     curva.recargar();
+    clima.recargar();
+    prediccion.recargar();
   };
 
   return (
@@ -185,7 +193,16 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
             </View>
             <IndicadorOcupacion ocupacion={d.ocupacionActual} variante="barra" capacidad={d.capacidad} />
             {d.ocupacionActual?.nivel && <Text style={styles.nota}>{NOTA_NIVEL[d.ocupacionActual.nivel]}</Text>}
+            <FactoresPrediccion prediccion={prediccion.datos} cargando={prediccion.cargando} error={prediccion.error} />
           </LinearGradient>
+
+          <Text style={styles.subtitulo}>Clima</Text>
+          <TarjetaClima
+            pronostico={clima.datos}
+            cargando={clima.cargando}
+            error={clima.error}
+            onReintentar={clima.recargar}
+          />
 
           {d.descripcion ? (
             <>
