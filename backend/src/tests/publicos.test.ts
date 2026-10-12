@@ -4,6 +4,7 @@ import * as destinoModel from '../models/destinoModel';
 import * as ocupacionModel from '../models/ocupacionModel';
 import * as preferenciaModel from '../models/preferenciaModel';
 import * as fecha from '../utils/fecha';
+import { proveedorFalso } from './climaFalso';
 import { catalogo, destinos, etiquetas, hoyoSoplador, johnnyCay, promediosHora } from './fixtures';
 
 jest.mock('../models/destinoModel');
@@ -65,7 +66,9 @@ describe('GET /v1/destinos', () => {
       ubicacion: johnnyCay.ubicacion_texto,
       ocupacionActual: { estado: 'Abierto', porcentaje: 82.4, nivel: 'Alto', personasEstimadas: 659 },
     });
-    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), { finDeSemana: false, hora: 12 });
+    // Base: histórico de los miércoles a esa hora (una sola consulta para todos).
+    expect(ocupacionM.promedioPorHora).toHaveBeenCalledTimes(1);
+    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), { diaSemana: 3, hora: 12 });
   });
 
   it('incluye horario, precio, cómo llegar e imagen con crédito', async () => {
@@ -225,7 +228,7 @@ describe('GET /v1/ocupacion/:destinoId', () => {
 });
 
 describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
-  it('predice con el promedio de la hora y el tipo de día', async () => {
+  it('predice con el promedio de esa hora en ese día de la semana, sin factores con buen clima', async () => {
     const res = await request(app).get('/v1/ocupacion/3/prediccion?fecha=2026-10-03&hora=12:30');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -239,17 +242,41 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       personasEstimadas: 75,
       muestras: 16,
       fuente: 'promedio_historico',
+      base: { porcentaje: 25.1, origen: 'dia_semana', muestras: 16 },
+      features: {
+        hora: 12,
+        diaSemana: 6,
+        esFinDeSemana: true,
+        esFestivo: false,
+        esPuente: false,
+        temporada: 'normal',
+        clima: { temperatura: 29, probLluvia: 10, precipitacion: 0, codigoClima: 1, viento: 15 },
+      },
+      clima: {
+        fechaHora: '2026-10-03T12:00',
+        temperatura: 29,
+        probLluvia: 10,
+        precipitacion: 0,
+        codigoClima: 1,
+        viento: 15,
+      },
+      motivoSinClima: null,
+      factores: [],
     });
     expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), {
-      finDeSemana: true,
+      diaSemana: 6,
       hora: 12,
       idDestino: 3,
     });
   });
 
-  it('usa el patrón entre semana en días hábiles', async () => {
-    await request(app).get('/v1/ocupacion/3/prediccion?fecha=2026-09-30&hora=08:00');
-    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), {
+  it('usa el histórico del tipo de día si el del día de la semana tiene pocas muestras', async () => {
+    ocupacionM.promedioPorHora
+      .mockResolvedValueOnce([{ id_destino: 3, hora: 8, promedio: 50, muestras: 2 }])
+      .mockResolvedValueOnce([{ id_destino: 3, hora: 8, promedio: 20, muestras: 40 }]);
+    const res = await request(app).get('/v1/ocupacion/3/prediccion?fecha=2026-09-30&hora=08:00');
+    expect(res.body.base).toEqual({ porcentaje: 20, origen: 'entre_semana', muestras: 40 });
+    expect(ocupacionM.promedioPorHora).toHaveBeenLastCalledWith(expect.anything(), {
       finDeSemana: false,
       hora: 8,
       idDestino: 3,
@@ -270,8 +297,14 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       personasEstimadas: 0,
       muestras: 0,
       fuente: 'horario',
+      base: null,
+      features: expect.objectContaining({ hora: 8, diaSemana: 3, clima: null }),
+      clima: null,
+      motivoSinClima: null,
+      factores: [],
     });
     expect(ocupacionM.promedioPorHora).not.toHaveBeenCalled();
+    expect(proveedorFalso.llamadas).toHaveLength(0);
   });
 
   it.each([

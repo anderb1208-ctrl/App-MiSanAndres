@@ -10,6 +10,7 @@ import * as destinoModel from '../models/destinoModel';
 import { noEncontrado } from '../utils/errores';
 import { ahoraEnColombia } from '../utils/fecha';
 import { type Horario, horarioDe } from '../utils/horario';
+import * as climaService from './clima/climaService';
 import * as prediccionService from './prediccionService';
 
 export interface OcupacionActual {
@@ -120,6 +121,16 @@ export async function obtenerOFallar(db: Db, id: number): Promise<DestinoRow> {
   const fila = await destinoModel.obtenerVisible(db, id);
   if (!fila) throw noEncontrado(`No existe un destino con id ${id}.`);
   return fila;
+}
+
+/** Clima de la hora actual y de las próximas horas en el destino. */
+export async function climaDelDestino(db: Db, id: number, horas: number) {
+  const fila = await obtenerOFallar(db, id);
+  const pronostico = await climaService.pronosticoDesdeAhora(
+    { clave: climaService.claveDestino(id), latitud: Number(fila.latitud), longitud: Number(fila.longitud) },
+    horas,
+  );
+  return { destinoId: id, nombre: fila.nombre, ...pronostico };
 }
 
 /** Detalle completo: datos, etiquetas y ocupación predicha para ahora. */

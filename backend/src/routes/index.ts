@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import * as climaController from '../controllers/climaController';
 import * as destinoController from '../controllers/destinoController';
 import * as interaccionController from '../controllers/interaccionController';
 import * as ocupacionController from '../controllers/ocupacionController';
@@ -20,6 +21,13 @@ publicas.get('/health', (_req, res) => {
 
 publicas.get('/destinos', validar({ query: e.consultaDestinos }), destinoController.listar);
 publicas.get('/destinos/:id', validar({ params: e.paramsId }), destinoController.obtener);
+publicas.get(
+  '/destinos/:id/clima',
+  validar({ params: e.paramsId, query: e.consultaClima }),
+  climaController.delDestino,
+);
+
+publicas.get('/clima', validar({ query: e.consultaClima }), climaController.deLaIsla);
 
 publicas.get(
   '/ocupacion/:destinoId',

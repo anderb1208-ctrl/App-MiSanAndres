@@ -59,6 +59,18 @@ export type ConsultaFecha = z.infer<typeof consultaFecha>;
 export const consultaPrediccion = z.object({ fecha, hora });
 export type ConsultaPrediccion = z.infer<typeof consultaPrediccion>;
 
+// ---- Clima ----
+const MENSAJE_HORAS = 'Debe ser un número entero entre 1 y 48.';
+export const consultaClima = z.object({
+  horas: z.coerce
+    .number({ error: MENSAJE_HORAS })
+    .int(MENSAJE_HORAS)
+    .min(1, MENSAJE_HORAS)
+    .max(48, MENSAJE_HORAS)
+    .default(12),
+});
+export type ConsultaClima = z.infer<typeof consultaClima>;
+
 // ---- Perfil ----
 export const cuerpoPerfil = z.strictObject({
   nombre: z

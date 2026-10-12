@@ -25,6 +25,12 @@ GET {{baseUrl}}/destinos?q=cay
 ### Detalle de un destino (con horario, rango de precio, cómo llegar e imagen con crédito)
 GET {{baseUrl}}/destinos/5
 
+### Clima del destino: hora actual y próximas horas (Open-Meteo, CC BY 4.0). horas: 1–48, por defecto 12
+GET {{baseUrl}}/destinos/5/clima?horas=6
+
+### Clima del centro de la isla (resumen de Inicio)
+GET {{baseUrl}}/clima
+
 ### ---------------------------------------------------------------
 ### Ocupación y predicción (público)
 ### ---------------------------------------------------------------
@@ -34,6 +40,14 @@ GET {{baseUrl}}/ocupacion/1?fecha=2026-09-28
 
 ### Predicción para una fecha y hora (5 = Johnny Cay, abierto de 09:00 a 16:00)
 GET {{baseUrl}}/ocupacion/5/prediccion?fecha=2026-10-03&hora=12:00
+
+### Predicción en un festivo (lunes 2 de noviembre, Todos los Santos): factor "Festivo: +25 %"
+### La respuesta trae base, features, clima usado (o null con motivoSinClima) y factores
+GET {{baseUrl}}/ocupacion/1/prediccion?fecha=2026-11-02&hora=12:00
+
+### Predicción en temporada alta. A más de 16 días no hay pronóstico:
+### clima null y motivoSinClima "fuera_de_rango"; la predicción sigue funcionando
+GET {{baseUrl}}/ocupacion/1/prediccion?fecha=2026-12-20&hora=12:00
 
 ### Predicción fuera del horario: responde estado "Cerrado" con ocupación 0
 GET {{baseUrl}}/ocupacion/5/prediccion?fecha=2026-10-03&hora=18:00
