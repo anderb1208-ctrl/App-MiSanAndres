@@ -20,13 +20,19 @@ Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.docx`) y la 
 | Campo | Entregable | Implementado | Motivo |
 | --- | --- | --- | --- |
 | nombre | VARCHAR(150), NOT NULL | TEXT, NOT NULL, **UNIQUE** | Evitar destinos duplicados. |
-| categoria | VARCHAR(50), valor controlado | Enum `categoria_destino`: playa, cayo, naturaleza, buceo_snorkel, cultura, gastronomia | El valor controlado queda garantizado por la base de datos. |
+| categoria | VARCHAR(50), valor controlado | Enum `categoria_destino`: playa, cayo, naturaleza, buceo_snorkel, cultura, gastronomia, **actividad** | El valor controlado queda garantizado por la base de datos. `actividad` (snorkel, buceo, kayak, lancha) se agregó en el prototipo; `buceo_snorkel` queda sin destinos pero no se elimina (migraciones aditivas). Los restaurantes usan `gastronomia` (etiqueta "Restaurantes"). |
 | ubicacion | VARCHAR(255), NOT NULL | `ubicacion_texto` TEXT, NOT NULL | Renombrado para distinguirlo de las coordenadas. |
 | latitud | DECIMAL(10,8) | NUMERIC(9,6), CHECK entre -90 y 90 | 6 decimales ≈ 0,1 m de precisión, suficiente para destinos turísticos. |
 | longitud | DECIMAL(11,8) | NUMERIC(9,6), CHECK entre -180 y 180 | Ídem. |
 | estado | VARCHAR(20) (ej: Activo, Inactivo) | Enum `estado_destino`: abierto, cerrado_temporal, inactivo | Se agrega el cierre temporal (mantenimiento, clima, veda). |
 | descripcion | — | **Nuevo**: TEXT | Lo muestra la pantalla de Detalle del destino. |
 | imagen_url | — | **Nuevo**: TEXT | Imagen de la tarjeta y del detalle. |
+| horario_apertura, horario_cierre | — | **Nuevo** (prototipo): TIME, opcionales; van juntos y apertura < cierre | Mostrar el horario y que la predicción responda "Cerrado" fuera de él. |
+| rango_precio | — | **Nuevo** (prototipo): enum `rango_precio` (Gratis, $, $$, $$$), opcional | Orientar al turista sobre el costo. |
+| como_llegar | — | **Nuevo** (prototipo): TEXT, opcional | Indicaciones en el detalle. |
+| imagen_autor, imagen_licencia, imagen_fuente | — | **Nuevo** (prototipo): TEXT, opcionales | Atribución que exigen las licencias Creative Commons (ver `docs/creditos-imagenes.md`). |
+
+Las fotos propias se suben al bucket público `destinos` de Supabase Storage (lectura pública, sin escritura desde la app).
 
 ## 3. Tablas que el diccionario de datos no detalla
 
@@ -126,3 +132,8 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 - El gráfico del detalle muestra la **ocupación típica** de cada hora para ese día de la semana (p. ej. "Ocupación típica de un martes"), con los registros reales de hoy superpuestos. Si aún no hay historial de ese día, se usa el del tipo de día.
 - Ambos cálculos usan la función SQL `ocupacion_promedio_hora` (migraciones `20260929200000` y `20261001120000`), que es `security invoker` (respeta RLS) y solo pueden ejecutar los roles `anon` y `authenticated`.
 - El backend encapsula el cálculo en `prediccionService`; al llegar el modelo Random Forest solo cambia ese servicio.
+- Si la hora consultada está fuera del horario del destino, la predicción responde `estado: "Cerrado"` con ocupación 0 (sin consultar el histórico). Dentro del horario, `estado: "Abierto"`.
+
+## 10. Búsqueda de destinos
+
+`GET /destinos` acepta `q` (texto, 1 a 100 caracteres): filtra por nombre sin distinguir mayúsculas. Se combina con `categoria` y `nivelOcupacion`.
