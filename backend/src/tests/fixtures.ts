@@ -2,43 +2,66 @@ import type { DestinoRow, PreferenciaRow } from '../models/database.types';
 import type { EtiquetaDestino } from '../models/destinoModel';
 import type { PromedioHora } from '../models/ocupacionModel';
 
+/** Campos de contenido vacíos (destinos sin horario, precio ni imagen). */
+const sinContenido = {
+  horario_apertura: null,
+  horario_cierre: null,
+  rango_precio: null,
+  como_llegar: null,
+  imagen_url: null,
+  imagen_autor: null,
+  imagen_licencia: null,
+  imagen_fuente: null,
+} satisfies Partial<DestinoRow>;
+
+/** Cayo con horario 09:00–16:00 e imagen con crédito. */
 export const johnnyCay: DestinoRow = {
+  ...sinContenido,
   id_destino: 1,
   nombre: 'Johnny Cay',
   descripcion: 'Cayo con playa de arena blanca, palmeras y música en vivo.',
   categoria: 'cayo',
-  latitud: 12.6019,
-  longitud: -81.6893,
+  latitud: 12.6005,
+  longitud: -81.6899,
   ubicacion_texto: 'A 15 minutos en lancha desde el muelle de North End',
   capacidad: 800,
   estado: 'abierto',
-  imagen_url: null,
+  horario_apertura: '09:00:00',
+  horario_cierre: '16:00:00',
+  rango_precio: '$',
+  como_llegar: 'En lancha desde el muelle de North End.',
+  imagen_url: 'https://upload.wikimedia.org/johnny-cay-960.jpg',
+  imagen_autor: 'EASLYHAKS',
+  imagen_licencia: 'CC BY-SA 4.0',
+  imagen_fuente: 'https://commons.wikimedia.org/wiki/File:Isla_Johnny_Cay.jpg',
 };
 
+/** Sin horario: siempre accesible. */
 export const hoyoSoplador: DestinoRow = {
+  ...sinContenido,
   id_destino: 3,
   nombre: 'Hoyo Soplador',
   descripcion: 'Géiser natural que expulsa agua de mar entre las rocas de coral.',
   categoria: 'naturaleza',
-  latitud: 12.4838,
-  longitud: -81.7327,
+  latitud: 12.4822,
+  longitud: -81.7316,
   ubicacion_texto: 'Extremo sur de la isla, vía circunvalar',
   capacidad: 300,
   estado: 'abierto',
-  imagen_url: null,
+  rango_precio: 'Gratis',
 };
 
 export const sprattBight: DestinoRow = {
+  ...sinContenido,
   id_destino: 6,
-  nombre: 'Playa Spratt Bight',
+  nombre: 'Playa de Spratt Bight',
   descripcion: 'Playa principal de la isla, junto al paseo peatonal.',
   categoria: 'playa',
-  latitud: 12.5842,
-  longitud: -81.6996,
+  latitud: 12.5843,
+  longitud: -81.6988,
   ubicacion_texto: 'North End, frente a la Avenida Colombia',
   capacidad: 1500,
   estado: 'abierto',
-  imagen_url: null,
 };
 
 export const destinos = [hoyoSoplador, johnnyCay, sprattBight];

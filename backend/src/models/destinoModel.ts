@@ -10,13 +10,20 @@ export interface EtiquetaDestino {
   nombre: string;
 }
 
-/** Destinos visibles para el turista (todos menos los inactivos), ordenados por nombre. */
+/** Escapa los comodines de LIKE (% y _) para buscar el texto literal. */
+export const escaparLike = (texto: string) => texto.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/**
+ * Destinos visibles para el turista (todos menos los inactivos), ordenados por nombre.
+ * `nombre` filtra por coincidencia parcial sin distinguir mayúsculas.
+ */
 export async function listarVisibles(
   db: Db,
-  filtros: { categoria?: CategoriaDestino; soloAbiertos?: boolean } = {},
+  filtros: { categoria?: CategoriaDestino; nombre?: string; soloAbiertos?: boolean } = {},
 ): Promise<DestinoRow[]> {
   let consulta = db.from('destino').select('*').neq('estado', 'inactivo');
   if (filtros.categoria) consulta = consulta.eq('categoria', filtros.categoria);
+  if (filtros.nombre) consulta = consulta.ilike('nombre', `%${escaparLike(filtros.nombre)}%`);
   if (filtros.soloAbiertos) consulta = consulta.eq('estado', 'abierto');
   return verificarLista(await consulta.order('nombre'), 'Listar destinos');
 }

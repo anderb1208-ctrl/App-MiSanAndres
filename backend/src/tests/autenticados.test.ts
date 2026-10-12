@@ -7,6 +7,7 @@ import * as interaccionModel from '../models/interaccionModel';
 import * as ocupacionModel from '../models/ocupacionModel';
 import * as preferenciaModel from '../models/preferenciaModel';
 import * as usuarioModel from '../models/usuarioModel';
+import * as fecha from '../utils/fecha';
 import { catalogo, destinos, etiquetas, johnnyCay, promediosHora } from './fixtures';
 
 jest.mock('../models/authModel');
@@ -23,6 +24,7 @@ const interaccionM = jest.mocked(interaccionModel);
 const ocupacionM = jest.mocked(ocupacionModel);
 const preferenciaM = jest.mocked(preferenciaModel);
 const usuarioM = jest.mocked(usuarioModel);
+const ahora = jest.spyOn(fecha, 'ahoraEnColombia');
 
 const ID_USUARIO = '6f1c2a3b-0000-4000-8000-000000000001';
 const TOKEN = 'token-valido';
@@ -36,6 +38,8 @@ const perfil: UsuarioRow = {
 };
 
 beforeEach(() => {
+  // Miércoles al mediodía: todos los destinos de prueba están abiertos.
+  ahora.mockReturnValue({ fecha: '2026-09-30', hora: '12:30' });
   authM.obtenerUsuarioDelToken.mockImplementation(async (token) =>
     token === TOKEN ? { id: ID_USUARIO, correo: 'ana@correo.com' } : null,
   );
@@ -307,7 +311,7 @@ describe('GET /v1/recomendaciones', () => {
     expect(resumen).toEqual([
       ['Hoyo Soplador', 70, 'Coincide con Naturaleza y Fotografía · ocupación baja ahora, como prefieres'],
       ['Johnny Cay', 70, 'Coincide con Cayos y Relax (+2) · ocupación alta ahora'],
-      ['Playa Spratt Bight', 13, 'Coincide con Relax · ocupación media ahora'],
+      ['Playa de Spratt Bight', 13, 'Coincide con Relax · ocupación media ahora'],
     ]);
     expect(res.body.recomendaciones[1]).toMatchObject({
       id: 1,
@@ -323,6 +327,21 @@ describe('GET /v1/recomendaciones', () => {
     const johnny = res.body.recomendaciones.find((r: { id: number }) => r.id === johnnyCay.id_destino);
     expect(johnny.puntaje).toBe(85);
     expect(johnny.razon).toBe('Coincide con Cayos y Relax (+2) · ocupación alta ahora');
+  });
+
+  it('penaliza y avisa cuando el destino está cerrado a esta hora', async () => {
+    ahora.mockReturnValue({ fecha: '2026-09-30', hora: '17:00' });
+    const res = await request(app).get('/v1/recomendaciones').set(auth);
+    const resumen = res.body.recomendaciones.map((r: { nombre: string; puntaje: number; razon: string }) => [
+      r.nombre,
+      r.puntaje,
+      r.razon,
+    ]);
+    // Johnny Cay (09:00–16:00) está cerrado: 85 − 15; empata con Hoyo Soplador y queda después por estar cerrado.
+    expect(resumen[0][0]).toBe('Hoyo Soplador');
+    expect(resumen).toContainEqual(['Johnny Cay', 70, 'Coincide con Cayos y Relax (+2) · cerrado ahora']);
+    const johnny = res.body.recomendaciones.find((r: { id: number }) => r.id === 1);
+    expect(johnny.ocupacionActual).toMatchObject({ estado: 'Cerrado', nivel: null });
   });
 
   it('omite destinos sin coincidencias', async () => {

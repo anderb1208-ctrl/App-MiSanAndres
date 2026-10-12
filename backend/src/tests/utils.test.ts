@@ -1,4 +1,6 @@
 import { ahoraEnColombia, diaSemanaIso, esFinDeSemana, nombreDia, rangoDelDia } from '../utils/fecha';
+import { escaparLike } from '../models/destinoModel';
+import { estaEnHorario, horarioDe } from '../utils/horario';
 import { distanciaNiveles, nivelDesdePorcentaje } from '../utils/nivelOcupacion';
 
 describe('nivelDesdePorcentaje', () => {
@@ -44,5 +46,34 @@ describe('fechas en hora de Colombia', () => {
       desde: '2026-09-28T05:00:00.000Z',
       hasta: '2026-09-29T05:00:00.000Z',
     });
+  });
+});
+
+describe('horario', () => {
+  const cayo = { horario_apertura: '09:00:00', horario_cierre: '16:00:00' };
+
+  it('expone el horario en HH:MM', () => {
+    expect(horarioDe(cayo)).toEqual({ apertura: '09:00', cierre: '16:00' });
+    expect(horarioDe({ horario_apertura: null, horario_cierre: null })).toBeNull();
+  });
+
+  it.each([
+    ['08:59', false],
+    ['09:00', true],
+    ['15:59', true],
+    ['16:00', false],
+  ])('a las %s está en horario: %p', (hora, esperado) => {
+    expect(estaEnHorario(cayo, hora)).toBe(esperado);
+  });
+
+  it('sin horario siempre está en horario', () => {
+    expect(estaEnHorario({}, '03:00')).toBe(true);
+  });
+});
+
+describe('escaparLike', () => {
+  it('escapa los comodines para buscar el texto literal', () => {
+    expect(escaparLike('50%_off\\')).toBe('50\\%\\_off\\\\');
+    expect(escaparLike('Johnny')).toBe('Johnny');
   });
 });

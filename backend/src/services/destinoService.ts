@@ -4,18 +4,31 @@ import type {
   DestinoRow,
   EstadoDestino,
   NivelOcupacion,
+  RangoPrecio,
 } from '../models/database.types';
 import * as destinoModel from '../models/destinoModel';
 import { noEncontrado } from '../utils/errores';
 import { ahoraEnColombia } from '../utils/fecha';
+import { type Horario, horarioDe } from '../utils/horario';
 import * as prediccionService from './prediccionService';
 
 export interface OcupacionActual {
   fecha: string;
   hora: string;
+  /** "Cerrado" si a esta hora el destino está fuera de su horario. */
+  estado: prediccionService.EstadoAtencion;
   porcentaje: number;
-  nivel: NivelOcupacion;
+  /** null cuando está cerrado. */
+  nivel: NivelOcupacion | null;
   personasEstimadas: number;
+}
+
+export interface ImagenDestino {
+  url: string;
+  autor: string | null;
+  licencia: string | null;
+  /** Enlace a la página de la foto. */
+  fuente: string | null;
 }
 
 export interface Destino {
@@ -28,7 +41,13 @@ export interface Destino {
   longitud: number;
   capacidad: number;
   estado: EstadoDestino;
+  /** Horario en hora de Colombia; null = sin horario (siempre accesible). */
+  horario: Horario | null;
+  rangoPrecio: RangoPrecio | null;
+  comoLlegar: string | null;
+  /** Se mantiene por compatibilidad; igual a `imagen.url`. */
   imagenUrl: string | null;
+  imagen: ImagenDestino | null;
   /** Ocupación predicha para la hora actual en Colombia (null si no hay historial). */
   ocupacionActual: OcupacionActual | null;
 }
@@ -47,6 +66,7 @@ export function aOcupacionActual(p: prediccionService.Prediccion | undefined | n
   return {
     fecha: p.fecha,
     hora: p.hora,
+    estado: p.estado,
     porcentaje: p.porcentaje,
     nivel: p.nivel,
     personasEstimadas: p.personasEstimadas,
@@ -64,17 +84,28 @@ export function aDestino(fila: DestinoRow, prediccion?: prediccionService.Predic
     longitud: Number(fila.longitud),
     capacidad: fila.capacidad,
     estado: fila.estado,
+    horario: horarioDe(fila),
+    rangoPrecio: fila.rango_precio,
+    comoLlegar: fila.como_llegar,
     imagenUrl: fila.imagen_url,
+    imagen: fila.imagen_url
+      ? {
+          url: fila.imagen_url,
+          autor: fila.imagen_autor,
+          licencia: fila.imagen_licencia,
+          fuente: fila.imagen_fuente,
+        }
+      : null,
     ocupacionActual: aOcupacionActual(prediccion),
   };
 }
 
-/** Destinos con su ocupación predicha para ahora; filtros opcionales. */
+/** Destinos con su ocupación predicha para ahora; filtros opcionales (q busca en el nombre). */
 export async function listar(
   db: Db,
-  filtros: { categoria?: CategoriaDestino; nivelOcupacion?: NivelOcupacion },
+  filtros: { categoria?: CategoriaDestino; nivelOcupacion?: NivelOcupacion; q?: string },
 ): Promise<Destino[]> {
-  const filas = await destinoModel.listarVisibles(db, { categoria: filtros.categoria });
+  const filas = await destinoModel.listarVisibles(db, { categoria: filtros.categoria, nombre: filtros.q });
   const { fecha, hora } = ahoraEnColombia();
   const predicciones = await prediccionService.predecirVarios(db, filas, fecha, hora);
 

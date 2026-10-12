@@ -8,6 +8,7 @@
  *    La afinidad es el promedio ponderado de las dimensiones activas.
  * 2. Ajuste por ocupación predicha para la hora actual frente al nivel preferido:
  *    +15 si coincide, 0 si es adyacente, −15 si es opuesto (0 sin preferencia o sin predicción).
+ *    Si el destino está cerrado a esta hora, el ajuste es −15 y la razón lo dice.
  * 3. Puntaje = 85 × afinidad + ajuste, acotado a 0–100.
  *
  * Solo entran destinos abiertos con al menos una coincidencia.
@@ -44,23 +45,30 @@ const TOPE_COINCIDENCIAS: Record<TipoPreferencia, number> = { categoria: 1, expe
 const PUNTOS_AFINIDAD = 85;
 const AJUSTE_OCUPACION = [15, 0, -15] as const; // por distancia entre niveles
 
+const AJUSTE_CERRADO = -15;
+
 export function ajustePorOcupacion(
-  predicho: NivelOcupacion | undefined,
+  predicho: NivelOcupacion | null | undefined,
   preferido: NivelOcupacion | null,
+  cerrado = false,
 ): number {
+  if (cerrado) return AJUSTE_CERRADO;
   if (!predicho || !preferido) return 0;
   return AJUSTE_OCUPACION[distanciaNiveles(predicho, preferido)] ?? 0;
 }
 
 export function construirRazon(
   coincidencias: string[],
-  predicho: NivelOcupacion | undefined,
+  predicho: NivelOcupacion | null | undefined,
   preferido: NivelOcupacion | null,
+  cerrado = false,
 ): string {
   const [a, b, ...resto] = coincidencias;
   let razon = `Coincide con ${b ? `${a} y ${b}` : a}`;
   if (resto.length > 0) razon += ` (+${resto.length})`;
-  if (predicho) {
+  if (cerrado) {
+    razon += ' · cerrado ahora';
+  } else if (predicho) {
     razon += ` · ocupación ${ADJETIVO_OCUPACION[predicho]} ahora`;
     if (predicho === preferido) razon += ', como prefieres';
   }
@@ -109,21 +117,22 @@ export async function recomendar(db: Db, idUsuario: string): Promise<ResultadoRe
     afinidad /= pesoTotal;
 
     const prediccion = predicciones.get(destino.id_destino);
-    const puntaje = Math.round(
-      Math.min(100, Math.max(0, PUNTOS_AFINIDAD * afinidad + ajustePorOcupacion(prediccion?.nivel, nivelOcupacion))),
-    );
+    const cerrado = prediccion?.estado === 'Cerrado';
+    const ajuste = ajustePorOcupacion(prediccion?.nivel, nivelOcupacion, cerrado);
+    const puntaje = Math.round(Math.min(100, Math.max(0, PUNTOS_AFINIDAD * afinidad + ajuste)));
 
     recomendaciones.push({
       ...aDestino(destino, prediccion),
       puntaje,
       coincidencias,
-      razon: construirRazon(coincidencias, prediccion?.nivel, nivelOcupacion),
+      razon: construirRazon(coincidencias, prediccion?.nivel, nivelOcupacion, cerrado),
     });
   }
 
   recomendaciones.sort(
     (a, b) =>
       b.puntaje - a.puntaje ||
+      Number(a.ocupacionActual?.estado === 'Cerrado') - Number(b.ocupacionActual?.estado === 'Cerrado') ||
       (a.ocupacionActual?.porcentaje ?? 100) - (b.ocupacionActual?.porcentaje ?? 100) ||
       a.nombre.localeCompare(b.nombre, 'es'),
   );

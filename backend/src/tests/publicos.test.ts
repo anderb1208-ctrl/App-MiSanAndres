@@ -3,6 +3,7 @@ import { crearApp } from '../app';
 import * as destinoModel from '../models/destinoModel';
 import * as ocupacionModel from '../models/ocupacionModel';
 import * as preferenciaModel from '../models/preferenciaModel';
+import * as fecha from '../utils/fecha';
 import { catalogo, destinos, etiquetas, hoyoSoplador, johnnyCay, promediosHora } from './fixtures';
 
 jest.mock('../models/destinoModel');
@@ -13,8 +14,11 @@ const app = crearApp();
 const destinoM = jest.mocked(destinoModel);
 const ocupacionM = jest.mocked(ocupacionModel);
 const preferenciaM = jest.mocked(preferenciaModel);
+const ahora = jest.spyOn(fecha, 'ahoraEnColombia');
 
 beforeEach(() => {
+  // Miércoles al mediodía: Johnny Cay (09:00–16:00) está abierto.
+  ahora.mockReturnValue({ fecha: '2026-09-30', hora: '12:30' });
   destinoM.listarVisibles.mockResolvedValue(destinos);
   destinoM.obtenerVisible.mockImplementation(async (_db, id) => destinos.find((d) => d.id_destino === id) ?? null);
   destinoM.listarEtiquetas.mockResolvedValue(etiquetas.filter((e) => e.id_destino === 1));
@@ -59,12 +63,65 @@ describe('GET /v1/destinos', () => {
       nombre: 'Johnny Cay',
       categoria: 'cayo',
       ubicacion: johnnyCay.ubicacion_texto,
-      ocupacionActual: { porcentaje: 82.4, nivel: 'Alto', personasEstimadas: 659 },
+      ocupacionActual: { estado: 'Abierto', porcentaje: 82.4, nivel: 'Alto', personasEstimadas: 659 },
     });
-    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ finDeSemana: expect.any(Boolean), hora: expect.any(Number) }),
-    );
+    expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), { finDeSemana: false, hora: 12 });
+  });
+
+  it('incluye horario, precio, cómo llegar e imagen con crédito', async () => {
+    const res = await request(app).get('/v1/destinos');
+    const johnny = res.body.find((d: { id: number }) => d.id === 1);
+    expect(johnny).toMatchObject({
+      horario: { apertura: '09:00', cierre: '16:00' },
+      rangoPrecio: '$',
+      comoLlegar: johnnyCay.como_llegar,
+      imagenUrl: johnnyCay.imagen_url,
+      imagen: {
+        url: johnnyCay.imagen_url,
+        autor: 'EASLYHAKS',
+        licencia: 'CC BY-SA 4.0',
+        fuente: johnnyCay.imagen_fuente,
+      },
+    });
+    const hoyo = res.body.find((d: { id: number }) => d.id === 3);
+    expect(hoyo).toMatchObject({ horario: null, rangoPrecio: 'Gratis', comoLlegar: null, imagenUrl: null, imagen: null });
+  });
+
+  it('marca como cerrados los destinos fuera de su horario', async () => {
+    ahora.mockReturnValue({ fecha: '2026-09-30', hora: '18:00' });
+    const res = await request(app).get('/v1/destinos');
+    const johnny = res.body.find((d: { id: number }) => d.id === 1);
+    expect(johnny.ocupacionActual).toEqual({
+      fecha: '2026-09-30',
+      hora: '18:00',
+      estado: 'Cerrado',
+      porcentaje: 0,
+      nivel: null,
+      personasEstimadas: 0,
+    });
+    // El histórico se consulta una sola vez, para los abiertos.
+    expect(ocupacionM.promedioPorHora).toHaveBeenCalledTimes(1);
+  });
+
+  it('busca por nombre con q', async () => {
+    destinoM.listarVisibles.mockResolvedValue([johnnyCay]);
+    const res = await request(app).get('/v1/destinos?q=%20johnny%20&categoria=cayo');
+    expect(res.status).toBe(200);
+    expect(res.body.map((d: { nombre: string }) => d.nombre)).toEqual(['Johnny Cay']);
+    expect(destinoM.listarVisibles).toHaveBeenCalledWith(expect.anything(), { categoria: 'cayo', nombre: 'johnny' });
+  });
+
+  it.each(['', '%20%20', 'a'.repeat(101)])('400 con búsqueda inválida (q=%s)', async (q) => {
+    const res = await request(app).get(`/v1/destinos?q=${q}`);
+    esperarError(res, 400, 'SOLICITUD_INVALIDA');
+    expect(res.body.error.detalles[0].campo).toBe('query.q');
+  });
+
+  it('acepta la categoría actividad', async () => {
+    destinoM.listarVisibles.mockResolvedValue([]);
+    const res = await request(app).get('/v1/destinos?categoria=actividad');
+    expect(res.status).toBe(200);
+    expect(destinoM.listarVisibles).toHaveBeenCalledWith(expect.anything(), { categoria: 'actividad' });
   });
 
   it('pasa el filtro de categoría al modelo', async () => {
@@ -176,6 +233,7 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       fecha: '2026-10-03',
       hora: '12:30',
       tipoDia: 'fin_de_semana',
+      estado: 'Abierto',
       porcentaje: 25.1,
       nivel: 'Bajo',
       personasEstimadas: 75,
@@ -196,6 +254,55 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       hora: 8,
       idDestino: 3,
     });
+  });
+
+  it('responde Cerrado fuera del horario sin consultar el histórico', async () => {
+    const res = await request(app).get('/v1/ocupacion/1/prediccion?fecha=2026-09-30&hora=08:59');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      destinoId: 1,
+      fecha: '2026-09-30',
+      hora: '08:59',
+      tipoDia: 'entre_semana',
+      estado: 'Cerrado',
+      porcentaje: 0,
+      nivel: null,
+      personasEstimadas: 0,
+      muestras: 0,
+      fuente: 'horario',
+    });
+    expect(ocupacionM.promedioPorHora).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['09:00', 'Abierto'],
+    ['15:59', 'Abierto'],
+    ['16:00', 'Cerrado'],
+    ['23:30', 'Cerrado'],
+  ])('a las %s Johnny Cay (09:00–16:00) está %s', async (hora, estado) => {
+    ocupacionM.promedioPorHora.mockResolvedValue([{ id_destino: 1, hora: 9, promedio: 40, muestras: 4 }]);
+    const res = await request(app).get(`/v1/ocupacion/1/prediccion?fecha=2026-09-30&hora=${hora}`);
+    expect(res.status).toBe(200);
+    expect(res.body.estado).toBe(estado);
+  });
+
+  it('responde Cerrado si el destino está cerrado temporalmente', async () => {
+    destinoM.obtenerVisible.mockResolvedValue({ ...hoyoSoplador, estado: 'cerrado_temporal' });
+    const res = await request(app).get('/v1/ocupacion/3/prediccion?fecha=2026-09-30&hora=12:00');
+    expect(res.body).toMatchObject({ estado: 'Cerrado', porcentaje: 0, nivel: null });
+  });
+
+  it('un destino sin horario siempre está abierto', async () => {
+    ocupacionM.promedioPorHora.mockResolvedValue([{ id_destino: 3, hora: 3, promedio: 2, muestras: 4 }]);
+    const res = await request(app).get('/v1/ocupacion/3/prediccion?fecha=2026-09-30&hora=03:00');
+    expect(res.body).toMatchObject({ estado: 'Abierto', porcentaje: 2, nivel: 'Bajo' });
+  });
+
+  it('fuera del horario responde Cerrado aunque no haya historial', async () => {
+    ocupacionM.promedioPorHora.mockResolvedValue([]);
+    const res = await request(app).get('/v1/ocupacion/1/prediccion?fecha=2026-09-30&hora=20:00');
+    expect(res.status).toBe(200);
+    expect(res.body.estado).toBe('Cerrado');
   });
 
   it.each([
@@ -242,8 +349,8 @@ describe('GET /v1/ocupacion/:destinoId/prediccion/dia', () => {
       base: 'dia_semana',
       fuente: 'promedio_historico',
       horas: [
-        { hora: '09:00', porcentaje: 30, nivel: 'Bajo', personasEstimadas: 240 },
-        { hora: '13:00', porcentaje: 81, nivel: 'Alto', personasEstimadas: 648 },
+        { hora: '09:00', abierto: true, porcentaje: 30, nivel: 'Bajo', personasEstimadas: 240 },
+        { hora: '13:00', abierto: true, porcentaje: 81, nivel: 'Alto', personasEstimadas: 648 },
       ],
     });
     expect(ocupacionM.promedioPorHora).toHaveBeenCalledTimes(1);
@@ -263,6 +370,20 @@ describe('GET /v1/ocupacion/:destinoId/prediccion/dia', () => {
       finDeSemana: true,
       idDestino: 1,
     });
+  });
+
+  it('las horas fuera del horario van cerradas y en 0', async () => {
+    ocupacionM.promedioPorHora.mockResolvedValue([
+      { id_destino: 1, hora: 8, promedio: 12, muestras: 4 },
+      { id_destino: 1, hora: 15, promedio: 50, muestras: 4 },
+      { id_destino: 1, hora: 16, promedio: 20, muestras: 4 },
+    ]);
+    const res = await request(app).get('/v1/ocupacion/1/prediccion/dia?fecha=2026-09-29');
+    expect(res.body.horas).toEqual([
+      { hora: '08:00', abierto: false, porcentaje: 0, nivel: 'Bajo', personasEstimadas: 0 },
+      { hora: '15:00', abierto: true, porcentaje: 50, nivel: 'Medio', personasEstimadas: 400 },
+      { hora: '16:00', abierto: false, porcentaje: 0, nivel: 'Bajo', personasEstimadas: 0 },
+    ]);
   });
 
   it('400 sin fecha', async () => {

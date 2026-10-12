@@ -42,6 +42,12 @@ export const paramsDestinoId = z.object({ destinoId: idPositivo });
 export type ParamsDestinoId = z.infer<typeof paramsDestinoId>;
 
 export const consultaDestinos = z.object({
+  q: z
+    .string({ error: 'Debe ser un texto.' })
+    .trim()
+    .min(1, 'No puede estar vacío.')
+    .max(100, 'Máximo 100 caracteres.')
+    .optional(),
   categoria: categoria.optional(),
   nivelOcupacion: nivelOcupacion.optional(),
 });

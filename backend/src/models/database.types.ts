@@ -3,7 +3,7 @@
 
 export type Database = {
   __InternalSupabase: {
-    PostgrestVersion: '14.5';
+    PostgrestVersion: '14.17';
   };
   public: {
     Tables: {
@@ -11,37 +11,58 @@ export type Database = {
         Row: {
           capacidad: number;
           categoria: Database['public']['Enums']['categoria_destino'];
+          como_llegar: string | null;
           descripcion: string | null;
           estado: Database['public']['Enums']['estado_destino'];
+          horario_apertura: string | null;
+          horario_cierre: string | null;
           id_destino: number;
+          imagen_autor: string | null;
+          imagen_fuente: string | null;
+          imagen_licencia: string | null;
           imagen_url: string | null;
           latitud: number;
           longitud: number;
           nombre: string;
+          rango_precio: Database['public']['Enums']['rango_precio'] | null;
           ubicacion_texto: string;
         };
         Insert: {
           capacidad: number;
           categoria: Database['public']['Enums']['categoria_destino'];
+          como_llegar?: string | null;
           descripcion?: string | null;
           estado?: Database['public']['Enums']['estado_destino'];
+          horario_apertura?: string | null;
+          horario_cierre?: string | null;
           id_destino?: never;
+          imagen_autor?: string | null;
+          imagen_fuente?: string | null;
+          imagen_licencia?: string | null;
           imagen_url?: string | null;
           latitud: number;
           longitud: number;
           nombre: string;
+          rango_precio?: Database['public']['Enums']['rango_precio'] | null;
           ubicacion_texto: string;
         };
         Update: {
           capacidad?: number;
           categoria?: Database['public']['Enums']['categoria_destino'];
+          como_llegar?: string | null;
           descripcion?: string | null;
           estado?: Database['public']['Enums']['estado_destino'];
+          horario_apertura?: string | null;
+          horario_cierre?: string | null;
           id_destino?: never;
+          imagen_autor?: string | null;
+          imagen_fuente?: string | null;
+          imagen_licencia?: string | null;
           imagen_url?: string | null;
           latitud?: number;
           longitud?: number;
           nombre?: string;
+          rango_precio?: Database['public']['Enums']['rango_precio'] | null;
           ubicacion_texto?: string;
         };
         Relationships: [];
@@ -244,9 +265,10 @@ export type Database = {
       };
     };
     Enums: {
-      categoria_destino: 'playa' | 'cayo' | 'naturaleza' | 'buceo_snorkel' | 'cultura' | 'gastronomia';
+      categoria_destino: 'playa' | 'cayo' | 'naturaleza' | 'buceo_snorkel' | 'cultura' | 'gastronomia' | 'actividad';
       estado_destino: 'abierto' | 'cerrado_temporal' | 'inactivo';
       nivel_ocupacion: 'Bajo' | 'Medio' | 'Alto';
+      rango_precio: 'Gratis' | '$' | '$$' | '$$$';
       tipo_interaccion: 'vista' | 'favorito' | 'visita' | 'compartir';
       tipo_preferencia: 'categoria' | 'experiencia' | 'grupo';
     };
@@ -261,6 +283,7 @@ type Enums = Database['public']['Enums'];
 export type CategoriaDestino = Enums['categoria_destino'];
 export type EstadoDestino = Enums['estado_destino'];
 export type NivelOcupacion = Enums['nivel_ocupacion'];
+export type RangoPrecio = Enums['rango_precio'];
 export type TipoInteraccion = Enums['tipo_interaccion'];
 export type TipoPreferencia = Enums['tipo_preferencia'];
 
@@ -273,9 +296,10 @@ export type InteraccionRow = Database['public']['Tables']['interaccion']['Row'];
 export const Constants = {
   public: {
     Enums: {
-      categoria_destino: ['playa', 'cayo', 'naturaleza', 'buceo_snorkel', 'cultura', 'gastronomia'],
+      categoria_destino: ['playa', 'cayo', 'naturaleza', 'buceo_snorkel', 'cultura', 'gastronomia', 'actividad'],
       estado_destino: ['abierto', 'cerrado_temporal', 'inactivo'],
       nivel_ocupacion: ['Bajo', 'Medio', 'Alto'],
+      rango_precio: ['Gratis', '$', '$$', '$$$'],
       tipo_interaccion: ['vista', 'favorito', 'visita', 'compartir'],
       tipo_preferencia: ['categoria', 'experiencia', 'grupo'],
     },

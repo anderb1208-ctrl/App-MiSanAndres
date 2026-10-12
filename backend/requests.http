@@ -13,14 +13,17 @@ GET {{baseUrl}}/health
 ### Listar destinos con su ocupación predicha para ahora
 GET {{baseUrl}}/destinos
 
-### Filtrar por categoría (playa, cayo, naturaleza, buceo_snorkel, cultura, gastronomia)
-GET {{baseUrl}}/destinos?categoria=playa
+### Filtrar por categoría (playa, cayo, gastronomia, actividad, naturaleza, cultura)
+GET {{baseUrl}}/destinos?categoria=actividad
 
 ### Filtrar por nivel de ocupación actual (Bajo, Medio, Alto)
 GET {{baseUrl}}/destinos?nivelOcupacion=Bajo
 
-### Detalle de un destino
-GET {{baseUrl}}/destinos/1
+### Buscar por nombre (parcial, sin distinguir mayúsculas); se combina con los filtros
+GET {{baseUrl}}/destinos?q=cay
+
+### Detalle de un destino (con horario, rango de precio, cómo llegar e imagen con crédito)
+GET {{baseUrl}}/destinos/5
 
 ### ---------------------------------------------------------------
 ### Ocupación y predicción (público)
@@ -29,11 +32,14 @@ GET {{baseUrl}}/destinos/1
 ### Registros reales de ocupación de un día (hora de Colombia)
 GET {{baseUrl}}/ocupacion/1?fecha=2026-09-28
 
-### Predicción para una fecha y hora
-GET {{baseUrl}}/ocupacion/1/prediccion?fecha=2026-10-03&hora=12:00
+### Predicción para una fecha y hora (5 = Johnny Cay, abierto de 09:00 a 16:00)
+GET {{baseUrl}}/ocupacion/5/prediccion?fecha=2026-10-03&hora=12:00
+
+### Predicción fuera del horario: responde estado "Cerrado" con ocupación 0
+GET {{baseUrl}}/ocupacion/5/prediccion?fecha=2026-10-03&hora=18:00
 
 ### Ocupación típica de cada hora para ese día de la semana (2026-10-03 es sábado)
-GET {{baseUrl}}/ocupacion/1/prediccion/dia?fecha=2026-10-03
+GET {{baseUrl}}/ocupacion/5/prediccion/dia?fecha=2026-10-03
 
 ### ---------------------------------------------------------------
 ### Preferencias (público)
