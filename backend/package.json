@@ -7,7 +7,8 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "clima:historico": "tsx scripts/generarClimaHistorico.ts"
   },
   "author": "",
   "license": "ISC",

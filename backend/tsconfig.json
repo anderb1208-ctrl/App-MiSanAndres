@@ -3,7 +3,6 @@
     "target": "ES2023",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "rootDir": "src",
     "outDir": "dist",
     "strict": true,
     "isolatedModules": true,
@@ -16,5 +15,5 @@
     "types": ["node", "jest"],
     "sourceMap": true
   },
-  "include": ["src"]
+  "include": ["src", "scripts"]
 }

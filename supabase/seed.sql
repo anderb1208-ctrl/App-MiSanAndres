@@ -7,6 +7,11 @@
 -- Nunca ejecutarlo contra la base de producción.
 -- ============================================================================
 --
+-- La ocupación es SINTÉTICA (ver docs/datos-sinteticos.md). El clima real
+-- (clima_hora, cargado con supabase/clima_hora.sql) se conserva: se respalda por
+-- nombre de destino antes del TRUNCATE y se restaura después, y la ocupación
+-- generada responde a él (menos gente al aire libre cuando llovió).
+--
 -- Datos de prueba del prototipo (base de desarrollo).
 -- No crea usuarios: se crean al registrarse con Supabase Auth.
 -- Es re-ejecutable: limpia los catálogos y la ocupación antes de insertar.
@@ -15,7 +20,14 @@
 -- confirmar está en docs/datos-por-verificar.md. Créditos de las fotos en
 -- docs/creditos-imagenes.md.
 
-truncate public.ocupacion, public.destino_preferencia, public.destino, public.preferencia
+-- Respaldo del clima real (la cascada desde destino vaciaría clima_hora).
+drop table if exists pg_temp.clima_respaldo;
+create temp table clima_respaldo as
+  select d.nombre, c.fecha_hora, c.temperatura, c.prob_lluvia, c.precipitacion, c.codigo_clima, c.viento
+  from public.clima_hora c
+  join public.destino d using (id_destino);
+
+truncate public.ocupacion, public.clima_hora, public.destino_preferencia, public.destino, public.preferencia
   restart identity cascade;
 
 -- ------------------------------------------------------------
@@ -243,9 +255,22 @@ join public.destino d on d.nombre = e.destino
 join public.preferencia p on p.tipo = e.tipo::public.tipo_preferencia and p.codigo = e.codigo;
 
 -- ------------------------------------------------------------
+-- Clima real restaurado (si existía antes del TRUNCATE)
+-- ------------------------------------------------------------
+insert into public.clima_hora (id_destino, fecha_hora, temperatura, prob_lluvia, precipitacion, codigo_clima, viento)
+select d.id_destino, r.fecha_hora, r.temperatura, r.prob_lluvia, r.precipitacion, r.codigo_clima, r.viento
+from clima_respaldo r
+join public.destino d on d.nombre = r.nombre;
+
+drop table clima_respaldo;
+
+-- ------------------------------------------------------------
 -- Ocupación por hora de las últimas 4 semanas (hora de Colombia)
--- porcentaje = curva de la categoría × factor fin de semana × popularidad × ruido ±10 %
+-- porcentaje = curva de la categoría × factor fin de semana × popularidad
+--              × efecto del clima real de esa hora × ruido ±10 %
 -- Fuera del horario del destino (o en su pausa) la ocupación es 0.
+-- Clima (de clima_hora; sin dato de esa hora no hay efecto):
+--   tormenta (WMO 95, 96, 99) o lluvia (prob. ≥ 60 % o ≥ 0,5 mm): ver efecto_clima.
 --
 -- Curvas (índice 1 = 00:00 … 24 = 23:00):
 --   playa:       pico al mediodía
@@ -277,6 +302,16 @@ curvas (categoria, curva) as (
      array[0,0,0,0,0,0, 0,0.10,0.25,0.45,0.60,0.70, 0.65,0.60,0.65,0.60,0.45,0.25, 0,0,0,0,0,0]::numeric[]),
     ('cultura',
      array[0,0,0,0,0,0, 0,0,0.15,0.35,0.55,0.60, 0.40,0.35,0.50,0.55,0.35,0, 0,0,0,0,0,0]::numeric[])
+),
+-- Multiplicador por categoría cuando llovió o hubo tormenta a esa hora.
+efecto_clima (categoria, lluvia, tormenta) as (
+  values
+    ('playa'::public.categoria_destino, 0.65, 0.40),
+    ('cayo',                            0.55, 0.25),
+    ('actividad',                       0.65, 0.40),
+    ('naturaleza',                      0.80, 0.60),
+    ('gastronomia',                     1.15, 1.10),
+    ('cultura',                         1.15, 1.10)
 ),
 -- pausa: horas (enteras) en que el lugar cierra dentro de su horario.
 popularidad (nombre, factor, pausa) as (
@@ -312,13 +347,20 @@ calculo as (
         c.curva[l.hora + 1]
         * (case l.dia when 6 then 1.30 when 7 then 1.25 when 5 then 1.10 else 1.00 end)
         * p.factor
+        * (case
+             when ch.codigo_clima in (95, 96, 99) then e.tormenta
+             when ch.prob_lluvia >= 60 or ch.precipitacion >= 0.5 then e.lluvia
+             else 1
+           end)
         * (0.90 + random() * 0.20)
         * 100
     end as porcentaje
   from public.destino d
   join popularidad p on p.nombre = d.nombre
   join curvas c on c.categoria = d.categoria
+  join efecto_clima e on e.categoria = d.categoria
   cross join horas h
+  left join public.clima_hora ch on ch.id_destino = d.id_destino and ch.fecha_hora = h.fecha_hora
   cross join lateral (
     select
       extract(hour from h.fecha_hora at time zone 'America/Bogota')::int as hora,
