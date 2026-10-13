@@ -123,6 +123,7 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 | POST, GET | /interacciones | Registrar una interacción y ver el historial propio | Sí |
 | GET | /destinos/{id}/clima?horas= | Clima actual y de las próximas horas (1–48, por defecto 12) en el destino, con la atribución de Open-Meteo | No |
 | GET | /clima?horas= | Clima del centro de la isla (resumen de Inicio) | No |
+| GET | /mapa | Todos los destinos visibles con coordenadas, foto y ocupación predicha de ahora (estado, porcentaje, nivel) en una sola llamada, para la pestaña Mapa | No |
 
 - `POST /preferencias` se reemplaza por `PUT /preferencias` (crea o reemplaza; idempotente).
 - `POST /recomendaciones` no se implementó: las recomendaciones se calculan con `GET /recomendaciones` a partir de las preferencias guardadas.

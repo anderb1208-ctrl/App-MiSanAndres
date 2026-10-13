@@ -29,6 +29,9 @@ publicas.get(
 
 publicas.get('/clima', validar({ query: e.consultaClima }), climaController.deLaIsla);
 
+// Todos los destinos con coordenadas y ocupación de ahora, en una sola llamada (pestaña Mapa).
+publicas.get('/mapa', destinoController.mapa);
+
 publicas.get(
   '/ocupacion/:destinoId',
   validar({ params: e.paramsDestinoId, query: e.consultaFecha }),

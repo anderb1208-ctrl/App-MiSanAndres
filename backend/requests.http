@@ -31,6 +31,10 @@ GET {{baseUrl}}/destinos/5/clima?horas=6
 ### Clima del centro de la isla (resumen de Inicio)
 GET {{baseUrl}}/clima
 
+### Mapa: todos los destinos con coordenadas, foto y ocupación de ahora en UNA llamada
+### (ocupacion.estado "Cerrado" fuera del horario; motivoSinClima si no hubo clima)
+GET {{baseUrl}}/mapa
+
 ### ---------------------------------------------------------------
 ### Ocupación y predicción (público)
 ### ---------------------------------------------------------------
