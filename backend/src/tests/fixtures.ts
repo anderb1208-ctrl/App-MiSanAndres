@@ -12,6 +12,8 @@ const sinContenido = {
   imagen_autor: null,
   imagen_licencia: null,
   imagen_fuente: null,
+  ubicacion_fuente: 'aproximada',
+  ubicacion_verificada: false,
 } satisfies Partial<DestinoRow>;
 
 /** Cayo con horario 09:00–16:00 e imagen con crédito. */
@@ -34,6 +36,7 @@ export const johnnyCay: DestinoRow = {
   imagen_autor: 'EASLYHAKS',
   imagen_licencia: 'CC BY-SA 4.0',
   imagen_fuente: 'https://commons.wikimedia.org/wiki/File:Isla_Johnny_Cay.jpg',
+  ubicacion_fuente: 'osm',
 };
 
 /** Sin horario: siempre accesible. */

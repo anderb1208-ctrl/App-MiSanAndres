@@ -20,6 +20,7 @@ export type AppStackParamList = {
   Tabs: NavigatorScreenParams<TabsParamList>;
   DetalleDestino: { id: number };
   Preferencias: undefined;
+  Creditos: undefined;
 };
 
 export type OnboardingStackParamList = {

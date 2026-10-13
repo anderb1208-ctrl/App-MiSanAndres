@@ -6,23 +6,42 @@ Convenciones: coordenadas en grados decimales (latitud, longitud); horarios en h
 
 ## Coordenadas
 
-| Destino | Cargado | Origen | Qué confirmar |
-| --- | --- | --- | --- |
-| Playa de Spratt Bight | 12.584300, -81.698800 | Seed del MVP | Punto central de la playa |
-| Playa de San Luis | 12.539000, -81.700500 | Seed del MVP | Punto central de la playa |
-| Rocky Cay | 12.512500, -81.704500 | Seed del MVP | Playa frente al cayo (podría estar más al norte, ~12.52) |
-| Playa de Sound Bay | 12.552000, -81.703000 | Estimado | Ubicación de la playa |
-| Johnny Cay | 12.600500, -81.689900 | Geolocalización de fotos de Commons | Solo revisar |
-| El Acuario (Rose Cay) | 12.552900, -81.688700 | Geolocalización de una foto tomada allí | Solo revisar |
-| Haynes Cay | 12.551000, -81.686000 | Estimado (vecino de El Acuario) | Ubicación exacta del cayo |
-| La Regatta | 12.580000, -81.696000 | Estimado | Ubicación del restaurante |
-| Miss Celia | 12.578500, -81.699500 | Estimado | Ubicación del restaurante |
-| Donde Francesca | 12.545500, -81.700500 | Estimado | Ubicación del restaurante |
-| West View | 12.534500, -81.727100 | Seed del MVP | Entrada del lugar |
-| La Piscinita | 12.538000, -81.726500 | Seed del MVP | Una foto de Commons la ubica en 12.5270, -81.7317: confirmar cuál es correcta |
-| Kayak en el Manglar de Old Point | 12.566000, -81.704000 | Estimado | Punto de salida de los tours |
-| Hoyo Soplador | 12.482200, -81.731600 | Geolocalización de fotos de Commons | Solo revisar |
-| Primera Iglesia Bautista | 12.561500, -81.716800 | Geolocalización de una foto tomada desde la iglesia | Solo revisar |
+Punto de acceso de cada destino (siempre en tierra; ver la convención en `docs/cambios-al-diseno.md`), calculado con OpenStreetMap por `backend/scripts/geolocalizar-destinos.ts`. Revisar y corregir en `docs/revision-ubicaciones.html`; las correcciones se aplican con `npm run ubicaciones:corregir` y regeneran esta tabla.
+
+<!-- ubicaciones:inicio (generado por backend/scripts/ubicaciones) -->
+| Destino | Punto de acceso | Fuente | Confianza | OSM | Cómo se obtuvo |
+| --- | --- | --- | --- | --- | --- |
+| Kayak en el Manglar de Old Point | 12.566000, -81.704000 | aproximada | baja | — | Sin objeto en OSM: coordenada aproximada. Punto de salida de los tours en el manglar |
+| Playa de San Luis | 12.530005, -81.707701 | aproximada | baja | [node/306384198](https://www.openstreetmap.org/node/306384198) | OSM no tiene la playa: costa más cercana al centro del sector "San Luis". Ajustado 3 m a tierr. A 1.3 km de la coordenada anterio |
+| Playa Los Charquitos | 12.480600, -81.728700 | aproximada | baja | — | OSM no tiene esta playa: coordenada aproximada. Las fuentes web la ubican en el extremo sur (South End) |
+| Vuelta a la isla | 12.582200, -81.695500 | aproximada | baja | — | Sin objeto en OSM: coordenada aproximada. Actividad sin lugar fijo: se toma como punto de encuentro el alquiler de carritos de North End |
+| Bahía Sardina | 12.583335, -81.691070 | osm | media | [node/6423522299](https://www.openstreetmap.org/node/6423522299) | Playa "Bahía Sardina" (punto en OSM) y contorno de playa vecino: punto más cercano a un camino |
+| Cayo Bolívar | 12.399145, -81.475497 | osm | media | [way/20257555](https://www.openstreetmap.org/way/20257555) | Sin muelle en OSM: orilla de "Cayo Bolívar" más cercana a la isla principal. Ajustado 3 m a tierr. A 1.0 km de la coordenada anterio |
+| El Acuario (Rose Cay) | 12.553161, -81.689049 | osm | media | [way/245133418](https://www.openstreetmap.org/way/245133418) | Sin muelle en OSM: orilla de "Cayo Acuario" más cercana a la isla principal |
+| Jardín Botánico de San Andrés | 12.537151, -81.711551 | osm | media | [way/713176581](https://www.openstreetmap.org/way/713176581) | Centro de "Jardin Botanico de San Andres" (leisure/park) en OSM (área grande sin entrada marcada) |
+| Laguna Big Pond | 12.548054, -81.719180 | osm | media | [way/28570754](https://www.openstreetmap.org/way/28570754) | "Laguna Big Pond" (water/pond) de OSM: orilla más cercana a un camino (a 2 m) |
+| Playa de Sound Bay | 12.516862, -81.714277 | osm | media | [way/172276505](https://www.openstreetmap.org/way/172276505) | Playa "Sound Bay" de OSM: punto más cercano a una calle o camino (a 4 m). Queda a 4.1 km de la coordenada aproximada: confirmar que es el mismo luga |
+| Rocky Cay | 12.543624, -81.703992 | osm | media | [way/172205579](https://www.openstreetmap.org/way/172205579) | Playa de OSM (way/172205579) junto a "Rocky Cay" (place/islet): punto más cercano a un camino. El destino es la playa frente al cayo: se toma la parte de la playa más cercana al cayo. A 3.5 km de la coordenada anterio |
+| Aquanautas (caminata submarina) | 12.520692, -81.729055 | osm | alta | [node/4523563092](https://www.openstreetmap.org/node/4523563092) | Ubicación de "Aquanautas" (tourism/attraction) en OSM. Funciona en West View |
+| Buceo con Karibik Diver | 12.580288, -81.690093 | osm | alta | [node/1269638941](https://www.openstreetmap.org/node/1269638941) | Ubicación de "Karibik Diving" (amenity/dive_centre) en OSM |
+| Capitán Mandy | 12.580954, -81.698561 | osm | alta | [node/3230550452](https://www.openstreetmap.org/node/3230550452) | Ubicación de "Capitan Mandy" (amenity/restaurant) en OSM |
+| Casa Museo Isleña | 12.560124, -81.729008 | osm | alta | [node/313846087](https://www.openstreetmap.org/node/313846087) | Ubicación de "Casa Museo Isleña" (tourism/museum) en OSM |
+| Cocoplum Bay | 12.542496, -81.707070 | osm | alta | [way/172205579](https://www.openstreetmap.org/way/172205579) | Playa "Cocoplum" de OSM: punto junto a "Cocoplum Beach Hotel" más cercano a una calle o camino (a 34 m). Se toma la parte de la playa frente al hotel Cocoplum (el extremo norte es el acceso de Rocky Cay) |
+| Cueva de Morgan | 12.542459, -81.729628 | osm | alta | [node/12434308112](https://www.openstreetmap.org/node/12434308112) | Ubicación de "Cueva de Morgan" (tourism/attraction) en OSM |
+| Donde Francesca | 12.519852, -81.713905 | osm | alta | [node/3168649268](https://www.openstreetmap.org/node/3168649268) | Ubicación de "Donde Francesca" (amenity/restaurant) en OSM. A 3.2 km de la coordenada anterio |
+| Fishermen's Place | 12.590403, -81.700637 | osm | alta | [node/3782623549](https://www.openstreetmap.org/node/3782623549) | Ubicación de "Fishermen's Place" (amenity/restaurant) en OSM |
+| Gourmet Shop Assho | 12.581517, -81.692729 | osm | alta | [node/3167245221](https://www.openstreetmap.org/node/3167245221) | Ubicación de "Gourmet Shop Assho" (amenity/restaurant) en OSM |
+| Haynes Cay | 12.550556, -81.689238 | osm | alta | [way/172206236](https://www.openstreetmap.org/way/172206236) | Muelle del cayo en OSM ("Cayo Córdoba") |
+| Hoyo Soplador | 12.481358, -81.731107 | osm | alta | [node/313845738](https://www.openstreetmap.org/node/313845738) | Ubicación de "Hoyo Soplador" (tourism/attraction) en OSM |
+| Johnny Cay | 12.599784, -81.690421 | osm | alta | [relation/11519035](https://www.openstreetmap.org/relation/11519035) | Muelle del cayo en OSM ("Cayo Sucre") |
+| La Piscinita | 12.508634, -81.729559 | osm | alta | [way/243996700](https://www.openstreetmap.org/way/243996700) | Centro de "La Piscinita" (leisure/swimming_pool) en OSM. Ajustado 7 m a tierr. A 3.3 km de la coordenada anterio |
+| La Regatta | 12.580267, -81.691796 | osm | alta | [node/3167245220](https://www.openstreetmap.org/node/3167245220) | Ubicación de "La Regatta" (amenity/restaurant) en OSM. Ajustado 12 m a tierr |
+| Miss Celia | 12.581208, -81.691748 | osm | alta | [node/3782623547](https://www.openstreetmap.org/node/3782623547) | Ubicación de "Miss Celia" (amenity/restaurant) en OSM. A 0.9 km de la coordenada anterio |
+| Paseo en semisubmarino | 12.580118, -81.690372 | osm | alta | [node/4740694087](https://www.openstreetmap.org/node/4740694087) | Ubicación de "Muelle Casa de la Cultura" (leisure/marina) en OSM. Punto de embarque: muelle de la Casa de la Cultura |
+| Playa de Spratt Bight | 12.585246, -81.693270 | osm | alta | [way/28185601](https://www.openstreetmap.org/way/28185601) | Playa "Spratt Bight" de OSM: punto más cercano a una calle o camino (a 2 m). A 0.6 km de la coordenada anterio |
+| Primera Iglesia Bautista | 12.561879, -81.716904 | osm | alta | [way/169875625](https://www.openstreetmap.org/way/169875625) | Centro de "Iglesia Bautista" (amenity/place_of_worship) en OSM |
+| West View | 12.520718, -81.729171 | osm | alta | [node/3166634771](https://www.openstreetmap.org/node/3166634771) | Ubicación de "West View" (tourism/attraction) en OSM. A 1.5 km de la coordenada anterio |
+<!-- ubicaciones:fin -->
 
 ## Horarios
 

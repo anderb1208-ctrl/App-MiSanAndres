@@ -31,6 +31,8 @@ Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.docx`) y la 
 | rango_precio | — | **Nuevo** (prototipo): enum `rango_precio` (Gratis, $, $$, $$$), opcional | Orientar al turista sobre el costo. |
 | como_llegar | — | **Nuevo** (prototipo): TEXT, opcional | Indicaciones en el detalle. |
 | imagen_autor, imagen_licencia, imagen_fuente | — | **Nuevo** (prototipo): TEXT, opcionales | Atribución que exigen las licencias Creative Commons (ver `docs/creditos-imagenes.md`). |
+| ubicacion_fuente | — | **Nuevo** (prototipo): enum `ubicacion_fuente` (osm, manual, aproximada), NOT NULL, default `aproximada` | Saber de dónde salen las coordenadas (sección 13). |
+| ubicacion_verificada | — | **Nuevo** (prototipo): BOOLEAN, NOT NULL, default `false` | Distinguir los puntos que una persona ya revisó. |
 
 Las fotos propias se suben al bucket público `destinos` de Supabase Storage (lectura pública, sin escritura desde la app).
 
@@ -195,3 +197,22 @@ En el MVP la pestaña Mapa era una lista con la ubicación en texto. En el proto
 - **Ubicación del usuario** (expo-location, solo en primer plano) y lista **ordenada por distancia** con la fórmula de Haversine (en línea recta; sin ubicación, por nombre). La lista es también el respaldo si el mapa no carga.
 - **Detalle**: mini mapa con la ubicación y botón "Cómo llegar", que abre `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG` (sin clave; funciona en iOS y Android).
 - **Configuración**: `mobile/app.config.ts` reemplaza a `app.json` y lee la clave de Google Maps de la variable de entorno `GOOGLE_MAPS_API_KEY` (EAS: variable secreta). La clave nunca se guarda en el repositorio.
+
+## 13. Ubicación de los destinos
+
+**Convención**: `latitud` y `longitud` representan el **punto de acceso** del destino y siempre caen **en tierra**:
+
+| Categoría | Punto de acceso |
+| --- | --- |
+| Playa | Acceso desde la calle o el paseo (el punto de la playa más cercano a una calle o camino) |
+| Cayo | Muelle o punto de desembarque (si OSM no tiene muelle: la orilla del cayo más cercana a la isla principal) |
+| Restaurante | Entrada |
+| Actividad | Punto de encuentro o de embarque |
+| Naturaleza y cultura | Entrada (en una laguna, la orilla junto al camino) |
+
+El entregable no define qué representa la coordenada. Con esta convención el pin de "Cómo llegar" lleva a un lugar al que se puede llegar por tierra, nunca a un punto en el mar.
+
+- **Origen**: se calculan con OpenStreetMap (Nominatim y Overpass; datos © colaboradores de OpenStreetMap, ODbL) con `backend/scripts/geolocalizar-destinos.ts`, que lee los destinos de `backend/scripts/ubicaciones/destinos.json`. Se comprueba que el punto cae dentro del contorno de la isla o del cayo; si cae en el agua se lleva a la tierra más cercana.
+- **Columnas nuevas**: `ubicacion_fuente` (`osm`, `manual` o `aproximada`) y `ubicacion_verificada` (falso hasta que una persona lo revisa en `docs/revision-ubicaciones.html` y aplica `npm run ubicaciones:corregir`).
+- **Control**: `npm run verificar:ubicaciones` falla si algún destino activo cae fuera de tierra o fuera del cuadro de San Andrés (12,38–12,62 N, 81,44–81,76 O: la isla, sus cayos cercanos y los Cayos del Este-Sudeste; no incluye Providencia).
+- **Agregar al entregable**: OpenStreetMap como fuente de datos externa (solo en el proceso de carga, no en tiempo de ejecución) y su atribución, que la app muestra en Perfil → Créditos y licencias.

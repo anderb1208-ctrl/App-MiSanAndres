@@ -122,3 +122,6 @@ $RECYCLE.BIN/
 *.code-workspace
 .history/
 .claude/
+
+# Caché de Overpass del script de geolocalización
+backend/scripts/ubicaciones/.cache/

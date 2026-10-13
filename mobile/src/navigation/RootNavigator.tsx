@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { EstadoCargando, EstadoMensaje } from '../components/StateView';
 import { BienvenidaScreen } from '../screens/BienvenidaScreen';
+import { CreditosScreen } from '../screens/CreditosScreen';
 import { DetalleDestinoScreen } from '../screens/DetalleDestinoScreen';
 import { ExplorarScreen } from '../screens/ExplorarScreen';
 import { InicioScreen } from '../screens/InicioScreen';
@@ -103,6 +104,7 @@ export function RootNavigator() {
       <AppStack.Screen name="Tabs" component={TabsNavigator} />
       <AppStack.Screen name="DetalleDestino" component={DetalleDestinoScreen} />
       <AppStack.Screen name="Preferencias" component={PreferenciasScreen} />
+      <AppStack.Screen name="Creditos" component={CreditosScreen} />
     </AppStack.Navigator>
   );
 }

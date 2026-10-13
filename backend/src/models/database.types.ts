@@ -25,7 +25,9 @@ export type Database = {
           longitud: number;
           nombre: string;
           rango_precio: Database['public']['Enums']['rango_precio'] | null;
+          ubicacion_fuente: Database['public']['Enums']['ubicacion_fuente'];
           ubicacion_texto: string;
+          ubicacion_verificada: boolean;
         };
         Insert: {
           capacidad: number;
@@ -44,7 +46,9 @@ export type Database = {
           longitud: number;
           nombre: string;
           rango_precio?: Database['public']['Enums']['rango_precio'] | null;
+          ubicacion_fuente?: Database['public']['Enums']['ubicacion_fuente'];
           ubicacion_texto: string;
+          ubicacion_verificada?: boolean;
         };
         Update: {
           capacidad?: number;
@@ -63,7 +67,9 @@ export type Database = {
           longitud?: number;
           nombre?: string;
           rango_precio?: Database['public']['Enums']['rango_precio'] | null;
+          ubicacion_fuente?: Database['public']['Enums']['ubicacion_fuente'];
           ubicacion_texto?: string;
+          ubicacion_verificada?: boolean;
         };
         Relationships: [];
       };
@@ -271,6 +277,7 @@ export type Database = {
       rango_precio: 'Gratis' | '$' | '$$' | '$$$';
       tipo_interaccion: 'vista' | 'favorito' | 'visita' | 'compartir';
       tipo_preferencia: 'categoria' | 'experiencia' | 'grupo';
+      ubicacion_fuente: 'osm' | 'manual' | 'aproximada';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -286,6 +293,7 @@ export type NivelOcupacion = Enums['nivel_ocupacion'];
 export type RangoPrecio = Enums['rango_precio'];
 export type TipoInteraccion = Enums['tipo_interaccion'];
 export type TipoPreferencia = Enums['tipo_preferencia'];
+export type UbicacionFuente = Enums['ubicacion_fuente'];
 
 export type DestinoRow = Database['public']['Tables']['destino']['Row'];
 export type PreferenciaRow = Database['public']['Tables']['preferencia']['Row'];
@@ -302,6 +310,7 @@ export const Constants = {
       rango_precio: ['Gratis', '$', '$$', '$$$'],
       tipo_interaccion: ['vista', 'favorito', 'visita', 'compartir'],
       tipo_preferencia: ['categoria', 'experiencia', 'grupo'],
+      ubicacion_fuente: ['osm', 'manual', 'aproximada'],
     },
   },
 } as const;

@@ -161,8 +161,16 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
             etiqueta="Mis preferencias"
             descripcion="Ver y editar preferencias"
             control="chevron"
-            divisor={false}
             onPress={() => navigation.navigate('Preferencias')}
+          />
+          <SelectRow
+            icono="info-outline"
+            tonoIcono="neutral"
+            etiqueta="Créditos y licencias"
+            descripcion="OpenStreetMap, Open-Meteo y fotos"
+            control="chevron"
+            divisor={false}
+            onPress={() => navigation.navigate('Creditos')}
           />
         </GlassPanel>
 

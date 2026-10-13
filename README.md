@@ -81,7 +81,8 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 │   │   ├── tests/               # Pruebas Jest + Supertest (modelos mockeados)
 │   │   ├── app.ts               # Configuración de Express
 │   │   └── server.ts            # Punto de entrada
-│   ├── scripts/                 # generarClimaHistorico.ts → supabase/clima_hora.sql
+│   ├── scripts/                 # Clima histórico y geolocalización de destinos (OSM)
+│   │   └── ubicaciones/         # destinos.json (entrada), ubicaciones.json y tierra.geojson (generados)
 │   └── requests.http            # Una petición de ejemplo por endpoint
 ├── mobile/                      # App móvil (React Native + Expo)
 │   └── src/
@@ -104,6 +105,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
     ├── cambios-al-diseno.md          # Diferencias entre el diseño y lo implementado
     ├── datos-sinteticos.md           # Supuestos de la ocupación sintética
     ├── datos-por-verificar.md        # Datos de los destinos que hay que confirmar
+    ├── revision-ubicaciones.html     # Mapa para revisar y corregir las ubicaciones (doble clic)
     └── creditos-imagenes.md          # Autor y licencia de las fotos
 ```
 
@@ -150,6 +152,35 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 
 Los datos del clima son de **[Open-Meteo.com](https://open-meteo.com/)**, con licencia [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). La API es gratuita para uso no comercial (hasta 10.000 llamadas al día) y no requiere clave. La app muestra "Datos del clima: Open-Meteo.com (CC BY 4.0)" con enlace en el detalle de cada destino y en el resumen del clima de Inicio. Los datos se usan sin modificar, salvo el redondeo para mostrarlos.
 
+## Ubicación de los destinos (OpenStreetMap)
+
+**Convención:** `latitud` y `longitud` son el **punto de acceso**, siempre en tierra: playas, el acceso desde la calle o el paseo; cayos, el muelle o punto de desembarque; restaurantes, la entrada; actividades, el punto de encuentro o embarque; naturaleza y cultura, la entrada. Cada destino guarda además `ubicacion_fuente` (`osm`, `manual` o `aproximada`) y `ubicacion_verificada`.
+
+### Atribución de OpenStreetMap
+
+Las ubicaciones se calculan con datos de **[OpenStreetMap](https://www.openstreetmap.org/copyright)** (© colaboradores de OpenStreetMap), disponibles bajo la [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). Se consultan con [Nominatim](https://nominatim.org/) y la [API de Overpass](https://overpass-api.de/) respetando sus políticas de uso (User-Agent identificable, máximo 1 petición por segundo a Nominatim, una sola consulta a Overpass guardada en caché). `backend/scripts/ubicaciones/tierra.geojson` (contorno de la isla y los cayos) es una base de datos derivada de OpenStreetMap y queda bajo la misma licencia ODbL. La app muestra la atribución en **Perfil → Créditos y licencias**.
+
+### Agregar un destino y geolocalizarlo
+
+1. Crea el destino en la base con una migración (y en `supabase/seed.sql`), con una coordenada aproximada.
+2. Agrégalo a `backend/scripts/ubicaciones/destinos.json`: `nombre` (igual al de la tabla), `categoria`, `aprox` y, si en OpenStreetMap tiene otro nombre, los términos en `buscar` (`[]` si no existe en OSM). Opcionales: `tipos` (tipos de OSM aceptados), `cerca` (lugar de referencia para elegir la parte de una playa larga), `mismoLugarQue` y `nota`. No hace falta tocar código.
+3. Geolocaliza (desde `backend/`):
+
+   ```powershell
+   npm run ubicaciones:geolocalizar               # usa la caché de Overpass
+   npm run ubicaciones:geolocalizar -- --overpass # vuelve a descargar los datos de OSM
+   ```
+
+   Busca cada lugar en Nominatim dentro del cuadro de San Andrés, calcula el punto de acceso según la categoría, comprueba que cae en tierra (si cae en el agua lo lleva a la tierra más cercana) y asigna una confianza (alta, media o baja). Si OSM no tiene el lugar, deja la coordenada aproximada con confianza baja. Los destinos ya verificados a mano se conservan (salvo `--incluir-verificados`). Genera una migración en `supabase/migrations/`, actualiza el seed, la tabla de `docs/datos-por-verificar.md` y la página de revisión.
+4. Aplica la migración generada en Supabase.
+
+### Revisar y corregir
+
+1. Abre `docs/revision-ubicaciones.html` con doble clic (necesita internet para el mapa). Los marcadores tienen el color de su confianza; arrástralos al punto de acceso correcto o márcalos como revisados. La capa satelital ayuda a ver muelles y entradas.
+2. Pulsa **Copiar correcciones** y guarda el texto como `correcciones.json` (o usa **Descargar JSON**).
+3. Aplica (desde `backend/`): `npm run ubicaciones:corregir -- ruta/correcciones.json`. Los destinos incluidos quedan como `manual` y verificados; genera la migración y actualiza el seed y la página. Rechaza puntos en el agua o fuera del cuadro.
+4. Aplica la migración en Supabase y comprueba con `npm run verificar:ubicaciones`, que falla si algún destino activo cae fuera de tierra o fuera del cuadro de San Andrés (`-- --local` revisa `ubicaciones.json` sin conectarse a la base).
+
 ## Cómo ejecutar
 
 Pasos para Windows 10/11 con PowerShell. El backend y la app corren en el mismo PC y el celular se conecta por la red local.
@@ -187,6 +218,7 @@ npm test            # pruebas (Jest + Supertest; no tocan la base de datos)
 npm run typecheck   # verificación de tipos
 npm run build       # compila a dist/
 npm start           # ejecuta dist/ (producción, p. ej. en Render)
+npm run verificar:ubicaciones   # todos los destinos activos en tierra y en el cuadro de San Andrés
 ```
 
 La primera vez que Windows pregunte, permite a Node.js en **redes privadas** en el Firewall; si no, el celular no podrá llegar a la API.

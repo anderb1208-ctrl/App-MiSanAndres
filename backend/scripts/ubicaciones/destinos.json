@@ -1,0 +1,40 @@
+{
+  "_comentario": "Entrada de backend/scripts/geolocalizar-destinos.ts. Para agregar un destino: añadir un objeto con nombre (igual al de la tabla destino), categoria, aprox (punto de partida) y, si su nombre en OpenStreetMap es distinto, los términos de búsqueda en 'buscar'. 'buscar' vacío = no hay objeto en OSM (queda aproximado). 'tipos' (opcional) reemplaza los tipos de OSM preferidos para la categoría. 'nota' se copia al informe.",
+  "destinos": [
+    { "nombre": "Playa de Spratt Bight", "categoria": "playa", "aprox": { "lat": 12.5843, "lon": -81.6988 }, "buscar": ["Spratt Bight"] },
+    { "nombre": "Playa de San Luis", "categoria": "playa", "aprox": { "lat": 12.539, "lon": -81.7005 }, "buscar": ["Playa de San Luis", "San Luis"] },
+    { "nombre": "Rocky Cay", "categoria": "playa", "aprox": { "lat": 12.5125, "lon": -81.7045 }, "buscar": ["Rocky Cay", "Cayo Rocoso"], "nota": "El destino es la playa frente al cayo: se toma la parte de la playa más cercana al cayo." },
+    { "nombre": "Playa de Sound Bay", "categoria": "playa", "aprox": { "lat": 12.552, "lon": -81.703 }, "buscar": ["Sound Bay"] },
+    { "nombre": "Cocoplum Bay", "categoria": "playa", "aprox": { "lat": 12.5425, "lon": -81.7056 }, "buscar": ["Cocoplum"], "cerca": "Cocoplum Beach Hotel", "nota": "Se toma la parte de la playa frente al hotel Cocoplum (el extremo norte es el acceso de Rocky Cay)." },
+    { "nombre": "Playa Los Charquitos", "categoria": "playa", "aprox": { "lat": 12.4806, "lon": -81.7287 }, "buscar": ["Playa Los Charquitos", "Charquitos"], "nota": "Las fuentes web la ubican en el extremo sur (South End)." },
+    { "nombre": "Bahía Sardina", "categoria": "playa", "aprox": { "lat": 12.5836, "lon": -81.6909 }, "buscar": ["Bahía Sardina"] },
+
+    { "nombre": "Johnny Cay", "categoria": "cayo", "aprox": { "lat": 12.6005, "lon": -81.6899 }, "buscar": ["Johnny Cay", "Cayo Sucre"] },
+    { "nombre": "El Acuario (Rose Cay)", "categoria": "cayo", "aprox": { "lat": 12.5529, "lon": -81.6887 }, "buscar": ["El Acuario", "Cayo Acuario", "Rose Cay"] },
+    { "nombre": "Haynes Cay", "categoria": "cayo", "aprox": { "lat": 12.551, "lon": -81.686 }, "buscar": ["Haynes Cay", "Cayo Córdoba"] },
+    { "nombre": "Cayo Bolívar", "categoria": "cayo", "aprox": { "lat": 12.4045, "lon": -81.4685 }, "buscar": ["Cayo Bolívar", "Cayos de Bolívar", "Courtown Cays", "East Southeast Cays", "Cayos del Este Sudeste"], "maxKm": 15 },
+
+    { "nombre": "La Regatta", "categoria": "gastronomia", "aprox": { "lat": 12.58, "lon": -81.696 }, "buscar": ["La Regatta"] },
+    { "nombre": "Miss Celia", "categoria": "gastronomia", "aprox": { "lat": 12.5785, "lon": -81.6995 }, "buscar": ["Miss Celia"] },
+    { "nombre": "Donde Francesca", "categoria": "gastronomia", "aprox": { "lat": 12.5455, "lon": -81.7005 }, "buscar": ["Donde Francesca"] },
+    { "nombre": "Fishermen's Place", "categoria": "gastronomia", "aprox": { "lat": 12.5904, "lon": -81.7006 }, "buscar": ["Fishermen's Place", "Fisherman Place"] },
+    { "nombre": "Gourmet Shop Assho", "categoria": "gastronomia", "aprox": { "lat": 12.5815, "lon": -81.6927 }, "buscar": ["Gourmet Shop Assho", "Assho"] },
+    { "nombre": "Capitán Mandy", "categoria": "gastronomia", "aprox": { "lat": 12.581, "lon": -81.6986 }, "buscar": ["Capitán Mandy", "Capitan Mandy"] },
+
+    { "nombre": "West View", "categoria": "actividad", "aprox": { "lat": 12.5345, "lon": -81.7271 }, "buscar": ["West View"] },
+    { "nombre": "La Piscinita", "categoria": "actividad", "aprox": { "lat": 12.538, "lon": -81.7265 }, "buscar": ["La Piscinita"] },
+    { "nombre": "Kayak en el Manglar de Old Point", "categoria": "actividad", "aprox": { "lat": 12.566, "lon": -81.704 }, "buscar": ["Old Point", "Manglar Old Point", "Parque Regional de Manglar Old Point"], "tipos": ["leisure/nature_reserve", "boundary/protected_area", "natural/wetland", "tourism/attraction"], "nota": "Punto de salida de los tours en el manglar." },
+    { "nombre": "Paseo en semisubmarino", "categoria": "actividad", "aprox": { "lat": 12.5801, "lon": -81.6904 }, "buscar": ["Muelle Casa de la Cultura"], "tipos": ["leisure/marina", "man_made/pier"], "nota": "Punto de embarque: muelle de la Casa de la Cultura." },
+    { "nombre": "Aquanautas (caminata submarina)", "categoria": "actividad", "aprox": { "lat": 12.5207, "lon": -81.7291 }, "buscar": ["Aquanautas"], "mismoLugarQue": "West View", "nota": "Funciona en West View." },
+    { "nombre": "Buceo con Karibik Diver", "categoria": "actividad", "aprox": { "lat": 12.5803, "lon": -81.6901 }, "buscar": ["Karibik Diver", "Karibik Diving"], "tipos": ["amenity/dive_centre", "shop/scuba_diving"] },
+    { "nombre": "Vuelta a la isla", "categoria": "actividad", "aprox": { "lat": 12.5822, "lon": -81.6955 }, "buscar": [], "nota": "Actividad sin lugar fijo: se toma como punto de encuentro el alquiler de carritos de North End." },
+
+    { "nombre": "Hoyo Soplador", "categoria": "naturaleza", "aprox": { "lat": 12.4822, "lon": -81.7316 }, "buscar": ["Hoyo Soplador"] },
+    { "nombre": "Laguna Big Pond", "categoria": "naturaleza", "aprox": { "lat": 12.5484, "lon": -81.7214 }, "buscar": ["Laguna Big Pond", "Big Pond"], "tipos": ["natural/water", "water/pond", "water/lake"] },
+    { "nombre": "Jardín Botánico de San Andrés", "categoria": "naturaleza", "aprox": { "lat": 12.5372, "lon": -81.7116 }, "buscar": ["Jardín Botánico de San Andrés", "Jardin Botanico de San Andres", "Jardín Botánico"], "tipos": ["leisure/park", "leisure/garden", "tourism/attraction"] },
+
+    { "nombre": "Primera Iglesia Bautista", "categoria": "cultura", "aprox": { "lat": 12.5615, "lon": -81.7168 }, "buscar": ["Primera Iglesia Bautista", "First Baptist Church", "Iglesia Bautista"], "tipos": ["amenity/place_of_worship", "building/church", "tourism/attraction"] },
+    { "nombre": "Cueva de Morgan", "categoria": "cultura", "aprox": { "lat": 12.5424, "lon": -81.7294 }, "buscar": ["Cueva de Morgan"] },
+    { "nombre": "Casa Museo Isleña", "categoria": "cultura", "aprox": { "lat": 12.5601, "lon": -81.729 }, "buscar": ["Casa Museo Isleña"] }
+  ]
+}

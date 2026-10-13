@@ -1,0 +1,482 @@
+[
+  {
+    "nombre": "Playa de Spratt Bight",
+    "categoria": "playa",
+    "latitud": 12.585246,
+    "longitud": -81.69327,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "way/28185601",
+    "metodo": "Playa \"Spratt Bight\" de OSM: punto más cercano a una calle o camino (a 2 m)",
+    "nota": "A 0.6 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.5843,
+      "lon": -81.6988
+    }
+  },
+  {
+    "nombre": "Playa de San Luis",
+    "categoria": "playa",
+    "latitud": 12.530005,
+    "longitud": -81.707701,
+    "fuente": "aproximada",
+    "confianza": "baja",
+    "verificada": false,
+    "osm": "node/306384198",
+    "metodo": "OSM no tiene la playa: costa más cercana al centro del sector \"San Luis\"",
+    "nota": "Ajustado 3 m a tierr. A 1.3 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.539,
+      "lon": -81.7005
+    }
+  },
+  {
+    "nombre": "Rocky Cay",
+    "categoria": "playa",
+    "latitud": 12.543624,
+    "longitud": -81.703992,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "way/172205579",
+    "metodo": "Playa de OSM (way/172205579) junto a \"Rocky Cay\" (place/islet): punto más cercano a un camino",
+    "nota": "El destino es la playa frente al cayo: se toma la parte de la playa más cercana al cayo. A 3.5 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.5125,
+      "lon": -81.7045
+    }
+  },
+  {
+    "nombre": "Playa de Sound Bay",
+    "categoria": "playa",
+    "latitud": 12.516862,
+    "longitud": -81.714277,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "way/172276505",
+    "metodo": "Playa \"Sound Bay\" de OSM: punto más cercano a una calle o camino (a 4 m)",
+    "nota": "Queda a 4.1 km de la coordenada aproximada: confirmar que es el mismo luga",
+    "aprox": {
+      "lat": 12.552,
+      "lon": -81.703
+    }
+  },
+  {
+    "nombre": "Cocoplum Bay",
+    "categoria": "playa",
+    "latitud": 12.542496,
+    "longitud": -81.70707,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "way/172205579",
+    "metodo": "Playa \"Cocoplum\" de OSM: punto junto a \"Cocoplum Beach Hotel\" más cercano a una calle o camino (a 34 m)",
+    "nota": "Se toma la parte de la playa frente al hotel Cocoplum (el extremo norte es el acceso de Rocky Cay)",
+    "aprox": {
+      "lat": 12.5425,
+      "lon": -81.7056
+    }
+  },
+  {
+    "nombre": "Playa Los Charquitos",
+    "categoria": "playa",
+    "latitud": 12.4806,
+    "longitud": -81.7287,
+    "fuente": "aproximada",
+    "confianza": "baja",
+    "verificada": false,
+    "osm": null,
+    "metodo": "OSM no tiene esta playa: coordenada aproximada",
+    "nota": "Las fuentes web la ubican en el extremo sur (South End)",
+    "aprox": {
+      "lat": 12.4806,
+      "lon": -81.7287
+    }
+  },
+  {
+    "nombre": "Bahía Sardina",
+    "categoria": "playa",
+    "latitud": 12.583335,
+    "longitud": -81.69107,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "node/6423522299",
+    "metodo": "Playa \"Bahía Sardina\" (punto en OSM) y contorno de playa vecino: punto más cercano a un camino",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5836,
+      "lon": -81.6909
+    }
+  },
+  {
+    "nombre": "Johnny Cay",
+    "categoria": "cayo",
+    "latitud": 12.599784,
+    "longitud": -81.690421,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "relation/11519035",
+    "metodo": "Muelle del cayo en OSM (\"Cayo Sucre\")",
+    "nota": null,
+    "aprox": {
+      "lat": 12.6005,
+      "lon": -81.6899
+    }
+  },
+  {
+    "nombre": "El Acuario (Rose Cay)",
+    "categoria": "cayo",
+    "latitud": 12.553161,
+    "longitud": -81.689049,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "way/245133418",
+    "metodo": "Sin muelle en OSM: orilla de \"Cayo Acuario\" más cercana a la isla principal",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5529,
+      "lon": -81.6887
+    }
+  },
+  {
+    "nombre": "Haynes Cay",
+    "categoria": "cayo",
+    "latitud": 12.550556,
+    "longitud": -81.689238,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "way/172206236",
+    "metodo": "Muelle del cayo en OSM (\"Cayo Córdoba\")",
+    "nota": null,
+    "aprox": {
+      "lat": 12.551,
+      "lon": -81.686
+    }
+  },
+  {
+    "nombre": "Cayo Bolívar",
+    "categoria": "cayo",
+    "latitud": 12.399145,
+    "longitud": -81.475497,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "way/20257555",
+    "metodo": "Sin muelle en OSM: orilla de \"Cayo Bolívar\" más cercana a la isla principal",
+    "nota": "Ajustado 3 m a tierr. A 1.0 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.4045,
+      "lon": -81.4685
+    }
+  },
+  {
+    "nombre": "La Regatta",
+    "categoria": "gastronomia",
+    "latitud": 12.580267,
+    "longitud": -81.691796,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3167245220",
+    "metodo": "Ubicación de \"La Regatta\" (amenity/restaurant) en OSM",
+    "nota": "Ajustado 12 m a tierr",
+    "aprox": {
+      "lat": 12.58,
+      "lon": -81.696
+    }
+  },
+  {
+    "nombre": "Miss Celia",
+    "categoria": "gastronomia",
+    "latitud": 12.581208,
+    "longitud": -81.691748,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3782623547",
+    "metodo": "Ubicación de \"Miss Celia\" (amenity/restaurant) en OSM",
+    "nota": "A 0.9 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.5785,
+      "lon": -81.6995
+    }
+  },
+  {
+    "nombre": "Donde Francesca",
+    "categoria": "gastronomia",
+    "latitud": 12.519852,
+    "longitud": -81.713905,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3168649268",
+    "metodo": "Ubicación de \"Donde Francesca\" (amenity/restaurant) en OSM",
+    "nota": "A 3.2 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.5455,
+      "lon": -81.7005
+    }
+  },
+  {
+    "nombre": "Fishermen's Place",
+    "categoria": "gastronomia",
+    "latitud": 12.590403,
+    "longitud": -81.700637,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3782623549",
+    "metodo": "Ubicación de \"Fishermen's Place\" (amenity/restaurant) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5904,
+      "lon": -81.7006
+    }
+  },
+  {
+    "nombre": "Gourmet Shop Assho",
+    "categoria": "gastronomia",
+    "latitud": 12.581517,
+    "longitud": -81.692729,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3167245221",
+    "metodo": "Ubicación de \"Gourmet Shop Assho\" (amenity/restaurant) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5815,
+      "lon": -81.6927
+    }
+  },
+  {
+    "nombre": "Capitán Mandy",
+    "categoria": "gastronomia",
+    "latitud": 12.580954,
+    "longitud": -81.698561,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3230550452",
+    "metodo": "Ubicación de \"Capitan Mandy\" (amenity/restaurant) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.581,
+      "lon": -81.6986
+    }
+  },
+  {
+    "nombre": "West View",
+    "categoria": "actividad",
+    "latitud": 12.520718,
+    "longitud": -81.729171,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/3166634771",
+    "metodo": "Ubicación de \"West View\" (tourism/attraction) en OSM",
+    "nota": "A 1.5 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.5345,
+      "lon": -81.7271
+    }
+  },
+  {
+    "nombre": "La Piscinita",
+    "categoria": "actividad",
+    "latitud": 12.508634,
+    "longitud": -81.729559,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "way/243996700",
+    "metodo": "Centro de \"La Piscinita\" (leisure/swimming_pool) en OSM",
+    "nota": "Ajustado 7 m a tierr. A 3.3 km de la coordenada anterio",
+    "aprox": {
+      "lat": 12.538,
+      "lon": -81.7265
+    }
+  },
+  {
+    "nombre": "Kayak en el Manglar de Old Point",
+    "categoria": "actividad",
+    "latitud": 12.566,
+    "longitud": -81.704,
+    "fuente": "aproximada",
+    "confianza": "baja",
+    "verificada": false,
+    "osm": null,
+    "metodo": "Sin objeto en OSM: coordenada aproximada",
+    "nota": "Punto de salida de los tours en el manglar",
+    "aprox": {
+      "lat": 12.566,
+      "lon": -81.704
+    }
+  },
+  {
+    "nombre": "Paseo en semisubmarino",
+    "categoria": "actividad",
+    "latitud": 12.580118,
+    "longitud": -81.690372,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/4740694087",
+    "metodo": "Ubicación de \"Muelle Casa de la Cultura\" (leisure/marina) en OSM",
+    "nota": "Punto de embarque: muelle de la Casa de la Cultura",
+    "aprox": {
+      "lat": 12.5801,
+      "lon": -81.6904
+    }
+  },
+  {
+    "nombre": "Aquanautas (caminata submarina)",
+    "categoria": "actividad",
+    "latitud": 12.520692,
+    "longitud": -81.729055,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/4523563092",
+    "metodo": "Ubicación de \"Aquanautas\" (tourism/attraction) en OSM",
+    "nota": "Funciona en West View",
+    "aprox": {
+      "lat": 12.5207,
+      "lon": -81.7291
+    }
+  },
+  {
+    "nombre": "Buceo con Karibik Diver",
+    "categoria": "actividad",
+    "latitud": 12.580288,
+    "longitud": -81.690093,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/1269638941",
+    "metodo": "Ubicación de \"Karibik Diving\" (amenity/dive_centre) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5803,
+      "lon": -81.6901
+    }
+  },
+  {
+    "nombre": "Vuelta a la isla",
+    "categoria": "actividad",
+    "latitud": 12.5822,
+    "longitud": -81.6955,
+    "fuente": "aproximada",
+    "confianza": "baja",
+    "verificada": false,
+    "osm": null,
+    "metodo": "Sin objeto en OSM: coordenada aproximada",
+    "nota": "Actividad sin lugar fijo: se toma como punto de encuentro el alquiler de carritos de North End",
+    "aprox": {
+      "lat": 12.5822,
+      "lon": -81.6955
+    }
+  },
+  {
+    "nombre": "Hoyo Soplador",
+    "categoria": "naturaleza",
+    "latitud": 12.481358,
+    "longitud": -81.731107,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/313845738",
+    "metodo": "Ubicación de \"Hoyo Soplador\" (tourism/attraction) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.4822,
+      "lon": -81.7316
+    }
+  },
+  {
+    "nombre": "Laguna Big Pond",
+    "categoria": "naturaleza",
+    "latitud": 12.548054,
+    "longitud": -81.71918,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "way/28570754",
+    "metodo": "\"Laguna Big Pond\" (water/pond) de OSM: orilla más cercana a un camino (a 2 m)",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5484,
+      "lon": -81.7214
+    }
+  },
+  {
+    "nombre": "Jardín Botánico de San Andrés",
+    "categoria": "naturaleza",
+    "latitud": 12.537151,
+    "longitud": -81.711551,
+    "fuente": "osm",
+    "confianza": "media",
+    "verificada": false,
+    "osm": "way/713176581",
+    "metodo": "Centro de \"Jardin Botanico de San Andres\" (leisure/park) en OSM (área grande sin entrada marcada)",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5372,
+      "lon": -81.7116
+    }
+  },
+  {
+    "nombre": "Primera Iglesia Bautista",
+    "categoria": "cultura",
+    "latitud": 12.561879,
+    "longitud": -81.716904,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "way/169875625",
+    "metodo": "Centro de \"Iglesia Bautista\" (amenity/place_of_worship) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5615,
+      "lon": -81.7168
+    }
+  },
+  {
+    "nombre": "Cueva de Morgan",
+    "categoria": "cultura",
+    "latitud": 12.542459,
+    "longitud": -81.729628,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/12434308112",
+    "metodo": "Ubicación de \"Cueva de Morgan\" (tourism/attraction) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5424,
+      "lon": -81.7294
+    }
+  },
+  {
+    "nombre": "Casa Museo Isleña",
+    "categoria": "cultura",
+    "latitud": 12.560124,
+    "longitud": -81.729008,
+    "fuente": "osm",
+    "confianza": "alta",
+    "verificada": false,
+    "osm": "node/313846087",
+    "metodo": "Ubicación de \"Casa Museo Isleña\" (tourism/museum) en OSM",
+    "nota": null,
+    "aprox": {
+      "lat": 12.5601,
+      "lon": -81.729
+    }
+  }
+]
