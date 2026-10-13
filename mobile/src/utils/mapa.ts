@@ -1,4 +1,4 @@
-import { Linking, Platform } from 'react-native';
+import { ActionSheetIOS, Linking, Platform } from 'react-native';
 import { PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import type { OcupacionResumida } from '../services/tipos';
 import { mapColors, occupancyColors } from '../theme';
@@ -40,12 +40,41 @@ export const ETIQUETA_MARCADOR: Record<EstadoMarcador, string> = {
   SinDatos: 'Sin datos',
 };
 
+/** Apple Maps con un pin en el punto y el nombre como etiqueta. */
+export const urlAppleMaps = (nombre: string, latitud: number, longitud: number) =>
+  `https://maps.apple.com/?ll=${latitud},${longitud}&q=${encodeURIComponent(nombre)}`;
+
 /**
- * Abre la app de mapas del teléfono con la ruta al destino. El enlace universal de
- * Google Maps funciona en Android y en iPhone (app de Google Maps o navegador),
- * sin clave ni costo.
+ * Google Maps con un pin en el punto. Es un enlace universal: abre la app si está
+ * instalada y, si no, el navegador. Se busca por coordenadas (no por nombre) para
+ * que no elija otro lugar con un nombre parecido.
  */
-export function abrirComoLlegar(latitud: number, longitud: number) {
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${latitud},${longitud}`;
-  return Linking.openURL(url);
+export const urlGoogleMaps = (latitud: number, longitud: number) =>
+  `https://www.google.com/maps/search/?api=1&query=${latitud}%2C${longitud}`;
+
+/** Android: abre la app de mapas predeterminada con el pin y el nombre como etiqueta. */
+export const urlGeo = (nombre: string, latitud: number, longitud: number) =>
+  `geo:${latitud},${longitud}?q=${latitud},${longitud}(${encodeURIComponent(nombre)})`;
+
+/**
+ * "Cómo llegar": abre la UBICACIÓN del destino (un pin con su nombre), no una ruta;
+ * desde la app de mapas el usuario decide si pide el trayecto.
+ * iPhone: hoja de opciones Apple Maps / Google Maps. Android: enlace geo:.
+ * Funciona en Expo Go (no usa esquemas que requieran declararse en la app).
+ */
+export function abrirUbicacion(nombre: string, latitud: number, longitud: number) {
+  const google = () => Linking.openURL(urlGoogleMaps(latitud, longitud));
+
+  if (Platform.OS === 'ios') {
+    ActionSheetIOS.showActionSheetWithOptions(
+      { title: nombre, options: ['Apple Maps', 'Google Maps', 'Cancelar'], cancelButtonIndex: 2 },
+      (i) => {
+        if (i === 0) void Linking.openURL(urlAppleMaps(nombre, latitud, longitud));
+        if (i === 1) void google();
+      },
+    );
+    return;
+  }
+  // Si no hay app que entienda geo:, se abre Google Maps (app o navegador).
+  Linking.openURL(urlGeo(nombre, latitud, longitud)).catch(google);
 }

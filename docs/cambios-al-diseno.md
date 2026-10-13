@@ -195,7 +195,8 @@ En el MVP la pestaña Mapa era una lista con la ubicación en texto. En el proto
 - **Datos**: `GET /mapa` devuelve en una sola llamada todos los destinos visibles con coordenadas, foto y la ocupación predicha de ahora (misma lógica de horario, clima y calendario que la predicción). Evita una petición por destino en conexiones móviles lentas.
 - **Marcadores**: el color es la ocupación (Bajo, Medio, Alto y Cerrado en gris) y el ícono la categoría; leyenda y filtros por categoría. Al tocar uno aparece una tarjeta con foto, ocupación y "Ver detalle".
 - **Ubicación del usuario** (expo-location, solo en primer plano) y lista **ordenada por distancia** con la fórmula de Haversine (en línea recta; sin ubicación, por nombre). La lista es también el respaldo si el mapa no carga.
-- **Detalle**: mini mapa con la ubicación y botón "Cómo llegar", que abre `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG` (sin clave; funciona en iOS y Android).
+- **Detalle**: mini mapa con la ubicación y botón "Cómo llegar", que abre la **ubicación** del destino (pin con el nombre) y no una ruta, para que el usuario decida en su app de mapas si pide el trayecto. iPhone: hoja de opciones Apple Maps (`https://maps.apple.com/?ll=LAT,LNG&q=NOMBRE`) / Google Maps (enlace universal de búsqueda por coordenadas; app o navegador). Android: `geo:LAT,LNG?q=LAT,LNG(NOMBRE)`. Sin claves; compatible con Expo Go.
+- **Marcadores**: con 30 destinos el nombre no se dibuja sobre el mapa; aparece al tocar el marcador (tarjeta), y se conservan los filtros por categoría.
 - **Configuración**: `mobile/app.config.ts` reemplaza a `app.json` y lee la clave de Google Maps de la variable de entorno `GOOGLE_MAPS_API_KEY` (EAS: variable secreta). La clave nunca se guarda en el repositorio.
 
 ## 13. Ubicación de los destinos

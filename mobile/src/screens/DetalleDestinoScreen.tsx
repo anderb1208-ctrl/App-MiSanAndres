@@ -29,7 +29,7 @@ import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
 import { creditoFoto, ETIQUETA_PRECIO, formatearHorario } from '../utils/contenido';
 import { horaEnColombia, horaMinutoEnColombia, hoyEnColombia } from '../utils/fecha';
-import { abrirComoLlegar } from '../utils/mapa';
+import { abrirUbicacion } from '../utils/mapa';
 import { NOTA_NIVEL } from '../utils/ocupacion';
 
 /** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
@@ -277,7 +277,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
           tamano="lg"
           icono="directions"
           style={styles.accion}
-          onPress={() => void abrirComoLlegar(d.latitud, d.longitud)}
+          onPress={() => abrirUbicacion(d.nombre, d.latitud, d.longitud)}
         >
           Cómo llegar
         </Button>

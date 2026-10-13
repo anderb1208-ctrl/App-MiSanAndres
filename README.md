@@ -259,7 +259,7 @@ La pestaña **Mapa** usa `react-native-maps`:
 | Android, en Expo Go | Google Maps | No necesita: Expo Go trae su propia configuración. |
 | Android, build propio (EAS) | Google Maps (`PROVIDER_GOOGLE`, solo en Android) | `GOOGLE_MAPS_API_KEY` |
 
-La configuración vive en `mobile/app.config.ts` (reemplaza a `app.json`). Lee la clave de `process.env.GOOGLE_MAPS_API_KEY` y la pasa al plugin de react-native-maps solo para Android. **La clave nunca se escribe en el repositorio.** El botón "Cómo llegar" del detalle abre `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG`, que no necesita clave.
+La configuración vive en `mobile/app.config.ts` (reemplaza a `app.json`). Lee la clave de `process.env.GOOGLE_MAPS_API_KEY` y la pasa al plugin de react-native-maps solo para Android. **La clave nunca se escribe en el repositorio.** El botón "Cómo llegar" del detalle abre la **ubicación** del destino (un pin con su nombre), no una ruta: en iPhone ofrece Apple Maps (`https://maps.apple.com/?ll=LAT,LNG&q=NOMBRE`) o Google Maps (enlace universal `https://www.google.com/maps/search/?api=1&query=LAT,LNG`, que abre la app o el navegador); en Android abre la app de mapas con `geo:LAT,LNG?q=LAT,LNG(NOMBRE)`. Ninguno necesita clave y todos funcionan en Expo Go.
 
 **Crear la clave (Google Cloud Console):**
 
