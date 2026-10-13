@@ -7,6 +7,7 @@ import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { IconButton } from '../components/IconButton';
 import { ImagenDestino } from '../components/ImagenDestino';
+import { MiniMapa } from '../components/MiniMapa';
 import { IndicadorOcupacion } from '../components/IndicadorOcupacion';
 import { OcupacionChart } from '../components/OcupacionChart';
 import { Overline } from '../components/ScreenHeader';
@@ -28,6 +29,7 @@ import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
 import { creditoFoto, ETIQUETA_PRECIO, formatearHorario } from '../utils/contenido';
 import { horaEnColombia, horaMinutoEnColombia, hoyEnColombia } from '../utils/fecha';
+import { abrirComoLlegar } from '../utils/mapa';
 import { NOTA_NIVEL } from '../utils/ocupacion';
 
 /** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
@@ -125,6 +127,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
   const credito = creditoFoto(d.imagen);
   const fuenteFoto = d.imagen?.fuente;
   const cerradoAhora = d.ocupacionActual?.estado === 'Cerrado';
+  const verEnMapa = () => navigation.navigate('Tabs', { screen: 'Mapa', params: { destinoId: d.id } });
   const recargarTodo = () => {
     destino.recargar();
     curva.recargar();
@@ -211,14 +214,19 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
             </>
           ) : null}
 
+          <Text style={styles.subtitulo}>Ubicación y cómo llegar</Text>
+          <MiniMapa
+            nombre={d.nombre}
+            categoria={d.categoria}
+            latitud={d.latitud}
+            longitud={d.longitud}
+            onPress={verEnMapa}
+          />
           {d.comoLlegar ? (
-            <>
-              <Text style={styles.subtitulo}>Cómo llegar</Text>
-              <View style={styles.comoLlegar}>
-                <Icon name="directions" size={22} color={colors.secondary} />
-                <Text style={[styles.descripcion, styles.comoLlegarTexto]}>{d.comoLlegar}</Text>
-              </View>
-            </>
+            <View style={[styles.comoLlegar, styles.comoLlegarSeparado]}>
+              <Icon name="directions" size={22} color={colors.secondary} />
+              <Text style={[styles.descripcion, styles.comoLlegarTexto]}>{d.comoLlegar}</Text>
+            </View>
           ) : null}
 
           {etiquetas.length > 0 && (
@@ -267,20 +275,14 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
       <View style={[styles.barraAcciones, shadows.lg, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
         <Button
           tamano="lg"
-          icono="map"
+          icono="directions"
           style={styles.accion}
-          onPress={() => navigation.navigate('Tabs', { screen: 'Mapa', params: { destinoId: d.id } })}
+          onPress={() => void abrirComoLlegar(d.latitud, d.longitud)}
         >
-          Ver ubicación
+          Cómo llegar
         </Button>
-        <Button
-          tamano="lg"
-          variante="glass"
-          icono="auto-awesome"
-          style={styles.accion}
-          onPress={() => navigation.navigate('Tabs', { screen: 'Inicio' })}
-        >
-          Para ti
+        <Button tamano="lg" variante="glass" icono="map" style={styles.accion} onPress={verEnMapa}>
+          Ver en el mapa
         </Button>
       </View>
     </View>
@@ -328,6 +330,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderCard,
   },
   comoLlegarTexto: { flex: 1 },
+  comoLlegarSeparado: { marginTop: spacing.sm },
   ocupacion: {
     marginTop: spacing.screen,
     padding: spacing.md,
