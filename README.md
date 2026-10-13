@@ -81,6 +81,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 │   │   ├── tests/               # Pruebas Jest + Supertest (modelos mockeados)
 │   │   ├── app.ts               # Configuración de Express
 │   │   └── server.ts            # Punto de entrada
+│   ├── public/destinos/         # Fotos de los destinos (servidas en /destinos/<slug>.jpg)
 │   ├── scripts/                 # Clima histórico y geolocalización de destinos (OSM)
 │   │   └── ubicaciones/         # destinos.json (entrada), ubicaciones.json y tierra.geojson (generados)
 │   └── requests.http            # Una petición de ejemplo por endpoint
@@ -180,6 +181,12 @@ Las ubicaciones se calculan con datos de **[OpenStreetMap](https://www.openstree
 2. Pulsa **Copiar correcciones** y guarda el texto como `correcciones.json` (o usa **Descargar JSON**).
 3. Aplica (desde `backend/`): `npm run ubicaciones:corregir -- ruta/correcciones.json`. Los destinos incluidos quedan como `manual` y verificados; genera la migración y actualiza el seed y la página. Rechaza puntos en el agua o fuera del cuadro.
 4. Aplica la migración en Supabase y comprueba con `npm run verificar:ubicaciones`, que falla si algún destino activo cae fuera de tierra o fuera del cuadro de San Andrés (`-- --local` revisa `ubicaciones.json` sin conectarse a la base).
+
+## Fotos de los destinos
+
+Las 30 fotos están en `backend/public/destinos/<slug>.jpg` (JPEG de ~1000 px) y el backend las sirve en `/destinos/<slug>.jpg` con caché de un día. `imagen_url` guarda la ruta relativa y la app la completa con `EXPO_PUBLIC_API_URL`. El detalle muestra "Foto: autor · licencia" o, para las imágenes de referencia con licencia *sin verificar*, "Imagen de referencia"; si una foto no carga, aparece el placeholder de la categoría. Créditos completos en `docs/creditos-imagenes.md`.
+
+**Reemplazar una foto:** sustituye el archivo en `backend/public/destinos/` por uno nuevo **con el mismo nombre** (JPEG, ~1000 px de ancho) y despliega el backend; no hace falta tocar la base. Luego actualiza el autor y la licencia (`backend/scripts/imagenes/creditos.json`, `docs/creditos-imagenes.md` y una migración para `imagen_autor`, `imagen_licencia` e `imagen_fuente`).
 
 ## Cómo ejecutar
 

@@ -72,7 +72,7 @@ insert into public.destino (
    'playa', 12.585246, -81.693270, 'North End, frente a la Avenida Colombia', 1500, 'abierto',
    '06:00', '19:00', 'Gratis',
    'Está en el centro (North End). Se llega caminando desde la mayoría de hoteles del centro por el paseo peatonal.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Playa_del_Centro_%288327400981%29.jpg/960px-Playa_del_Centro_%288327400981%29.jpg',
+   '/destinos/playa-spratt-bight.jpg',
    'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Playa_del_Centro_(8327400981).jpg'),
 
   ('Playa de San Luis',
@@ -80,7 +80,7 @@ insert into public.destino (
    'playa', 12.530005, -81.707701, 'Costa oriental, sector San Luis', 600, 'abierto',
    '06:00', '19:00', 'Gratis',
    'Por la vía circunvalar hacia el sur, unos 15 minutos desde el centro en taxi, bus o moto.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/San_Luis_%288321267521%29.jpg/960px-San_Luis_%288321267521%29.jpg',
+   '/destinos/playa-san-luis.jpg',
    'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:San_Luis_(8321267521).jpg'),
 
   ('Rocky Cay',
@@ -88,7 +88,7 @@ insert into public.destino (
    'playa', 12.543624, -81.703992, 'Costa oriental, sector San Luis, frente al cayo', 400, 'abierto',
    '06:00', '18:00', 'Gratis',
    'Por la vía circunvalar hacia San Luis, unos 15 minutos desde el centro; la playa queda junto a Cocoplum Bay.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Rocky_Cay_%288320969633%29.jpg/960px-Rocky_Cay_%288320969633%29.jpg',
+   '/destinos/rocky-cay.jpg',
    'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Rocky_Cay_(8320969633).jpg'),
 
   ('Playa de Sound Bay',
@@ -96,7 +96,8 @@ insert into public.destino (
    'playa', 12.516862, -81.714277, 'Costa oriental, sector Sound Bay, al sur de San Luis', 300, 'abierto',
    '06:00', '18:00', 'Gratis',
    'Por la vía circunvalar hacia el sur, pasando San Luis, unos 20 minutos desde el centro.',
-   null, null, null, null),
+   '/destinos/playa-sound-bay.jpg',
+   'Lyanishah Livingston O''Neill', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Enchanted_-_llO.jpg'),
 
   -- Cayos
   ('Johnny Cay',
@@ -104,7 +105,7 @@ insert into public.destino (
    'cayo', 12.599784, -81.690421, 'Frente a North End, a unos 15 minutos en lancha', 800, 'abierto',
    '09:00', '16:00', '$',
    'En lancha desde el muelle de North End. Normalmente se combina con El Acuario en el mismo tour.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Isla_Johnny_Cay.jpg/960px-Isla_Johnny_Cay.jpg',
+   '/destinos/johnny-cay.jpg',
    'EASLYHAKS', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Isla_Johnny_Cay.jpg'),
 
   ('El Acuario (Rose Cay)',
@@ -112,7 +113,7 @@ insert into public.destino (
    'cayo', 12.553161, -81.689049, 'Frente a San Luis, junto a Haynes Cay', 500, 'abierto',
    '09:00', '16:00', '$$',
    'En lancha desde el muelle de North End o desde San Luis, como parte del tour de cayos.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Acuario_de_San_Andr%C3%A9s_Islas.JPG/960px-Acuario_de_San_Andr%C3%A9s_Islas.JPG',
+   '/destinos/el-acuario.jpg',
    'Mr.Jhosimar', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Acuario_de_San_Andr%C3%A9s_Islas.JPG'),
 
   ('Haynes Cay',
@@ -120,7 +121,7 @@ insert into public.destino (
    'cayo', 12.550556, -81.689238, 'Frente a San Luis, junto a El Acuario', 300, 'abierto',
    '09:00', '16:00', '$$',
    'En lancha como parte del tour de cayos; desde El Acuario se puede cruzar caminando por el agua cuando la marea lo permite.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Haynes_cay_%28view_from_west%29.JPG/960px-Haynes_cay_%28view_from_west%29.JPG',
+   '/destinos/haynes-cay.jpg',
    'Milenioscuro', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Haynes_cay_(view_from_west).JPG'),
 
   -- Restaurantes
@@ -129,21 +130,24 @@ insert into public.destino (
    'gastronomia', 12.580267, -81.691796, 'North End, Avenida Newball', 120, 'abierto',
    '12:00', '22:30', '$$$',
    'En el centro (North End), sobre la Avenida Newball; se llega caminando desde los hoteles del centro.',
-   null, null, null, null),
+   '/destinos/la-regatta.jpg',
+   'Restaurante La Regatta (sitio oficial)', 'sin verificar', 'https://restaurantelaregatta.com/'),
 
   ('Miss Celia',
    'Restaurante de cocina isleña en una casa típica de madera, con platos como el rondón y mariscos.',
    'gastronomia', 12.581208, -81.691748, 'North End, Avenida Newball, frente al club náutico', 100, 'abierto',
    '12:00', '22:00', '$$',
    'En el centro (North End), sobre la Avenida Newball frente al club náutico.',
-   null, null, null, null),
+   '/destinos/miss-celia.jpg',
+   'sanandresislas.com.co', 'sin verificar', 'https://www.sanandresislas.com.co/restaurante-miss-celia-san-andres'),
 
   ('Donde Francesca',
    'Restaurante de playa en San Luis, conocido por sus mariscos y su ambiente frente al mar.',
    'gastronomia', 12.519852, -81.713905, 'Costa oriental, sector San Luis', 150, 'abierto',
    '11:00', '17:00', '$$',
    'Por la vía circunvalar hacia el sur, pasando San Luis, unos 20 minutos desde el centro.',
-   null, null, null, null),
+   '/destinos/donde-francesca.jpg',
+   'VisitSanAndres', 'sin verificar', 'https://visitsanandres.co/news/restaurante-donde-francesca'),
 
   -- Actividades
   ('West View',
@@ -151,7 +155,7 @@ insert into public.destino (
    'actividad', 12.520718, -81.729171, 'Costa occidental, sector El Cove', 250, 'abierto',
    '08:00', '17:00', '$',
    'Por la vía circunvalar hacia el occidente, unos 20 minutos desde el centro. Se paga entrada; alquilan equipo de snorkel.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/West_View_%288333619624%29.jpg/960px-West_View_%288333619624%29.jpg',
+   '/destinos/west-view.jpg',
    'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:West_View_(8333619624).jpg'),
 
   ('La Piscinita',
@@ -159,7 +163,7 @@ insert into public.destino (
    'actividad', 12.508634, -81.729559, 'Costa occidental, cerca de West View', 200, 'abierto',
    '08:00', '17:00', '$',
    'Por la vía circunvalar hacia el occidente, unos 20 minutos desde el centro. Se paga entrada; alquilan equipo de snorkel.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/San_Andres_Islas_La_Piscinita_-_panoramio.jpg/960px-San_Andres_Islas_La_Piscinita_-_panoramio.jpg',
+   '/destinos/la-piscinita.jpg',
    'adelmotrujillo (Panoramio)', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:San_Andres_Islas_La_Piscinita_-_panoramio.jpg'),
 
   ('Kayak en el Manglar de Old Point',
@@ -167,7 +171,8 @@ insert into public.destino (
    'actividad', 12.566000, -81.704000, 'Costa oriental, Parque Regional de Manglar Old Point', 60, 'abierto',
    '08:00', '16:00', '$$',
    'Por la vía circunvalar hacia San Luis, unos 10 minutos desde el centro. Los tours se reservan con operadores locales.',
-   null, null, null, null),
+   '/destinos/kayak-manglar-old-point.jpg',
+   'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Kayaking_in_San_Luis_(8330776002).jpg'),
 
   -- Naturaleza y cultura
   ('Hoyo Soplador',
@@ -175,7 +180,7 @@ insert into public.destino (
    'naturaleza', 12.481358, -81.731107, 'Extremo sur de la isla, vía circunvalar', 300, 'abierto',
    '07:00', '18:00', 'Gratis',
    'Por la vía circunvalar hasta el extremo sur, unos 30 minutos desde el centro. Es una parada habitual de la vuelta a la isla.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Hoyo_soplador%2C_San_Andres.jpg/960px-Hoyo_soplador%2C_San_Andres.jpg',
+   '/destinos/hoyo-soplador.jpg',
    'Denys', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Hoyo_soplador,_San_Andres.jpg'),
 
   ('Primera Iglesia Bautista',
@@ -183,7 +188,7 @@ insert into public.destino (
    'cultura', 12.561879, -81.716904, 'Sector La Loma, centro de la isla', 150, 'abierto',
    '08:00', '17:00', 'Gratis',
    'Subiendo a La Loma desde el centro o desde San Luis, unos 15 minutos en taxi o moto.',
-   'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/First_Baptist_church_on_The_Hill%2C_La_Loma.jpg/960px-First_Baptist_church_on_The_Hill%2C_La_Loma.jpg',
+   '/destinos/primera-iglesia-bautista.jpg',
    '...some guy (Flickr)', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:First_Baptist_church_on_The_Hill,_La_Loma.jpg'),
 
   -- ---- Destinos agregados en el prototipo (ids 16–30) ----
@@ -193,21 +198,24 @@ insert into public.destino (
    'playa', 12.542496, -81.707070, 'Costa oriental, sector San Luis, frente a Rocky Cay', 500, 'abierto',
    '06:00', '18:00', 'Gratis',
    'Por la vía circunvalar hacia San Luis, unos 15 minutos desde el centro en taxi, bus o moto.',
-   null, null, null, null),
+   '/destinos/cocoplum-bay.jpg',
+   'adelmotrujillo (Panoramio)', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:San_Andres_Islas_Colombia_-_panoramio_-_agosto_de_2010_(1).jpg'),
 
   ('Playa Los Charquitos',
    'Playa pequeña y tranquila a la orilla de la carretera, con pozos de agua (charquitos) que se forman entre las rocas con la marea baja; buena para niños y adultos mayores.',
    'playa', 12.480600, -81.728700, 'Extremo sur de la isla (South End), junto a la vía circunvalar', 200, 'abierto',
    '06:00', '18:00', 'Gratis',
    'Por la vía circunvalar hasta el extremo sur, unos 30 minutos desde el centro; queda cerca del Hoyo Soplador.',
-   null, null, null, null),
+   '/destinos/playa-los-charquitos.jpg',
+   'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Punta_Sur_(8330405067).jpg'),
 
   ('Bahía Sardina',
    'Playa urbana del sector oriental de North End, frente a los hoteles de la Avenida Colombia, con agua clara y poco profunda y vista hacia Johnny Cay.',
    'playa', 12.583335, -81.691070, 'North End, sector oriental de la Avenida Colombia', 600, 'abierto',
    '06:00', '19:00', 'Gratis',
    'En el centro (North End); se llega caminando por la Avenida Colombia desde la playa de Spratt Bight.',
-   null, null, null, null),
+   '/destinos/bahia-sardina.jpg',
+   'Joao Carlos Medau', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:San_Andres_Isla_(8303603057).jpg'),
 
   -- Cayos
   ('Cayo Bolívar',
@@ -215,7 +223,8 @@ insert into public.destino (
    'cayo', 12.399145, -81.475497, 'Cayos del Este-Sudeste (Courtown Cays), al sureste de la isla', 150, 'abierto',
    '09:00', '16:00', '$$$',
    'Tour de día completo en lancha o catamarán desde el muelle de North End, con reserva; solo sale con buen tiempo.',
-   null, null, null, null),
+   '/destinos/cayo-bolivar.jpg',
+   'Roberto San Andrés', 'CC0', 'https://commons.wikimedia.org/wiki/File:Bolivar_Key_-_Cayo_Bol%C3%ADvar,_San_Andres,_Colombia.JPG'),
 
   -- Restaurantes
   ('Fishermen''s Place',
@@ -223,21 +232,24 @@ insert into public.destino (
    'gastronomia', 12.590403, -81.700637, 'North End, extremo occidental de Spratt Bight, cerca del aeropuerto', 120, 'abierto',
    '12:00', '17:00', '$$',
    'En North End, caminando hacia el occidente por la playa de Spratt Bight, en dirección al aeropuerto.',
-   null, null, null, null),
+   '/destinos/fishermens-place.jpg',
+   'Jackca77', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Club_de_Pescadores_San_Andres,_Islas.jpg'),
 
   ('Gourmet Shop Assho',
    'Restaurante, tienda gourmet y vinoteca en el centro, con pastas, carnes y mariscos; ambiente tranquilo para cenar.',
    'gastronomia', 12.581517, -81.692729, 'North End, centro comercial de la isla', 80, 'abierto',
    '12:00', '22:00', '$$$',
    'En el centro (North End); se llega caminando desde los hoteles del centro.',
-   null, null, null, null),
+   '/destinos/gourmet-shop-assho.jpg',
+   'sanandresislas.com.co', 'sin verificar', 'https://www.sanandresislas.com.co/restaurante-gourmet-shop-assho-san-andres'),
 
   ('Capitán Mandy',
    'Restaurante de mariscos conocido por sus platos para compartir de langosta, cangrejo, camarón y pescado.',
    'gastronomia', 12.580954, -81.698561, 'North End, centro de la isla', 100, 'abierto',
    '12:00', '22:00', '$$',
    'En el centro (North End); se llega caminando o en taxi desde los hoteles del centro.',
-   null, null, null, null),
+   '/destinos/capitan-mandy.jpg',
+   'sanandresislas.com.co', 'sin verificar', 'https://www.sanandresislas.com.co/restaurante-capitan-mandy-san-andres'),
 
   -- Actividades
   ('Paseo en semisubmarino',
@@ -245,28 +257,32 @@ insert into public.destino (
    'actividad', 12.580118, -81.690372, 'Muelle Casa de la Cultura, North End', 60, 'abierto',
    '10:00', '17:00', '$$',
    'Salidas desde el muelle de la Casa de la Cultura (North End), con reserva. Normalmente hay una salida en la mañana y otra en la tarde.',
-   null, null, null, null),
+   '/destinos/paseo-semisubmarino.jpg',
+   'sanandres.travel', 'sin verificar', 'https://sanandres.travel/tour/semisubmarino'),
 
   ('Aquanautas (caminata submarina)',
    'Caminata por el fondo del mar a unos 6 m de profundidad con un casco que permite respirar normalmente, acompañado por un instructor; no hace falta saber nadar.',
    'actividad', 12.520692, -81.729055, 'Costa occidental, sector West View (El Cove)', 30, 'abierto',
    '09:00', '16:00', '$$$',
    'Por la vía circunvalar hacia el occidente, unos 20 minutos desde el centro, junto a West View. Con reserva; edad mínima 12 años.',
-   null, null, null, null),
+   '/destinos/aquanautas.jpg',
+   'Aquanautas (sitio oficial)', 'sin verificar', 'https://aqua-nautas.com/'),
 
   ('Buceo con Karibik Diver',
    'Centro de buceo de North End con inmersiones guiadas en los arrecifes de la isla, bautizos para principiantes y cursos de certificación.',
    'actividad', 12.580288, -81.690093, 'North End, cerca del muelle de la Casa de la Cultura', 40, 'abierto',
    '08:00', '17:00', '$$$',
    'En el centro (North End). Las inmersiones salen en lancha; se reservan con un día de anticipación.',
-   null, null, null, null),
+   '/destinos/buceo-karibik-diver.jpg',
+   'Andrés Dagnone', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Escuela_YoBuceo_en_San_Andr%C3%A9s.jpg'),
 
   ('Vuelta a la isla',
    'Recorrido por la vía circunvalar (unos 30 km) en carrito de golf alquilado o en chiva, con paradas en West View, la Cueva de Morgan, el Hoyo Soplador y San Luis.',
    'actividad', 12.582200, -81.695500, 'North End, alquiler de carritos sobre la Avenida Colombia', 200, 'abierto',
    '08:00', '18:00', '$$',
    'Los carritos de golf se alquilan por horas en North End; las chivas recogen en los hoteles. Toma medio día con paradas.',
-   null, null, null, null),
+   '/destinos/vuelta-a-la-isla.jpg',
+   'Aliman5040', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Carretera_del_litoral_en_San_Andr%C3%A9s.JPG'),
 
   -- Naturaleza
   ('Laguna Big Pond',
@@ -274,14 +290,16 @@ insert into public.destino (
    'naturaleza', 12.548054, -81.719180, 'Sector La Loma, interior de la isla (Vía Big Pond)', 100, 'abierto',
    '08:00', '17:00', '$',
    'Subiendo a La Loma desde el centro o desde San Luis, unos 15 minutos en taxi o moto; está en la Vía Big Pond.',
-   null, null, null, null),
+   '/destinos/laguna-big-pond.jpg',
+   'Jackca77', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Laguna_de_Big_Pong.jpg'),
 
   ('Jardín Botánico de San Andrés',
    'Jardín botánico de la Universidad Nacional (sede Caribe) con senderos entre plantas nativas de las islas y un mirador.',
    'naturaleza', 12.537151, -81.711551, 'Sector San Luis, vía a La Loma', 100, 'abierto',
    '08:00', '17:00', '$',
    'Por la vía circunvalar hacia San Luis y luego subiendo hacia La Loma, unos 15 minutos desde el centro.',
-   null, null, null, null),
+   '/destinos/jardin-botanico.jpg',
+   'Universidad Nacional de Colombia', 'sin verificar', 'https://circular.unal.edu.co/museo-detalle/jardin-botanico-de-san-andres'),
 
   -- Cultura
   ('Cueva de Morgan',
@@ -289,14 +307,16 @@ insert into public.destino (
    'cultura', 12.542459, -81.729628, 'Costa occidental, vía circunvalar', 300, 'abierto',
    '09:00', '17:00', '$$',
    'Por la vía circunvalar hacia el occidente, unos 20 minutos desde el centro. Es parada habitual de la vuelta a la isla.',
-   null, null, null, null),
+   '/destinos/cueva-de-morgan.jpg',
+   'HaseyJDBS', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Cueva_de_Morgan.jpg'),
 
   ('Casa Museo Isleña',
    'Réplica de una casa tradicional isleña de madera donde guías cuentan la historia y las costumbres de la cultura raizal.',
    'cultura', 12.560124, -81.729008, 'Costa occidental, vía circunvalar', 80, 'abierto',
    '09:00', '17:00', '$',
    'Por la vía circunvalar hacia el occidente, unos 15 minutos desde el centro. Es parada habitual de la vuelta a la isla.',
-   null, null, null, null);
+   '/destinos/casa-museo-islena.jpg',
+   'Mario Carvajal', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Casa_Museo_Isle%C3%B1a.jpg');
 
 -- <ubicaciones> (generado por backend/scripts/ubicaciones; no editar a mano)
 -- Punto de acceso (en tierra), origen y revisión de las coordenadas.

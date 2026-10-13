@@ -126,3 +126,10 @@ Authorization: Bearer {{token}}
 
 ### Sin token → 401
 GET {{baseUrl}}/recomendaciones
+
+### ---------------------------------------------------------------
+### Fotos de los destinos (archivos estáticos, fuera de /v1)
+### ---------------------------------------------------------------
+
+### Foto de un destino (imagen_url = /destinos/<slug>.jpg)
+GET http://localhost:3000/destinos/johnny-cay.jpg

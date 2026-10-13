@@ -26,7 +26,7 @@ Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.docx`) y la 
 | longitud | DECIMAL(11,8) | NUMERIC(9,6), CHECK entre -180 y 180 | Ídem. |
 | estado | VARCHAR(20) (ej: Activo, Inactivo) | Enum `estado_destino`: abierto, cerrado_temporal, inactivo | Se agrega el cierre temporal (mantenimiento, clima, veda). |
 | descripcion | — | **Nuevo**: TEXT | Lo muestra la pantalla de Detalle del destino. |
-| imagen_url | — | **Nuevo**: TEXT | Imagen de la tarjeta y del detalle. |
+| imagen_url | — | **Nuevo**: TEXT | Imagen de la tarjeta y del detalle. En el prototipo guarda la ruta relativa de la foto que sirve el backend (`/destinos/<slug>.jpg`, archivos en `backend/public/destinos/`); la app la completa con la URL del backend. |
 | horario_apertura, horario_cierre | — | **Nuevo** (prototipo): TIME, opcionales; van juntos y apertura < cierre | Mostrar el horario y que la predicción responda "Cerrado" fuera de él. |
 | rango_precio | — | **Nuevo** (prototipo): enum `rango_precio` (Gratis, $, $$, $$$), opcional | Orientar al turista sobre el costo. |
 | como_llegar | — | **Nuevo** (prototipo): TEXT, opcional | Indicaciones en el detalle. |
@@ -34,7 +34,7 @@ Diferencias entre el documento de diseño (`Entregable2_MiSanAndres.docx`) y la 
 | ubicacion_fuente | — | **Nuevo** (prototipo): enum `ubicacion_fuente` (osm, manual, aproximada), NOT NULL, default `aproximada` | Saber de dónde salen las coordenadas (sección 13). |
 | ubicacion_verificada | — | **Nuevo** (prototipo): BOOLEAN, NOT NULL, default `false` | Distinguir los puntos que una persona ya revisó. |
 
-Las fotos propias se suben al bucket público `destinos` de Supabase Storage (lectura pública, sin escritura desde la app).
+Las fotos se sirven desde el backend como archivos estáticos (`GET /destinos/<slug>.jpg`, fuera de `/v1`, con caché de un día); para reemplazar una basta con sustituir el archivo con el mismo nombre. El bucket público `destinos` de Supabase Storage sigue disponible (lectura pública, sin escritura desde la app). Las imágenes con `imagen_licencia = 'sin verificar'` son de referencia y la app las rotula "Imagen de referencia".
 
 ## 3. Tablas que el diccionario de datos no detalla
 

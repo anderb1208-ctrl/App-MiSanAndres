@@ -15,8 +15,11 @@ const faltantes = [
 /** Variables que faltan en mobile/.env (la app muestra un aviso si hay alguna). */
 export const variablesFaltantes = faltantes;
 
+/** Origen del backend (sin /v1 ni barra final); sirve también los archivos estáticos. */
+export const API_ORIGEN = (apiUrl ?? '').replace(/\/+$/, '').replace(/\/v1$/, '');
+
 /** Base de la API con /v1, acepte o no el .env la barra final o el /v1. */
-export const API_BASE_URL = `${(apiUrl ?? '').replace(/\/+$/, '').replace(/\/v1$/, '')}/v1`;
+export const API_BASE_URL = `${API_ORIGEN}/v1`;
 
 export const SUPABASE_URL = supabaseUrl ?? '';
 export const SUPABASE_PUBLISHABLE_KEY = supabasePublishableKey ?? '';

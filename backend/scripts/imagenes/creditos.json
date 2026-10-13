@@ -1,0 +1,272 @@
+[
+  {
+    "nombre": "Playa de Spratt Bight",
+    "slug": "playa-spratt-bight",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Playa_del_Centro_(8327400981).jpg",
+    "nota": null,
+    "archivo": "destinos/playa-spratt-bight.jpg"
+  },
+  {
+    "nombre": "Playa de San Luis",
+    "slug": "playa-san-luis",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:San_Luis_(8321267521).jpg",
+    "nota": null,
+    "archivo": "destinos/playa-san-luis.jpg"
+  },
+  {
+    "nombre": "Rocky Cay",
+    "slug": "rocky-cay",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Rocky_Cay_(8320969633).jpg",
+    "nota": null,
+    "archivo": "destinos/rocky-cay.jpg"
+  },
+  {
+    "nombre": "Playa de Sound Bay",
+    "slug": "playa-sound-bay",
+    "autor": "Lyanishah Livingston O'Neill",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Enchanted_-_llO.jpg",
+    "nota": "Tomada en el acceso de Sound Bay (coordenadas de la foto); día nublado",
+    "archivo": "destinos/playa-sound-bay.jpg"
+  },
+  {
+    "nombre": "Johnny Cay",
+    "slug": "johnny-cay",
+    "autor": "EASLYHAKS",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Isla_Johnny_Cay.jpg",
+    "nota": null,
+    "archivo": "destinos/johnny-cay.jpg"
+  },
+  {
+    "nombre": "El Acuario (Rose Cay)",
+    "slug": "el-acuario",
+    "autor": "Mr.Jhosimar",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Acuario_de_San_Andr%C3%A9s_Islas.JPG",
+    "nota": null,
+    "archivo": "destinos/el-acuario.jpg"
+  },
+  {
+    "nombre": "Haynes Cay",
+    "slug": "haynes-cay",
+    "autor": "Milenioscuro",
+    "licencia": "CC BY-SA 3.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Haynes_cay_(view_from_west).JPG",
+    "nota": null,
+    "archivo": "destinos/haynes-cay.jpg"
+  },
+  {
+    "nombre": "La Regatta",
+    "slug": "la-regatta",
+    "autor": "Restaurante La Regatta (sitio oficial)",
+    "licencia": "sin verificar",
+    "fuente": "https://restaurantelaregatta.com/",
+    "nota": null,
+    "archivo": "destinos/la-regatta.jpg"
+  },
+  {
+    "nombre": "Miss Celia",
+    "slug": "miss-celia",
+    "autor": "sanandresislas.com.co",
+    "licencia": "sin verificar",
+    "fuente": "https://www.sanandresislas.com.co/restaurante-miss-celia-san-andres",
+    "nota": null,
+    "archivo": "destinos/miss-celia.jpg"
+  },
+  {
+    "nombre": "Donde Francesca",
+    "slug": "donde-francesca",
+    "autor": "VisitSanAndres",
+    "licencia": "sin verificar",
+    "fuente": "https://visitsanandres.co/news/restaurante-donde-francesca",
+    "nota": null,
+    "archivo": "destinos/donde-francesca.jpg"
+  },
+  {
+    "nombre": "West View",
+    "slug": "west-view",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:West_View_(8333619624).jpg",
+    "nota": null,
+    "archivo": "destinos/west-view.jpg"
+  },
+  {
+    "nombre": "La Piscinita",
+    "slug": "la-piscinita",
+    "autor": "adelmotrujillo (Panoramio)",
+    "licencia": "CC BY-SA 3.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:San_Andres_Islas_La_Piscinita_-_panoramio.jpg",
+    "nota": null,
+    "archivo": "destinos/la-piscinita.jpg"
+  },
+  {
+    "nombre": "Kayak en el Manglar de Old Point",
+    "slug": "kayak-manglar-old-point",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Kayaking_in_San_Luis_(8330776002).jpg",
+    "nota": "Kayak en el mar de San Luis, no en el manglar",
+    "archivo": "destinos/kayak-manglar-old-point.jpg"
+  },
+  {
+    "nombre": "Hoyo Soplador",
+    "slug": "hoyo-soplador",
+    "autor": "Denys",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Hoyo_soplador,_San_Andres.jpg",
+    "nota": null,
+    "archivo": "destinos/hoyo-soplador.jpg"
+  },
+  {
+    "nombre": "Primera Iglesia Bautista",
+    "slug": "primera-iglesia-bautista",
+    "autor": "...some guy (Flickr)",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:First_Baptist_church_on_The_Hill,_La_Loma.jpg",
+    "nota": null,
+    "archivo": "destinos/primera-iglesia-bautista.jpg"
+  },
+  {
+    "nombre": "Cocoplum Bay",
+    "slug": "cocoplum-bay",
+    "autor": "adelmotrujillo (Panoramio)",
+    "licencia": "CC BY-SA 3.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:San_Andres_Islas_Colombia_-_panoramio_-_agosto_de_2010_(1).jpg",
+    "nota": "Tomada en el extremo norte de la playa (junto a Rocky Cay)",
+    "archivo": "destinos/cocoplum-bay.jpg"
+  },
+  {
+    "nombre": "Playa Los Charquitos",
+    "slug": "playa-los-charquitos",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Punta_Sur_(8330405067).jpg",
+    "nota": "Punta Sur (South End), la zona de la playa; no se confirma que sea exactamente Los Charquitos",
+    "archivo": "destinos/playa-los-charquitos.jpg"
+  },
+  {
+    "nombre": "Bahía Sardina",
+    "slug": "bahia-sardina",
+    "autor": "Joao Carlos Medau",
+    "licencia": "CC BY 2.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:San_Andres_Isla_(8303603057).jpg",
+    "nota": null,
+    "archivo": "destinos/bahia-sardina.jpg"
+  },
+  {
+    "nombre": "Cayo Bolívar",
+    "slug": "cayo-bolivar",
+    "autor": "Roberto San Andrés",
+    "licencia": "CC0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Bolivar_Key_-_Cayo_Bol%C3%ADvar,_San_Andres,_Colombia.JPG",
+    "nota": null,
+    "archivo": "destinos/cayo-bolivar.jpg"
+  },
+  {
+    "nombre": "Fishermen's Place",
+    "slug": "fishermens-place",
+    "autor": "Jackca77",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Club_de_Pescadores_San_Andres,_Islas.jpg",
+    "nota": "Lanchas del club de pescadores en la playa; no muestra el restaurante",
+    "archivo": "destinos/fishermens-place.jpg"
+  },
+  {
+    "nombre": "Gourmet Shop Assho",
+    "slug": "gourmet-shop-assho",
+    "autor": "sanandresislas.com.co",
+    "licencia": "sin verificar",
+    "fuente": "https://www.sanandresislas.com.co/restaurante-gourmet-shop-assho-san-andres",
+    "nota": null,
+    "archivo": "destinos/gourmet-shop-assho.jpg"
+  },
+  {
+    "nombre": "Capitán Mandy",
+    "slug": "capitan-mandy",
+    "autor": "sanandresislas.com.co",
+    "licencia": "sin verificar",
+    "fuente": "https://www.sanandresislas.com.co/restaurante-capitan-mandy-san-andres",
+    "nota": null,
+    "archivo": "destinos/capitan-mandy.jpg"
+  },
+  {
+    "nombre": "Paseo en semisubmarino",
+    "slug": "paseo-semisubmarino",
+    "autor": "sanandres.travel",
+    "licencia": "sin verificar",
+    "fuente": "https://sanandres.travel/tour/semisubmarino",
+    "nota": "Resolución baja (480 px)",
+    "archivo": "destinos/paseo-semisubmarino.jpg"
+  },
+  {
+    "nombre": "Aquanautas (caminata submarina)",
+    "slug": "aquanautas",
+    "autor": "Aquanautas (sitio oficial)",
+    "licencia": "sin verificar",
+    "fuente": "https://aqua-nautas.com/",
+    "nota": null,
+    "archivo": "destinos/aquanautas.jpg"
+  },
+  {
+    "nombre": "Buceo con Karibik Diver",
+    "slug": "buceo-karibik-diver",
+    "autor": "Andrés Dagnone",
+    "licencia": "CC BY-SA 3.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Escuela_YoBuceo_en_San_Andr%C3%A9s.jpg",
+    "nota": "Buceo en un naufragio de San Andrés con otra escuela; no es de Karibik Diver",
+    "archivo": "destinos/buceo-karibik-diver.jpg"
+  },
+  {
+    "nombre": "Vuelta a la isla",
+    "slug": "vuelta-a-la-isla",
+    "autor": "Aliman5040",
+    "licencia": "CC BY-SA 3.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Carretera_del_litoral_en_San_Andr%C3%A9s.JPG",
+    "nota": null,
+    "archivo": "destinos/vuelta-a-la-isla.jpg"
+  },
+  {
+    "nombre": "Laguna Big Pond",
+    "slug": "laguna-big-pond",
+    "autor": "Jackca77",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Laguna_de_Big_Pong.jpg",
+    "nota": null,
+    "archivo": "destinos/laguna-big-pond.jpg"
+  },
+  {
+    "nombre": "Jardín Botánico de San Andrés",
+    "slug": "jardin-botanico",
+    "autor": "Universidad Nacional de Colombia",
+    "licencia": "sin verificar",
+    "fuente": "https://circular.unal.edu.co/museo-detalle/jardin-botanico-de-san-andres",
+    "nota": "Resolución baja (700 px)",
+    "archivo": "destinos/jardin-botanico.jpg"
+  },
+  {
+    "nombre": "Cueva de Morgan",
+    "slug": "cueva-de-morgan",
+    "autor": "HaseyJDBS",
+    "licencia": "CC BY-SA 4.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Cueva_de_Morgan.jpg",
+    "nota": null,
+    "archivo": "destinos/cueva-de-morgan.jpg"
+  },
+  {
+    "nombre": "Casa Museo Isleña",
+    "slug": "casa-museo-islena",
+    "autor": "Mario Carvajal",
+    "licencia": "CC BY 3.0",
+    "fuente": "https://commons.wikimedia.org/wiki/File:Casa_Museo_Isle%C3%B1a.jpg",
+    "nota": null,
+    "archivo": "destinos/casa-museo-islena.jpg"
+  }
+]

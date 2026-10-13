@@ -66,7 +66,8 @@ Punto de acceso de cada destino (siempre en tierra; ver la convención en `docs/
 | Aquanautas | 09:00–16:00, pausa 12:00–14:00 | Según su web: turnos 9:00–12:00 y 14:00–16:00, con reserva. |
 | Buceo con Karibik Diver | 08:00–17:00 | Estimado. |
 | Vuelta a la isla | 08:00–18:00 | Horario referencial del alquiler de carritos y de las chivas. |
-| Laguna Big Pond, Jardín Botánico | 08:00–17:00 | Estimado. |
+| Laguna Big Pond | 08:00–17:00 | Estimado. |
+| Jardín Botánico | 08:00–17:00 | Según sanandresislas.com.co: martes a sábado 9:00–12:00 y 14:00–16:30; domingos y festivos 10:00–12:00 y 14:00–16:30; cerrado los lunes. Ajustar el horario cargado (el esquema guarda un solo intervalo). |
 | Cueva de Morgan, Casa Museo Isleña | 09:00–17:00 | Estimado. |
 
 ## Rangos de precio
