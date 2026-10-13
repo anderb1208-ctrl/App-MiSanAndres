@@ -119,6 +119,15 @@ export const placeholderColors = {
   buceo_snorkel: ['#b3ebff', '#005c70'],
 } as const;
 
+/** Marcadores del mapa que no son un nivel de ocupación. */
+export const mapColors = {
+  /** Destino cerrado a esta hora (gris neutro, nunca un color de ocupación). */
+  cerrado: palette.neutral500,
+  /** Sin datos para predecir. */
+  sinDatos: palette.navy800,
+  borde: palette.white,
+} as const;
+
 /**
  * Espectro de ocupación: reservado para Bajo / Medio / Alto.
  * Nunca se usa para otros significados ni se muestra sin la palabra.

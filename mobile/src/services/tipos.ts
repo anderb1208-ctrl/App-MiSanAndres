@@ -146,6 +146,29 @@ export interface Recomendacion extends Destino {
   razon: string;
 }
 
+// ---- Mapa ----
+
+/** Lo que necesitan el indicador y el marcador para pintar la ocupación. */
+export type OcupacionResumida = Pick<OcupacionActual, 'estado' | 'porcentaje' | 'nivel'>;
+
+export interface DestinoMapa {
+  id: number;
+  nombre: string;
+  categoria: CategoriaDestino;
+  latitud: number;
+  longitud: number;
+  imagenUrl: string | null;
+  /** null si no hay historial para predecir. */
+  ocupacion: OcupacionResumida | null;
+}
+
+export interface DatosMapa {
+  fecha: string;
+  hora: string;
+  motivoSinClima: MotivoSinClima | null;
+  destinos: DestinoMapa[];
+}
+
 // ---- Clima (Open-Meteo, CC BY 4.0) ----
 
 /** Clima de una hora. Cualquier valor puede faltar. */

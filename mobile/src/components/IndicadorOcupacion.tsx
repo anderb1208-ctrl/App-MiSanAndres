@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
-import type { OcupacionActual } from '../services/tipos';
+import type { OcupacionResumida } from '../services/tipos';
 import { colors, occupancyColors, radius, spacing, typography } from '../theme';
 import { ADJETIVO_NIVEL, ETIQUETA_NIVEL, formatearPorcentaje } from '../utils/ocupacion';
 import { Icon } from './Icon';
 
 interface Props {
-  ocupacion: OcupacionActual | null;
+  /** La ocupación completa (OcupacionActual) o la resumida del mapa. */
+  ocupacion: (OcupacionResumida & { personasEstimadas?: number }) | null;
   /** badge: píldora compacta; barra: detalle con porcentaje y aforo estimado. */
   variante?: 'badge' | 'barra';
   mostrarPorcentaje?: boolean;
@@ -81,7 +82,7 @@ export function IndicadorOcupacion({ ocupacion, variante = 'badge', mostrarPorce
       <View style={styles.pista}>
         <View style={[styles.relleno, { width: ancho, backgroundColor: c.main }]} />
       </View>
-      {capacidad !== undefined && (
+      {capacidad !== undefined && ocupacion.personasEstimadas !== undefined && (
         <Text style={styles.aforo}>
           Aforo estimado: {ocupacion.personasEstimadas} de {capacidad} personas
         </Text>
