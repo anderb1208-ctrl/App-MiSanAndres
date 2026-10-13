@@ -35,6 +35,8 @@ export const ICONOS_PREFERENCIA: Record<string, NombreIcono> = {
   cultural: 'account-balance',
   fotografia: 'photo-camera',
   gastronomica: 'restaurant-menu',
+  acuatica: 'scuba-diving',
+  ecologica: 'park',
   solo: 'person',
   pareja: 'people',
   familia_ninos: 'child-friendly',

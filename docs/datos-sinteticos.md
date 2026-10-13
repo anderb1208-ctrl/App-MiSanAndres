@@ -24,8 +24,8 @@ limitado a 100 %. Fuera del horario del destino la ocupación es 0. `cantidad_pe
 | --- | --- |
 | Curva por categoría | Playas: pico al mediodía. Cayos: solo de 9 a 16 (horario de las lanchas). Restaurantes: picos al almuerzo (12–14) y a la cena (19–21). Actividades: mañana y comienzo de la tarde. Naturaleza: todo el día, suave. Cultura: mañana y media tarde. |
 | Día de la semana | Viernes ×1,10; sábado ×1,30; domingo ×1,25; lunes a jueves ×1,00. |
-| Popularidad | Factor por destino entre 0,50 (Primera Iglesia Bautista) y 1,10 (Johnny Cay, La Regatta), según la fama del lugar. No se midió. |
-| Pausa | La Regatta cierra de 15:00 a 18:30: ocupación 0 en esas horas. |
+| Popularidad | Factor por destino entre 0,45 (Playa Los Charquitos, Jardín Botánico) y 1,10 (Johnny Cay, La Regatta), según la fama del lugar. No se midió. |
+| Pausa | La Regatta cierra de 15:00 a 18:30; el semisubmarino no tiene salidas de 12:00 a 15:00 y Aquanautas para de 12:00 a 14:00: ocupación 0 en esas horas. |
 | Clima | Si a esa hora hubo **tormenta** (código WMO 95, 96 o 99) o **lluvia** (probabilidad ≥ 60 % o ≥ 0,5 mm), se multiplica por: |
 
 | Categoría | Lluvia | Tormenta |
@@ -55,6 +55,13 @@ Los factores de la **predicción** (`config/factoresPrediccion.ts`) son más sua
 4. Volver a correr `supabase/seed.sql` para que la ocupación responda al clima. El seed respalda `clima_hora` antes de vaciar las tablas y lo restaura después (por nombre de destino), así que el clima no se pierde.
 
 > ⚠️ El seed vacía también las preferencias e interacciones de todos los usuarios. Para regenerar solo la ocupación, ejecutar únicamente su último bloque precedido de `delete from public.ocupacion;`.
+
+### Destinos agregados en una base que ya tiene datos
+
+La base de Supabase la comparte el backend desplegado, así que los 15 destinos del prototipo (ids 16–30) no se cargaron con el seed sino con la migración aditiva `20261014120000_destinos_nuevos.sql`. Para ellos:
+
+- **Ocupación**: se generó con el último bloque del seed agregando `where not exists (select 1 from public.ocupacion o where o.id_destino = d.id_destino)`, que solo llena los destinos sin historial y no toca los demás.
+- **Clima**: en la base se copió provisionalmente el clima del destino existente con la misma serie de Open-Meteo (o del más cercano para Playa Los Charquitos, Cayo Bolívar, Laguna Big Pond, Jardín Botánico y Cueva de Morgan). Los valores exactos de cada destino están en `supabase/clima_hora.sql` (regenerado para los 30); ejecutarlo en el editor SQL de Supabase los reemplaza sin borrar nada (`on conflict … do update`).
 
 ## Para el modelo de ML
 

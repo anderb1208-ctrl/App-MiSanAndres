@@ -38,6 +38,17 @@ Convenciones: coordenadas en grados decimales (latitud, longitud); horarios en h
 | Kayak en Old Point | 08:00–16:00 | Estimado: los tours salen con reserva. |
 | Hoyo Soplador | 07:00–18:00 | Lugar abierto; horario referencial (luz de día). |
 | Primera Iglesia Bautista | 08:00–17:00 | Estimado: confirmar horario de visitas. |
+| Cocoplum Bay, Playa Los Charquitos | 06:00–18:00 | Acceso libre; horario referencial. |
+| Bahía Sardina | 06:00–19:00 | Acceso libre; horario referencial (igual que Spratt Bight). |
+| Cayo Bolívar | 09:00–16:00 | Tour de día completo; confirmar horas de salida y regreso con los operadores. |
+| Fishermen's Place | 12:00–17:00 | Estimado: se conoce como lugar de almuerzo. Confirmar si abre en la noche. |
+| Gourmet Shop Assho, Capitán Mandy | 12:00–22:00 | Estimado. |
+| Paseo en semisubmarino | 10:00–17:00, sin salidas de 12:00 a 15:00 | Según operadores en la web: salidas a las 10:00 y a las 15:00 (~1 h 30 min). La pausa se refleja con ocupación 0 en el seed. |
+| Aquanautas | 09:00–16:00, pausa 12:00–14:00 | Según su web: turnos 9:00–12:00 y 14:00–16:00, con reserva. |
+| Buceo con Karibik Diver | 08:00–17:00 | Estimado. |
+| Vuelta a la isla | 08:00–18:00 | Horario referencial del alquiler de carritos y de las chivas. |
+| Laguna Big Pond, Jardín Botánico | 08:00–17:00 | Estimado. |
+| Cueva de Morgan, Casa Museo Isleña | 09:00–17:00 | Estimado. |
 
 ## Rangos de precio
 
@@ -51,6 +62,13 @@ Convenciones: coordenadas en grados decimales (latitud, longitud); horarios en h
 | Miss Celia, Donde Francesca | $$ | |
 | Primera Iglesia Bautista | Gratis | Confirmar si cobran por subir a la torre o piden aporte. |
 | Playas, Hoyo Soplador | Gratis | |
+| Cayo Bolívar | $$$ | Tour de día completo con almuerzo; confirmar precio. |
+| Fishermen's Place, Capitán Mandy | $$ | |
+| Gourmet Shop Assho | $$$ | |
+| Paseo en semisubmarino, Vuelta a la isla | $$ | La vuelta a la isla depende de si es en carrito (por horas) o en chiva (por persona). |
+| Aquanautas, Buceo con Karibik Diver | $$$ | |
+| Laguna Big Pond, Jardín Botánico, Casa Museo Isleña | $ | Confirmar si cobran entrada o piden aporte voluntario. |
+| Cueva de Morgan | $$ | Entrada al parque temático. |
 
 ## Otros datos
 
@@ -58,3 +76,9 @@ Convenciones: coordenadas en grados decimales (latitud, longitud); horarios en h
 - **Primera Iglesia Bautista**: la descripción dice "fundada en 1844"; confirmar el año.
 - **Haynes Cay**: la descripción menciona que en sus alrededores se suelen ver mantarrayas.
 - **Cómo llegar**: los tiempos de viaje desde el centro son aproximados.
+- **Cayo Bolívar**: está a unos 30 km al sureste de la isla (Cayos del Este-Sudeste / Courtown Cays); no es tan cercano como Johnny Cay o El Acuario, pero se visita en tours de día desde San Andrés. El tiempo de viaje en lancha varía con el mar: confirmarlo antes de mostrarlo en la app.
+- **Playa Los Charquitos**: las fuentes web la ubican en el extremo sur (South End); OpenStreetMap no tiene una playa con ese nombre. Confirmar el punto exacto.
+- **Laguna Big Pond**: la descripción menciona babillas y tortugas (según guías turísticas); confirmar.
+- **Jardín Botánico de San Andrés**: confirmar el mirador y si se visita con guía o reserva.
+- **Buceo con Karibik Diver**: en OpenStreetMap aparece como "Karibik Diving"; confirmar el nombre comercial.
+- **Aquanautas**: según su web, edad mínima de 12 años (o 1,45 m de estatura) y unos 25 minutos bajo el agua.
