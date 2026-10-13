@@ -21,7 +21,8 @@ beforeEach(() => {
   ocupacionM.promedioPorHora.mockResolvedValue(promediosHora);
 });
 
-const porId = (body: { destinos: { id: number }[] }, id: number) => body.destinos.find((d) => d.id === id);
+const porId = (body: { destinos: { id: number; ocupacion: unknown }[] }, id: number) =>
+  body.destinos.find((d) => d.id === id);
 
 describe('GET /v1/mapa', () => {
   it('devuelve todos los destinos con coordenadas y la ocupación de ahora en una sola respuesta', async () => {
