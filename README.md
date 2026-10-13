@@ -61,7 +61,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 | Pruebas | Jest + Supertest (backend) |
 | Despliegue | Render (backend) |
 | Machine Learning *(fase posterior)* | Python + Scikit-learn (Random Forest Regressor) |
-| Mapas *(fase posterior)* | Google Maps Platform. En el MVP la pestaña Mapa muestra una lista con la ubicación en texto. |
+| Mapas | react-native-maps: Apple Maps en iPhone (sin clave) y Google Maps en Android. expo-location para la ubicación del usuario. |
 
 ## Estructura del repositorio
 
@@ -118,6 +118,7 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 | GET | `/destinos/:id` | Detalle de un destino |
 | GET | `/destinos/:id/clima?horas=` | Clima actual y de las próximas horas en el destino |
 | GET | `/clima?horas=` | Clima del centro de la isla |
+| GET | `/mapa` | Todos los destinos con coordenadas, foto y ocupación de ahora, en una sola llamada |
 | GET | `/ocupacion/:destinoId?fecha=` | Registros de ocupación de un día |
 | GET | `/ocupacion/:destinoId/prediccion?fecha=&hora=` | Predicción para una fecha y hora, con el clima usado y los factores aplicados |
 | GET | `/ocupacion/:destinoId/prediccion/dia?fecha=` | Ocupación típica por hora de ese día de la semana |
@@ -209,13 +210,47 @@ Variables de `mobile/.env` (ver `mobile/.env.example`):
 | `EXPO_PUBLIC_API_URL` | `http://<IP-del-PC>:3000`, **no** `localhost` (en el celular, localhost es el propio celular) |
 | `EXPO_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key. La secret / service role key nunca va en la app. |
+| `GOOGLE_MAPS_API_KEY` | Opcional. Clave de Google Maps SDK for Android, solo para builds propios de Android (ver [Mapa](#mapa)). Vacía en desarrollo con Expo Go. |
 
 3. Escanea el código QR con Expo Go (Android) o con la cámara (iOS).
 4. Si cambias el `.env`, reinicia con `npx expo start --clear`.
 
 Verificación de tipos: `npm run typecheck`.
 
+### Mapa
+
+La pestaña **Mapa** usa `react-native-maps`:
+
+| Plataforma | Proveedor | Clave |
+| --- | --- | --- |
+| iPhone | Apple Maps (proveedor por defecto) | No necesita. Funciona en Expo Go. |
+| Android, en Expo Go | Google Maps | No necesita: Expo Go trae su propia configuración. |
+| Android, build propio (EAS) | Google Maps (`PROVIDER_GOOGLE`, solo en Android) | `GOOGLE_MAPS_API_KEY` |
+
+La configuración vive en `mobile/app.config.ts` (reemplaza a `app.json`). Lee la clave de `process.env.GOOGLE_MAPS_API_KEY` y la pasa al plugin de react-native-maps solo para Android. **La clave nunca se escribe en el repositorio.** El botón "Cómo llegar" del detalle abre `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG`, que no necesita clave.
+
+**Crear la clave (Google Cloud Console):**
+
+1. En un proyecto de Google Cloud, habilita **Maps SDK for Android**.
+2. Crea una clave de API (APIs y servicios → Credenciales).
+3. Restríngela: tipo de aplicación **Android**, paquete `com.misanandres.app` y la huella **SHA-1** del certificado de firma. Con EAS se obtiene con `eas credentials` (Android → Keystore). Si publicas en Google Play, agrega también la SHA-1 de "App signing" de Play Console.
+4. En "Restricciones de API", permite solo **Maps SDK for Android**.
+
+**Usarla en EAS Build** (variable secreta, no visible en los registros):
+
+```powershell
+cd mobile
+eas env:create --name GOOGLE_MAPS_API_KEY --value "<tu-clave>" --environment development --environment preview --environment production --visibility secret
+eas build --platform android --profile preview
+```
+
+Durante el build, EAS expone la variable a `app.config.ts`. Para un build local (`npx expo run:android`), pon la clave en `mobile/.env` (`GOOGLE_MAPS_API_KEY=...`); ese archivo nunca se sube.
+
+**Ubicación:** se pide solo en primer plano, con el texto en español definido en `app.config.ts` (en Expo Go, iOS muestra el texto de Expo Go). Si el permiso se niega, el mapa y la lista funcionan igual y la lista se ordena por nombre.
+
 ### Problemas frecuentes
+
+- **Mapa gris en Android con un build propio**: falta `GOOGLE_MAPS_API_KEY` en el build o la restricción de la clave no coincide con el paquete o la SHA-1. Tras 10 segundos la pantalla ofrece la lista como respaldo.
 
 - **"No pudimos conectar con el servidor"**: revisa que el backend esté corriendo, que `EXPO_PUBLIC_API_URL` use la IP del PC y que el celular esté en la misma Wi-Fi. Prueba abrir `http://<IP-del-PC>:3000/v1/health` desde el navegador del celular.
 - **El registro pide confirmar el correo**: si Supabase tiene activa la confirmación de correo (Authentication → Providers → Email), confirma desde el enlace del correo y luego inicia sesión. Al entrar por primera vez la app lleva a Configurar preferencias.

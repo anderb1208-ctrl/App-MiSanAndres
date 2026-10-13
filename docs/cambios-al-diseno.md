@@ -184,3 +184,14 @@ El resultado se limita a 0–100 % y se reclasifica en Bajo / Medio / Alto. Fuer
 Relación: Destino → Clima_Hora (1:N). Lectura pública por RLS, sin escritura desde el cliente. Se llena con el clima real de las últimas 4 semanas (`backend/scripts/generarClimaHistorico.ts` → `supabase/clima_hora.sql`). La ocupación de prueba es **sintética** y responde a ese clima: ver `docs/datos-sinteticos.md`.
 
 **Servicio externo y atribución**: los datos del clima son de Open-Meteo.com con licencia CC BY 4.0 (gratis para uso no comercial, hasta 10.000 llamadas al día). La app muestra "Datos del clima: Open-Meteo.com (CC BY 4.0)" con enlace donde aparece el clima. Agregar Open-Meteo al diagrama de arquitectura del entregable como servicio externo del backend.
+
+## 12. Mapa
+
+En el MVP la pestaña Mapa era una lista con la ubicación en texto. En el prototipo pasa a ser un mapa interactivo:
+
+- **Proveedor**: Apple Maps en iPhone (sin clave, compatible con Expo Go) y Google Maps solo en Android (`PROVIDER_GOOGLE`). El entregable menciona Google Maps Platform para ambas plataformas; en iOS se usa Apple Maps porque no necesita clave ni facturación.
+- **Datos**: `GET /mapa` devuelve en una sola llamada todos los destinos visibles con coordenadas, foto y la ocupación predicha de ahora (misma lógica de horario, clima y calendario que la predicción). Evita una petición por destino en conexiones móviles lentas.
+- **Marcadores**: el color es la ocupación (Bajo, Medio, Alto y Cerrado en gris) y el ícono la categoría; leyenda y filtros por categoría. Al tocar uno aparece una tarjeta con foto, ocupación y "Ver detalle".
+- **Ubicación del usuario** (expo-location, solo en primer plano) y lista **ordenada por distancia** con la fórmula de Haversine (en línea recta; sin ubicación, por nombre). La lista es también el respaldo si el mapa no carga.
+- **Detalle**: mini mapa con la ubicación y botón "Cómo llegar", que abre `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG` (sin clave; funciona en iOS y Android).
+- **Configuración**: `mobile/app.config.ts` reemplaza a `app.json` y lee la clave de Google Maps de la variable de entorno `GOOGLE_MAPS_API_KEY` (EAS: variable secreta). La clave nunca se guarda en el repositorio.
