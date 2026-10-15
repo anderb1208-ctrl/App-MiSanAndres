@@ -246,13 +246,13 @@ Variables de `mobile/.env` (ver `mobile/.env.example`):
 
 | Variable | Valor |
 | --- | --- |
-| `EXPO_PUBLIC_API_URL` | `http://<IP-del-PC>:3000`, **no** `localhost` (en el celular, localhost es el propio celular) |
+| `EXPO_PUBLIC_API_URL` | URL del backend, sin barra final ni `/v1`: `https://app-misanandres.onrender.com` (Render) o `http://<IP-del-PC>:3000` para el backend local (**no** `localhost`: en el celular, localhost es el propio celular) |
 | `EXPO_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key. La secret / service role key nunca va en la app. |
 | `GOOGLE_MAPS_API_KEY` | Opcional. Clave de Google Maps SDK for Android, solo para builds propios de Android (ver [Mapa](#mapa)). Vacía en desarrollo con Expo Go. |
 
 3. Escanea el código QR con Expo Go (Android) o con la cámara (iOS).
-4. Si cambias el `.env`, reinicia con `npx expo start --clear`.
+4. Si cambias el `.env`, reinicia con `npm run start:limpio` (`npx expo start --clear`). Expo **incrusta** las variables `EXPO_PUBLIC_*` en el bundle; sin limpiar la caché, la app sigue usando el valor anterior. En desarrollo la app imprime la URL de la API al arrancar y la muestra al final de **Perfil**; la configuración está centralizada en `mobile/src/config/env.ts` y, si falta una variable, la app lo dice en vez de usar otra URL.
 
 Verificación de tipos: `npm run typecheck`.
 
@@ -291,6 +291,7 @@ Durante el build, EAS expone la variable a `app.config.ts`. Para un build local 
 
 - **Mapa gris en Android con un build propio**: falta `GOOGLE_MAPS_API_KEY` en el build o la restricción de la clave no coincide con el paquete o la SHA-1. Tras 10 segundos la pantalla ofrece la lista como respaldo.
 
+- **La app sigue usando la IP local aunque el `.env` tiene la URL de Render**: el bundle quedó con el valor anterior. Detén Expo y arranca con `npm run start:limpio`; revisa también que `mobile/.env` no tenga dos líneas `EXPO_PUBLIC_API_URL` (vale la última). La consola de Metro y Perfil muestran la URL que está usando la app.
 - **"No pudimos conectar con el servidor"**: revisa que el backend esté corriendo, que `EXPO_PUBLIC_API_URL` use la IP del PC y que el celular esté en la misma Wi-Fi. Prueba abrir `http://<IP-del-PC>:3000/v1/health` desde el navegador del celular.
 - **El registro pide confirmar el correo**: si Supabase tiene activa la confirmación de correo (Authentication → Providers → Email), confirma desde el enlace del correo y luego inicia sesión. Al entrar por primera vez la app lleva a Configurar preferencias.
 - **La gráfica no muestra la línea "Real de hoy"**: la ocupación típica del día siempre se muestra; la serie real solo aparece si hay registros de ocupación de hoy (el seed genera datos hasta el momento en que se ejecutó).

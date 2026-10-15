@@ -1,7 +1,8 @@
 import { resolve } from 'node:path';
 import cors from 'cors';
 import express from 'express';
-import { origenesCors } from './config/env';
+import morgan from 'morgan';
+import { env, origenesCors } from './config/env';
 import { manejarErrores, rutaNoEncontrada } from './middleware/errores';
 import { rutasV1 } from './routes';
 
@@ -12,6 +13,8 @@ export function crearApp() {
   const app = express();
 
   app.disable('x-powered-by');
+  // Registro de cada petición: método, ruta, código de estado y duración (no en las pruebas).
+  if (env.NODE_ENV !== 'test') app.use(morgan(':method :url :status :response-time ms'));
   app.use(cors({ origin: origenesCors.length > 0 ? origenesCors : true }));
   app.use(express.json({ limit: '100kb' }));
 

@@ -6,7 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenBackground } from './components/ScreenBackground';
 import { EstadoCargando, EstadoMensaje } from './components/StateView';
 import { RootNavigator } from './navigation/RootNavigator';
-import { variablesFaltantes } from './services/config';
+import { configuracionValida, erroresConfiguracion } from './config/env';
 import { AuthProvider } from './store/AuthContext';
 import { colors, fontAssets } from './theme';
 
@@ -26,7 +26,7 @@ export default function App() {
   const [fuentesListas, errorFuentes] = useFonts(fontAssets);
 
   let contenido;
-  if (variablesFaltantes.length > 0) {
+  if (!configuracionValida) {
     contenido = (
       <ScreenBackground>
         <SafeAreaView style={styles.centro}>
@@ -34,7 +34,7 @@ export default function App() {
             tono="danger"
             icono="settings"
             titulo="Falta configurar la app"
-            mensaje={`Agrega en mobile/.env: ${variablesFaltantes.join(', ')}. Luego reinicia Expo.`}
+            mensaje={`${erroresConfiguracion.join(' ')} Luego reinicia Expo con npm run start:limpio.`}
           />
         </SafeAreaView>
       </ScreenBackground>

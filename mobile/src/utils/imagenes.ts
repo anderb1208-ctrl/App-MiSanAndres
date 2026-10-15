@@ -1,5 +1,5 @@
 import type { ImageSourcePropType, ImageURISource } from 'react-native';
-import { API_ORIGEN } from '../services/config';
+import { API_ORIGEN } from '../config/env';
 
 /** Fotos locales de las pantallas de bienvenida, autenticación e inicio. */
 export const IMAGENES = {

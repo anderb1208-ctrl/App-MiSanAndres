@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const esquemaEnv = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   SUPABASE_URL: z.url(),
   SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),

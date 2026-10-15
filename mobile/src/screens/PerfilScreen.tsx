@@ -18,6 +18,7 @@ import { obtenerHistorial } from '../services/interacciones';
 import { actualizarNombre, obtenerPerfil } from '../services/perfil';
 import { obtenerPreferencias } from '../services/preferencias';
 import type { InteraccionHistorial, TipoInteraccion } from '../services/tipos';
+import { API_BASE_URL } from '../config/env';
 import { useAuth } from '../store/AuthContext';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, type NombreIcono } from '../utils/categorias';
@@ -211,6 +212,12 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
         <Button variante="danger" tamano="lg" anchoCompleto icono="logout" cargando={saliendo} onPress={confirmarSalida}>
           Cerrar sesión
         </Button>
+
+        {__DEV__ && (
+          <Text style={styles.servidor} selectable>
+            API: {API_BASE_URL}
+          </Text>
+        )}
       </View>
     );
   };
@@ -257,4 +264,5 @@ const styles = StyleSheet.create({
   estadisticaEtiqueta: { ...typography.labelMd, color: colors.textSubtle, textAlign: 'center' },
   menu: { overflow: 'hidden' },
   vacio: { paddingVertical: spacing.md },
+  servidor: { ...typography.labelMd, fontSize: 11, color: colors.textSubtle, textAlign: 'center' },
 });

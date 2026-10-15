@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import { obtenerApiBaseUrl } from '../config/env';
 import { supabase } from './supabase';
 
 const TIEMPO_LIMITE_MS = 15_000;
@@ -40,7 +40,7 @@ function construirUrl(ruta: string, consulta?: Opciones['consulta']) {
     .filter((par): par is [string, string | number] => par[1] !== undefined && par[1] !== '')
     .map(([clave, valor]) => `${encodeURIComponent(clave)}=${encodeURIComponent(String(valor))}`)
     .join('&');
-  return `${API_BASE_URL}${ruta}${params ? `?${params}` : ''}`;
+  return `${obtenerApiBaseUrl()}${ruta}${params ? `?${params}` : ''}`;
 }
 
 /** Hace una petición al backend y devuelve el JSON tipado (o undefined en 204). */
@@ -63,7 +63,7 @@ export async function solicitud<T>(ruta: string, opciones: Opciones = {}): Promi
     });
   } catch {
     // En desarrollo se muestra la URL usada, para detectar un EXPO_PUBLIC_API_URL mal configurado.
-    const detalle = __DEV__ ? ` (Servidor: ${API_BASE_URL})` : '';
+    const detalle = __DEV__ ? ` (Servidor: ${obtenerApiBaseUrl()})` : '';
     throw new ErrorApi(
       0,
       'SIN_CONEXION',
