@@ -36,6 +36,29 @@ export interface Atribucion {
 }
 
 /**
+ * Por qué falló una consulta al proveedor de clima:
+ * - timeout: no respondió a tiempo.
+ * - error_red: no se pudo conectar (DNS, conexión rechazada, sin red).
+ * - limite_excedido: HTTP 429 (límite de peticiones; p. ej. el de Open-Meteo por IP).
+ * - error_http: otro código HTTP de error.
+ * - respuesta_invalida: respondió, pero con un formato inesperado.
+ */
+export type FallaClima = 'timeout' | 'error_red' | 'limite_excedido' | 'error_http' | 'respuesta_invalida';
+
+/** Error de un proveedor de clima, con su tipo de falla y un mensaje sin datos sensibles. */
+export class ErrorProveedorClima extends Error {
+  override name = 'ErrorProveedorClima';
+  constructor(
+    public readonly tipo: FallaClima,
+    mensaje: string,
+    /** Código HTTP, si hubo respuesta. */
+    public readonly estadoHttp?: number,
+  ) {
+    super(mensaje);
+  }
+}
+
+/**
  * Proveedor de clima. Para cambiar de servicio basta con otra implementación de
  * esta interfaz (y registrarla en climaService); nada más del backend cambia.
  */

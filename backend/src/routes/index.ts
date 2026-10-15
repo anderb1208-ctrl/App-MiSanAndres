@@ -9,6 +9,7 @@ import * as recomendacionController from '../controllers/recomendacionController
 import { requerirAuth } from '../middleware/auth';
 import * as e from '../middleware/esquemas';
 import { adjuntarClienteAnonimo } from '../middleware/supabase';
+import { estadoClima } from '../services/clima/climaService';
 import { validar } from '../middleware/validar';
 
 /** Rutas públicas: consultan como anon (RLS de lectura pública). */
@@ -16,7 +17,8 @@ const publicas = Router();
 publicas.use(adjuntarClienteAnonimo);
 
 publicas.get('/health', (_req, res) => {
-  res.json({ estado: 'ok', servicio: 'misanandres-api', fecha: new Date().toISOString() });
+  // Incluye el estado del clima (sin URL ni claves) para diagnosticar el despliegue.
+  res.json({ estado: 'ok', servicio: 'misanandres-api', fecha: new Date().toISOString(), clima: estadoClima() });
 });
 
 publicas.get('/destinos', validar({ query: e.consultaDestinos }), destinoController.listar);

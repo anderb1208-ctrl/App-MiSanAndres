@@ -22,7 +22,7 @@ import { obtenerMapa } from '../services/mapa';
 import type { CategoriaDestino, DestinoMapa } from '../services/tipos';
 import { colors, mapColors, radius, spacing, typography } from '../theme';
 import { CATEGORIAS, LISTA_CATEGORIAS } from '../utils/categorias';
-import { MOTIVO_SIN_CLIMA } from '../utils/clima';
+import { textoSinClima } from '../utils/clima';
 import { formatearDistancia, ordenarPorDistancia } from '../utils/distancia';
 import { colorMarcador, DELTA_CERCANO, estadoMarcador, PROVEEDOR_MAPA, REGION_SAN_ANDRES } from '../utils/mapa';
 
@@ -276,7 +276,7 @@ export function MapaScreen({ navigation, route }: TabScreenProps<'Mapa'>) {
             </View>
             {avisoUbicacion && <Text style={styles.resumenNota}>{avisoUbicacion}</Text>}
             {datos.motivoSinClima && (
-              <Text style={styles.resumenNota}>Predicción sin clima: {MOTIVO_SIN_CLIMA[datos.motivoSinClima]}</Text>
+              <Text style={styles.resumenNota}>Predicción sin clima: {textoSinClima(datos.motivoSinClima)}</Text>
             )}
           </View>
         ) : null

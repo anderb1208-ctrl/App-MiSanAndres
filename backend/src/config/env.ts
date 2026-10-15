@@ -20,6 +20,14 @@ const esquemaEnv = z
     ML_TIMEOUT_MS: z.coerce.number().int().min(200).max(30_000).default(2500),
     // Origen de la tabla ocupacion que usa el heurístico: hoy es simulada (supabase/seed.sql).
     ORIGEN_DATOS_HISTORICOS: z.enum(['sintetico', 'real']).default('sintetico'),
+
+    // Clima (todas opcionales, con valores por defecto que funcionan sin configurar nada).
+    // "ninguno" desactiva el clima: las predicciones responden motivoSinClima = "no_configurado".
+    CLIMA_PROVEEDOR: z.enum(['open-meteo', 'ninguno']).default('open-meteo'),
+    OPEN_METEO_URL: opcional(z.url()),
+    OPEN_METEO_API_KEY: opcional(z.string().min(1)),
+    CLIMA_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(6000),
+    CLIMA_REINTENTOS: z.coerce.number().int().min(0).max(3).default(1),
   })
   .superRefine((v, ctx) => {
     if (v.PREDICCION_PROVEEDOR === 'heuristico') return;

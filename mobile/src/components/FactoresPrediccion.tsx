@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { PrediccionOcupacion } from '../services/tipos';
 import { colors, spacing, typography } from '../theme';
-import { iconoFactor, MOTIVO_SIN_CLIMA } from '../utils/clima';
+import { iconoFactor, textoSinClima } from '../utils/clima';
 import { formatearPorcentaje } from '../utils/ocupacion';
 import { Icon } from './Icon';
 
@@ -53,7 +53,7 @@ export function FactoresPrediccion({ prediccion, cargando, error }: Props) {
         ))
       )}
       {prediccion.motivoSinClima && (
-        <Text style={styles.nota}>Sin clima: {MOTIVO_SIN_CLIMA[prediccion.motivoSinClima]}</Text>
+        <Text style={styles.nota}>Sin clima: {textoSinClima(prediccion.motivoSinClima)}</Text>
       )}
       {prediccion.mensajeOrigen && (
         <View style={styles.factor} accessibilityRole="text">

@@ -186,7 +186,16 @@ export interface ClimaHora {
   viento: number | null;
 }
 
-export type MotivoSinClima = 'fuera_de_rango' | 'proveedor_no_disponible' | 'sin_datos';
+/** Por qué no hay clima (ver backend/src/services/clima/climaService.ts). */
+export type MotivoSinClima =
+  | 'fuera_de_rango'
+  | 'sin_datos'
+  | 'no_configurado'
+  | 'timeout'
+  | 'error_red'
+  | 'limite_excedido'
+  | 'error_http'
+  | 'respuesta_invalida';
 
 export interface AtribucionClima {
   texto: string;

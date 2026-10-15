@@ -166,7 +166,7 @@ describe('predicción sin datos de clima', () => {
     expect(res.body).toMatchObject({
       porcentaje: 82.4,
       clima: null,
-      motivoSinClima: 'proveedor_no_disponible',
+      motivoSinClima: 'error_red',
       factores: [],
     });
   });
@@ -272,7 +272,7 @@ describe('GET /v1/destinos/:id/clima', () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
       disponible: false,
-      motivoSinClima: 'proveedor_no_disponible',
+      motivoSinClima: 'error_red',
       actual: null,
       proximasHoras: [],
     });

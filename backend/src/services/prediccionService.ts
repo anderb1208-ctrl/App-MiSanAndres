@@ -178,7 +178,7 @@ export async function predecirVarios(
 
   const climas = await climaService.climaEnHora(abiertos.map(puntoClima), fecha, hora);
   const climaDe = (d: DestinoAPredecir): climaService.ResultadoClima =>
-    climas.get(puntoClima(d).clave) ?? { clima: null, motivo: 'proveedor_no_disponible' };
+    climas.get(puntoClima(d).clave) ?? { clima: null, motivo: 'sin_datos' };
   const entradas: EntradaPrediccion[] = abiertos.map((destino) => {
     const { features, calendario } = construirFeatures(fecha, hora, climaDe(destino).clima);
     return { destino, features, calendario, clima: climaDe(destino).clima };

@@ -3,7 +3,9 @@
 
 @baseUrl = http://localhost:3000/v1
 
-### Estado del servicio
+### Estado del servicio. Incluye "clima": proveedor, estado (ok | fallando | sin_consultar |
+### no_configurado) y la última falla con su motivo (timeout, error_red, limite_excedido,
+### error_http, respuesta_invalida). Útil para diagnosticar el clima en Render.
 GET {{baseUrl}}/health
 
 ### ---------------------------------------------------------------

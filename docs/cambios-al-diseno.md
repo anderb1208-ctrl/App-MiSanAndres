@@ -169,7 +169,7 @@ El entregable menciona la predicción por hora y día, pero no las variables de 
 
 El resultado se limita a 0–100 % y se reclasifica en Bajo / Medio / Alto. Fuera del horario es "Cerrado" sin factores.
 
-**Respuesta de `GET /ocupacion/{destinoId}/prediccion`**: además de porcentaje y nivel, incluye `base` (promedio histórico usado), `features`, `clima` (o `null`), `motivoSinClima` (`fuera_de_rango`, `proveedor_no_disponible` o `sin_datos`) y `factores` (lista legible). **Degradación elegante**: si Open-Meteo falla o la fecha está a más de 16 días, la predicción funciona sin clima.
+**Respuesta de `GET /ocupacion/{destinoId}/prediccion`**: además de porcentaje y nivel, incluye `base` (promedio histórico usado), `features`, `clima` (o `null`), `motivoSinClima` (ver abajo) y `factores` (lista legible). **Degradación elegante**: si Open-Meteo falla o la fecha está a más de 16 días, la predicción funciona sin clima. `motivoSinClima` distingue el caso: `fuera_de_rango`, `sin_datos`, `no_configurado` (`CLIMA_PROVEEDOR=ninguno`), `timeout`, `error_red`, `limite_excedido` (HTTP 429), `error_http` o `respuesta_invalida` (antes era un único `proveedor_no_disponible`). Las fallas transitorias se reintentan una vez, cada falla se registra en el log con su motivo concreto y `GET /health` muestra el estado del clima. Variables opcionales: `CLIMA_PROVEEDOR`, `CLIMA_TIMEOUT_MS`, `CLIMA_REINTENTOS`, `OPEN_METEO_URL`, `OPEN_METEO_API_KEY`.
 
 **Tabla nueva `Clima_Hora`** (datos de entrenamiento del modelo):
 

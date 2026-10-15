@@ -1,5 +1,5 @@
 import { ATRIBUCION_OPEN_METEO } from '../services/clima/openMeteoProvider';
-import type { ClimaHora, Coordenada, OpcionesPronostico, ProveedorClima } from '../services/clima/tipos';
+import { type ClimaHora, type Coordenada, ErrorProveedorClima, type FallaClima, type OpcionesPronostico, type ProveedorClima } from '../services/clima/tipos';
 import { sumarDias } from '../services/calendarioService';
 
 type ClimaParcial = Partial<Omit<ClimaHora, 'fechaHora'>>;
@@ -22,6 +22,8 @@ export class ProveedorClimaFalso implements ProveedorClima {
   readonly atribucion = ATRIBUCION_OPEN_METEO;
   llamadas: Coordenada[][] = [];
   fallar = false;
+  /** Tipo de falla que simula cuando `fallar` es true. */
+  tipoFalla: FallaClima = 'error_red';
   desde = '2026-09-29';
   /** Clima de todas las horas, salvo las que se fijen con `enHora`. */
   clima: ClimaParcial = CLIMA_DESPEJADO;
@@ -30,6 +32,7 @@ export class ProveedorClimaFalso implements ProveedorClima {
   reiniciar() {
     this.llamadas = [];
     this.fallar = false;
+    this.tipoFalla = 'error_red';
     this.desde = '2026-09-29';
     this.clima = CLIMA_DESPEJADO;
     this.porHora.clear();
@@ -42,7 +45,7 @@ export class ProveedorClimaFalso implements ProveedorClima {
 
   async pronostico(puntos: Coordenada[], opciones: OpcionesPronostico = {}): Promise<ClimaHora[][]> {
     this.llamadas.push(puntos);
-    if (this.fallar) throw new Error('sin conexión');
+    if (this.fallar) throw new ErrorProveedorClima(this.tipoFalla, `falla simulada (${this.tipoFalla})`);
     const dias = (opciones.diasPasados ?? 1) + (opciones.diasPronostico ?? 16);
     const serie: ClimaHora[] = [];
     for (let d = 0; d < dias; d++) {

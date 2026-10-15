@@ -74,7 +74,7 @@ describe('GET /v1/mapa', () => {
     proveedorFalso.fallar = true;
     const res = await request(app).get('/v1/mapa');
     expect(res.status).toBe(200);
-    expect(res.body.motivoSinClima).toBe('proveedor_no_disponible');
+    expect(res.body.motivoSinClima).toBe('error_red');
     expect(porId(res.body, 1)?.ocupacion).toEqual({ estado: 'Abierto', porcentaje: 82.4, nivel: 'Alto' });
   });
 

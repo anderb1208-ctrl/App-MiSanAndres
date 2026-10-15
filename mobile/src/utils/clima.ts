@@ -55,9 +55,19 @@ export const horaDe = (c: ClimaHora) => c.fechaHora.slice(11, 16);
 /** Por qué no hay clima, en una frase para el usuario. */
 export const MOTIVO_SIN_CLIMA: Record<MotivoSinClima, string> = {
   fuera_de_rango: 'No hay pronóstico del clima para esa fecha.',
-  proveedor_no_disponible: 'El servicio del clima no responde en este momento.',
   sin_datos: 'No hay datos del clima para esta hora.',
+  no_configurado: 'El clima no está disponible en este servidor.',
+  timeout: 'El servicio del clima tardó demasiado en responder. Intenta de nuevo en un momento.',
+  error_red: 'No pudimos conectar con el servicio del clima en este momento.',
+  limite_excedido: 'El servicio del clima recibió demasiadas consultas. Vuelve a intentarlo más tarde.',
+  error_http: 'El servicio del clima tuvo un problema en este momento.',
+  respuesta_invalida: 'El servicio del clima respondió con datos que no pudimos leer.',
 };
+
+/** Frase para un motivo; acepta motivos desconocidos (p. ej. de una versión anterior del backend). */
+export function textoSinClima(motivo: string | null | undefined): string {
+  return (motivo && MOTIVO_SIN_CLIMA[motivo as MotivoSinClima]) || 'El clima no está disponible en este momento.';
+}
 
 /** Ícono de un factor de la predicción. */
 export function iconoFactor(f: FactorPrediccion): NombreIcono {

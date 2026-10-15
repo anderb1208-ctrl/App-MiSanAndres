@@ -6,7 +6,7 @@ import {
   estadoDelTiempo,
   formatearTemperatura,
   horaDe,
-  MOTIVO_SIN_CLIMA,
+  textoSinClima,
 } from '../utils/clima';
 import { GlassPanel } from './GlassPanel';
 import { Icon } from './Icon';
@@ -50,7 +50,7 @@ export function TarjetaClima({ pronostico, cargando, error, onReintentar }: Prop
   if (cargando) return <EstadoCargando mensaje="Consultando el clima…" style={styles.cargando} />;
   if (!pronostico) return <Aviso texto="No pudimos cargar el clima." onReintentar={onReintentar} />;
   if (!pronostico.disponible || !pronostico.actual) {
-    return <Aviso texto={MOTIVO_SIN_CLIMA[pronostico.motivoSinClima ?? 'sin_datos']} onReintentar={error ? onReintentar : undefined} />;
+    return <Aviso texto={textoSinClima(pronostico.motivoSinClima ?? 'sin_datos')} onReintentar={error ? onReintentar : undefined} />;
   }
 
   const actual = pronostico.actual;
