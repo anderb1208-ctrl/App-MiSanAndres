@@ -1,0 +1,31 @@
+id_destino,nombre,capacidad,categoria,horario_apertura,horario_cierre,estado
+1,Playa de Spratt Bight,1500,playa,06:00,19:00,abierto
+2,Playa de San Luis,600,playa,06:00,19:00,abierto
+3,Rocky Cay,400,playa,06:00,18:00,abierto
+4,Playa de Sound Bay,300,playa,06:00,18:00,abierto
+5,Johnny Cay,800,cayo,09:00,16:00,abierto
+6,El Acuario (Rose Cay),500,cayo,09:00,16:00,abierto
+7,Haynes Cay,300,cayo,09:00,16:00,abierto
+8,La Regatta,120,gastronomia,12:00,22:30,abierto
+9,Miss Celia,100,gastronomia,12:00,22:00,abierto
+10,Donde Francesca,150,gastronomia,11:00,17:00,abierto
+11,West View,250,actividad,08:00,17:00,abierto
+12,La Piscinita,200,actividad,08:00,17:00,abierto
+13,Kayak en el Manglar de Old Point,60,actividad,08:00,16:00,abierto
+14,Hoyo Soplador,300,naturaleza,07:00,18:00,abierto
+15,Primera Iglesia Bautista,150,cultura,08:00,17:00,abierto
+16,Cocoplum Bay,500,playa,06:00,18:00,abierto
+17,Playa Los Charquitos,200,playa,06:00,18:00,abierto
+18,Bahía Sardina,600,playa,06:00,19:00,abierto
+19,Cayo Bolívar,150,cayo,09:00,16:00,abierto
+20,Fishermen's Place,120,gastronomia,12:00,17:00,abierto
+21,Gourmet Shop Assho,80,gastronomia,12:00,22:00,abierto
+22,Capitán Mandy,100,gastronomia,12:00,22:00,abierto
+23,Paseo en semisubmarino,60,actividad,10:00,17:00,abierto
+24,Aquanautas (caminata submarina),30,actividad,09:00,16:00,abierto
+25,Buceo con Karibik Diver,40,actividad,08:00,17:00,abierto
+26,Vuelta a la isla,200,actividad,08:00,18:00,abierto
+27,Laguna Big Pond,100,naturaleza,08:00,17:00,abierto
+28,Jardín Botánico de San Andrés,100,naturaleza,08:00,17:00,abierto
+29,Cueva de Morgan,300,cultura,09:00,17:00,abierto
+30,Casa Museo Isleña,80,cultura,09:00,17:00,abierto

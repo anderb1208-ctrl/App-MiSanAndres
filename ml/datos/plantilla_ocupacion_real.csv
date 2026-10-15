@@ -1,0 +1,3 @@
+fecha_hora,id_destino,hora,dia_semana,es_fin_de_semana,es_festivo,es_puente,temporada,temperatura,precipitacion,viento,cantidad_personas,porcentaje_ocupacion
+EJEMPLO 2026-01-10 14:00,5,14,6,true,false,true,alta,29.5,0,18,520,65
+EJEMPLO 2026-01-12 10:00,1,10,1,false,true,true,alta,28.1,1.2,22,600,40

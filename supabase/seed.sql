@@ -7,7 +7,8 @@
 -- Nunca ejecutarlo contra la base de producción.
 -- ============================================================================
 --
--- La ocupación es SINTÉTICA (ver docs/datos-sinteticos.md). El clima real
+-- La ocupación es SINTÉTICA (ver docs/datos-sinteticos.md) y se guarda con
+-- origen = 'sintetico' (requiere la migración 20261015120000_ocupacion_origen). El clima real
 -- (clima_hora, cargado con supabase/clima_hora.sql) se conserva: se respalda por
 -- nombre de destino antes del TRUNCATE y se restaura después, y la ocupación
 -- generada responde a él (menos gente al aire libre cuando llovió).
@@ -626,10 +627,12 @@ calculo as (
       extract(isodow from h.fecha_hora at time zone 'America/Bogota')::int as dia
   ) l
 )
-insert into public.ocupacion (id_destino, fecha_hora, cantidad_personas, porcentaje_ocupacion)
+-- origen = 'sintetico': esta ocupación es simulada (migración 20261015120000).
+insert into public.ocupacion (id_destino, fecha_hora, cantidad_personas, porcentaje_ocupacion, origen)
 select
   id_destino,
   fecha_hora,
   round(least(porcentaje, 100) / 100 * capacidad)::int,
-  round(least(porcentaje, 100)::numeric, 2)
+  round(least(porcentaje, 100)::numeric, 2),
+  'sintetico'
 from calculo;

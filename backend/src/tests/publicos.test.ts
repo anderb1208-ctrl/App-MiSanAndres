@@ -193,7 +193,7 @@ describe('GET /v1/destinos/:id', () => {
 describe('GET /v1/ocupacion/:destinoId', () => {
   it('devuelve los registros del día en hora de Colombia', async () => {
     ocupacionM.listarRegistros.mockResolvedValue([
-      { id_ocupacion: 10, id_destino: 1, fecha_hora: '2026-09-28T17:00:00+00:00', cantidad_personas: 600, porcentaje_ocupacion: 75 },
+      { id_ocupacion: 10, id_destino: 1, fecha_hora: '2026-09-28T17:00:00+00:00', cantidad_personas: 600, porcentaje_ocupacion: 75, origen: 'sintetico' },
     ]);
     const res = await request(app).get('/v1/ocupacion/1?fecha=2026-09-28');
     expect(res.status).toBe(200);

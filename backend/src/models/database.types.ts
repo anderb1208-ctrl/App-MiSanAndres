@@ -148,6 +148,7 @@ export type Database = {
           fecha_hora: string;
           id_destino: number;
           id_ocupacion: number;
+          origen: Database['public']['Enums']['origen_ocupacion'];
           porcentaje_ocupacion: number;
         };
         Insert: {
@@ -155,6 +156,7 @@ export type Database = {
           fecha_hora: string;
           id_destino: number;
           id_ocupacion?: never;
+          origen?: Database['public']['Enums']['origen_ocupacion'];
           porcentaje_ocupacion: number;
         };
         Update: {
@@ -162,6 +164,7 @@ export type Database = {
           fecha_hora?: string;
           id_destino?: number;
           id_ocupacion?: never;
+          origen?: Database['public']['Enums']['origen_ocupacion'];
           porcentaje_ocupacion?: number;
         };
         Relationships: [
@@ -274,6 +277,7 @@ export type Database = {
       categoria_destino: 'playa' | 'cayo' | 'naturaleza' | 'buceo_snorkel' | 'cultura' | 'gastronomia' | 'actividad';
       estado_destino: 'abierto' | 'cerrado_temporal' | 'inactivo';
       nivel_ocupacion: 'Bajo' | 'Medio' | 'Alto';
+      origen_ocupacion: 'sintetico' | 'real';
       rango_precio: 'Gratis' | '$' | '$$' | '$$$';
       tipo_interaccion: 'vista' | 'favorito' | 'visita' | 'compartir';
       tipo_preferencia: 'categoria' | 'experiencia' | 'grupo';
@@ -290,6 +294,7 @@ type Enums = Database['public']['Enums'];
 export type CategoriaDestino = Enums['categoria_destino'];
 export type EstadoDestino = Enums['estado_destino'];
 export type NivelOcupacion = Enums['nivel_ocupacion'];
+export type OrigenOcupacion = Enums['origen_ocupacion'];
 export type RangoPrecio = Enums['rango_precio'];
 export type TipoInteraccion = Enums['tipo_interaccion'];
 export type TipoPreferencia = Enums['tipo_preferencia'];
@@ -307,6 +312,7 @@ export const Constants = {
       categoria_destino: ['playa', 'cayo', 'naturaleza', 'buceo_snorkel', 'cultura', 'gastronomia', 'actividad'],
       estado_destino: ['abierto', 'cerrado_temporal', 'inactivo'],
       nivel_ocupacion: ['Bajo', 'Medio', 'Alto'],
+      origen_ocupacion: ['sintetico', 'real'],
       rango_precio: ['Gratis', '$', '$$', '$$$'],
       tipo_interaccion: ['vista', 'favorito', 'visita', 'compartir'],
       tipo_preferencia: ['categoria', 'experiencia', 'grupo'],

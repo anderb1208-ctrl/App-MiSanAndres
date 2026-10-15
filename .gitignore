@@ -125,3 +125,17 @@ $RECYCLE.BIN/
 
 # Caché de Overpass del script de geolocalización
 backend/scripts/ubicaciones/.cache/
+
+# Servicio de ML: entorno, datos y modelos generados (se regeneran con los scripts)
+ml/.venv/
+ml/.pytest_cache/
+ml/**/__pycache__/
+ml/datos/destinos.csv
+ml/datos/mock/
+ml/datos/procesado_real/
+ml/datos/real/*
+!ml/datos/real/.gitkeep
+ml/modelos/*
+!ml/modelos/.gitkeep
+ml/reportes/*
+!ml/reportes/.gitkeep
