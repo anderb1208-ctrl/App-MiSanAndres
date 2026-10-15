@@ -232,7 +232,16 @@ export interface PrediccionOcupacion {
   porcentaje: number;
   nivel: NivelOcupacion | null;
   personasEstimadas: number;
-  /** Promedio histórico antes de los factores (null si está cerrado). */
+  /** Quién la generó: cálculo heurístico, modelo de ML u "horario" (cerrado). */
+  proveedor: 'heuristico' | 'ml' | 'horario';
+  /** true si se pidió el modelo de ML y respondió el heurístico porque el servicio falló. */
+  proveedorRespaldo: boolean;
+  /** Datos en que se basa la estimación; null si está cerrado. */
+  origenDatos: 'sintetico' | 'real' | null;
+  datosSimulados: boolean;
+  /** "Estimación basada en datos simulados" mientras los datos sean sintéticos; si no, null. */
+  mensajeOrigen: string | null;
+  /** Promedio histórico antes de los factores (null si está cerrado o la generó el modelo de ML). */
   base: { porcentaje: number; origen: 'dia_semana' | 'entre_semana' | 'fin_de_semana'; muestras: number } | null;
   features: {
     hora: number;

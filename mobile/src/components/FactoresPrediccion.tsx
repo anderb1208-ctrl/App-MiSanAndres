@@ -31,11 +31,14 @@ export function FactoresPrediccion({ prediccion, cargando, error }: Props) {
   if (prediccion.estado === 'Cerrado') return null;
 
   const base = textoBase(prediccion);
+  const conModelo = prediccion.proveedor === 'ml';
   return (
     <View style={styles.contenedor} accessibilityLabel="Factores de la predicción">
       <Text style={styles.titulo}>Por qué esta predicción</Text>
       {base && <Text style={styles.nota}>{base}</Text>}
-      {prediccion.factores.length === 0 ? (
+      {conModelo ? (
+        <Text style={styles.nota}>Estimada por el modelo de predicción a partir del día, la hora, el calendario y el clima.</Text>
+      ) : prediccion.factores.length === 0 ? (
         <Text style={styles.nota}>Sin ajustes: no se prevé lluvia y no es festivo ni temporada alta.</Text>
       ) : (
         prediccion.factores.map((f) => (
@@ -51,6 +54,12 @@ export function FactoresPrediccion({ prediccion, cargando, error }: Props) {
       )}
       {prediccion.motivoSinClima && (
         <Text style={styles.nota}>Sin clima: {MOTIVO_SIN_CLIMA[prediccion.motivoSinClima]}</Text>
+      )}
+      {prediccion.mensajeOrigen && (
+        <View style={styles.factor} accessibilityRole="text">
+          <Icon name="science" size={16} color={colors.textMuted} />
+          <Text style={[styles.nota, styles.factorTextos]}>{prediccion.mensajeOrigen}.</Text>
+        </View>
       )}
     </View>
   );

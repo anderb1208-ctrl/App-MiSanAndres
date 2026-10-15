@@ -42,7 +42,9 @@ GET {{baseUrl}}/mapa
 ### Registros reales de ocupación de un día (hora de Colombia)
 GET {{baseUrl}}/ocupacion/1?fecha=2026-09-28
 
-### Predicción para una fecha y hora (5 = Johnny Cay, abierto de 09:00 a 16:00)
+### Predicción para una fecha y hora (5 = Johnny Cay, abierto de 09:00 a 16:00).
+### La respuesta indica el proveedor (heuristico | ml | horario), si fue respaldo del modo auto
+### y si se basa en datos simulados (datosSimulados, mensajeOrigen). Ver PREDICCION_PROVEEDOR.
 GET {{baseUrl}}/ocupacion/5/prediccion?fecha=2026-10-03&hora=12:00
 
 ### Predicción en un festivo (lunes 2 de noviembre, Todos los Santos): factor "Festivo: +25 %"
@@ -133,3 +135,27 @@ GET {{baseUrl}}/recomendaciones
 
 ### Foto de un destino (imagen_url = /destinos/<slug>.jpg)
 GET http://localhost:3000/destinos/johnny-cay.jpg
+
+### ---------------------------------------------------------------
+### Servicio de ML (ml/app.py), directo. Requiere ML_API_KEY.
+### ---------------------------------------------------------------
+
+@mlUrl = http://localhost:8000
+@mlKey = cambia-esta-clave
+
+### Estado del servicio y del modelo (origen mock/real, métricas)
+GET {{mlUrl}}/health
+
+### Una predicción
+POST {{mlUrl}}/predict
+X-API-Key: {{mlKey}}
+Content-Type: application/json
+
+{ "id_destino": 5, "fecha": "2026-12-26", "hora": "12:00", "clima": { "temperatura": 29, "precipitacion": 0, "viento": 20 } }
+
+### Varias predicciones (lo que usa el backend)
+POST {{mlUrl}}/predict/lote
+X-API-Key: {{mlKey}}
+Content-Type: application/json
+
+{ "consultas": [ { "id_destino": 1, "fecha": "2026-12-26", "hora": "12:00" }, { "id_destino": 5, "fecha": "2026-12-26", "hora": "12:00" } ] }

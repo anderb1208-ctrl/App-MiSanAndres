@@ -60,7 +60,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 | Autenticación | Supabase Auth (JWT) |
 | Pruebas | Jest + Supertest (backend) |
 | Despliegue | Render (backend) |
-| Machine Learning *(fase posterior)* | Python + Scikit-learn (Random Forest Regressor) |
+| Machine Learning | Python + scikit-learn (Random Forest Regressor) + FastAPI, servicio aparte en `ml/` (hoy entrenado con datos sintéticos) |
 | Mapas | react-native-maps: Apple Maps en iPhone (sin clave) y Google Maps en Android. expo-location para la ubicación del usuario. |
 
 ## Estructura del repositorio
@@ -96,7 +96,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 │       ├── hooks/               # Hooks reutilizables
 │       ├── utils/               # Utilidades de formato y validación
 │       └── theme/               # Colores, tipografía, espaciado
-├── ml/                          # Modelo de predicción de ocupación (fase posterior)
+├── ml/                          # Servicio de predicción (Random Forest + FastAPI); ver ml/README.md
 ├── supabase/
 │   ├── migrations/              # Migraciones SQL versionadas
 │   ├── seed.sql                 # Datos de prueba de San Andrés (ocupación sintética)
@@ -148,6 +148,18 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 **Calendario** (`calendarioService`, sin API externa): festivos de Colombia calculados con la Ley 51 de 1983 (Ley Emiliani), incluidos los que dependen de la Pascua; puentes (bloques de 3 o más días no laborales) y temporadas. Las fechas de temporada alta son **supuestos configurables** en `config/calendario.ts`: 15 dic – 15 ene, Semana Santa y 15 jun – 15 jul.
 
 **Clima** (`services/clima/`): la interfaz `ProveedorClima` aísla al proveedor; `OpenMeteoProvider` pide temperatura, probabilidad de precipitación, precipitación, código WMO y viento por hora (zona `America/Bogota`), con todos los destinos en una sola llamada y un timeout de 4 s. `climaService` guarda cada destino en caché 30 minutos y, si la API falla, no reintenta durante 1 minuto. Si no hay clima (API caída o fecha a más de 16 días), la predicción sigue funcionando sin él y lo indica en `motivoSinClima`.
+
+### Proveedores de predicción
+
+El porcentaje lo calcula un proveedor intercambiable (`backend/src/services/prediccion/`), elegido con `PREDICCION_PROVEEDOR`:
+
+| Valor | Qué hace |
+| --- | --- |
+| `heuristico` (por defecto) | Promedio histórico + factores (lo descrito arriba). No necesita nada más. |
+| `ml` | Servicio de `ml/` (Random Forest, `POST /predict/lote`). Si no responde, la predicción da 503. |
+| `auto` | Servicio de `ml/` y, si falla o tarda más de `ML_TIMEOUT_MS`, el heurístico; la API no se rompe. |
+
+Cada predicción indica `proveedor`, `proveedorRespaldo`, `origenDatos` y `datosSimulados`; mientras los datos sean simulados, `mensajeOrigen` dice "Estimación basada en datos simulados" y la app lo muestra en el detalle. Cómo entrenar, desplegar y pasar a datos reales: [`ml/README.md`](ml/README.md).
 
 ### Atribución del clima
 
@@ -215,6 +227,11 @@ Variables de `backend/.env` (ver `backend/.env.example`):
 | `SUPABASE_PUBLISHABLE_KEY` | Publishable key (`sb_publishable_...`). El backend **no** usa la secret key: reenvía el JWT del usuario para que se aplique RLS. |
 | `PORT` | Puerto HTTP (por defecto `3000`) |
 | `CORS_ORIGIN` | Orígenes permitidos separados por coma; vacío = cualquiera (desarrollo) |
+| `NODE_ENV` | `development` (por defecto) o `production` |
+| `PREDICCION_PROVEEDOR` | `heuristico` (por defecto), `ml` o `auto` |
+| `ML_SERVICE_URL`, `ML_API_KEY` | URL del servicio de `ml/` y su API key; obligatorias solo con `ml` o `auto` |
+| `ML_TIMEOUT_MS` | Espera máxima al servicio de ML (por defecto 2500) |
+| `ORIGEN_DATOS_HISTORICOS` | `sintetico` (por defecto) o `real`: origen de la tabla `ocupacion` que usa el heurístico |
 
 Comprobar que responde: abre `http://localhost:3000/v1/health` en el navegador. `backend/requests.http` tiene una petición de ejemplo por endpoint (extensión REST Client de VS Code).
 

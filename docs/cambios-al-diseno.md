@@ -72,6 +72,7 @@ El entregable menciona Preferencia, Usuario_Preferencia, Interaccion y Ocupacion
 | fecha_hora | TIMESTAMPTZ | NOT NULL, UNIQUE (id_destino, fecha_hora) |
 | cantidad_personas | INT | NOT NULL, CHECK >= 0 |
 | porcentaje_ocupacion | NUMERIC(5,2) | NOT NULL, CHECK entre 0 y 100 |
+| origen | Enum `origen_ocupacion`: sintetico, real | NOT NULL, default `sintetico` (migración `20261015120000`, sección 14) |
 
 ## 4. Tabla nueva: Destino_Preferencia
 
@@ -136,7 +137,7 @@ No están en la sección 3 del entregable; agregarlos a las tablas de endpoints:
 - Mientras no exista el servicio de ML, la predicción parte del **promedio histórico del porcentaje de ocupación a la misma hora y en el mismo día de la semana** (si hay al menos 3 registros; si no, el del tipo de día: entre semana / fin de semana), en hora de Colombia, y lo ajusta con factores de clima y calendario (sección 11).
 - El gráfico del detalle muestra la **ocupación típica** de cada hora para ese día de la semana (p. ej. "Ocupación típica de un martes"), con los registros reales de hoy superpuestos. Si aún no hay historial de ese día, se usa el del tipo de día.
 - Ambos cálculos usan la función SQL `ocupacion_promedio_hora` (migraciones `20260929200000` y `20261001120000`), que es `security invoker` (respeta RLS) y solo pueden ejecutar los roles `anon` y `authenticated`.
-- El backend encapsula el cálculo en `prediccionService`; al llegar el modelo Random Forest solo cambia ese servicio.
+- El backend encapsula el cálculo en `prediccionService`. Con el modelo Random Forest (sección 14) el cálculo pasó a ser un proveedor intercambiable: este promedio histórico es el proveedor **heurístico**, que sigue siendo el predeterminado.
 - Si la hora consultada está fuera del horario del destino, la predicción responde `estado: "Cerrado"` con ocupación 0 (sin consultar el histórico). Dentro del horario, `estado: "Abierto"`.
 
 ## 10. Búsqueda de destinos
@@ -217,3 +218,30 @@ El entregable no define qué representa la coordenada. Con esta convención el p
 - **Columnas nuevas**: `ubicacion_fuente` (`osm`, `manual` o `aproximada`) y `ubicacion_verificada` (falso hasta que una persona lo revisa en `docs/revision-ubicaciones.html` y aplica `npm run ubicaciones:corregir`).
 - **Control**: `npm run verificar:ubicaciones` falla si algún destino activo cae fuera de tierra o fuera del cuadro de San Andrés (12,38–12,62 N, 81,44–81,76 O: la isla, sus cayos cercanos y los Cayos del Este-Sudeste; no incluye Providencia).
 - **Agregar al entregable**: OpenStreetMap como fuente de datos externa (solo en el proceso de carga, no en tiempo de ejecución) y su atribución, que la app muestra en Perfil → Créditos y licencias.
+
+## 14. Predicción con Machine Learning
+
+El entregable prevé un modelo Random Forest expuesto con `POST /predict`. Se implementó en `ml/` y se integró al backend sin cambiar rutas ni la app:
+
+**Servicio `ml/` (Python, FastAPI, scikit-learn)**
+
+| Endpoint | Descripción | Protección |
+| --- | --- | --- |
+| `GET /health` | Estado del servicio y del modelo (origen de los datos, métricas) | Pública |
+| `POST /predict` | Porcentaje, nivel y personas para un destino, fecha, hora y clima opcional | Cabecera `X-API-Key` (`ML_API_KEY`) |
+| `POST /predict/lote` | Lo mismo para varias consultas (hasta 500); lo usa el backend | Cabecera `X-API-Key` |
+
+- Modelo: `RandomForestRegressor(n_estimators=100, random_state=42)` con `min_samples_leaf=20` (para que el archivo pese ~11 MB). Variables: las de `FeaturesPrediccion` (hora, día de la semana, fin de semana, festivo, puente, temporada, temperatura, precipitación, viento) más el destino, su categoría y su capacidad. Validación **temporal** (entrena con las fechas antiguas, prueba con las recientes) y comparación contra un baseline (promedio por destino y hora).
+- **Datos sintéticos**: mientras no haya mediciones reales, el modelo se entrena con un dataset simulado (`ml/generar_mock_dataset.py`) con los mismos supuestos del seed y el mismo calendario del backend (`ml/calendario.py` replica `calendarioService`). Cada respuesta indica el origen (`mock`/`real`) y la app muestra "Estimación basada en datos simulados".
+- **Datos reales**: plantilla y guía en `ml/datos/`; `ml/cargar_datos_reales.py` valida y normaliza el archivo y opcionalmente lo inserta en `ocupacion` con `origen = real`; `python entrenar_modelo.py --dataset real` reentrena. Con menos de 4 semanas por destino el modelo no queda "listo para producción".
+- Se despliega como un segundo Web Service en Render (Root Directory `ml`).
+
+**Backend**
+
+- Interfaz `ProveedorPrediccion` (`services/prediccion/`) con dos implementaciones, el **heurístico** (promedio histórico + factores, sección 9) y el de **ML** (llama a `/predict/lote` con timeout corto), y un modo **auto** (ML; si falla o no responde, heurístico). Se elige con `PREDICCION_PROVEEDOR` (`heuristico` por defecto). Tras un fallo del servicio de ML no se reintenta durante 30 s. En modo `ml` sin respaldo, una caída responde **503** (`SERVICIO_NO_DISPONIBLE`).
+- Variables nuevas, validadas con zod y opcionales si no se usa ML: `PREDICCION_PROVEEDOR`, `ML_SERVICE_URL`, `ML_API_KEY`, `ML_TIMEOUT_MS` (2.500 ms) y `ORIGEN_DATOS_HISTORICOS` (`sintetico`/`real`, el origen del histórico que usa el heurístico).
+- `GET /ocupacion/{destinoId}/prediccion` (y la ocupación de `/destinos`, `/mapa` y `/recomendaciones`, que usan el mismo servicio) agrega: `proveedor` (`heuristico`, `ml` u `horario` si está cerrado), `proveedorRespaldo` (el modo auto cayó al heurístico), `origenDatos` (`sintetico`/`real`), `datosSimulados` y `mensajeOrigen` ("Estimación basada en datos simulados"). Con ML, `fuente` es `modelo_ml`, `base` es `null` y `factores` va vacío (el modelo ya incorpora calendario y clima).
+- La ocupación típica del día (`/prediccion/dia`) sigue saliendo del histórico de `ocupacion`.
+- Registro de peticiones con morgan (método, ruta, estado y duración) y mensaje de arranque con entorno y puerto.
+
+**Agregar al entregable**: el servicio de ML como componente del diagrama de arquitectura (Backend → Servicio ML por HTTPS con API key), la columna `Ocupacion.origen`, los campos nuevos de la respuesta de predicción y el aviso de datos simulados.

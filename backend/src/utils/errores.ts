@@ -2,6 +2,7 @@ export type CodigoError =
   | 'SOLICITUD_INVALIDA'
   | 'NO_AUTENTICADO'
   | 'NO_ENCONTRADO'
+  | 'SERVICIO_NO_DISPONIBLE'
   | 'ERROR_INTERNO';
 
 export interface DetalleError {
@@ -29,6 +30,9 @@ export const noAutenticado = (mensaje = 'Se requiere un token de acceso válido.
   new ErrorApi(401, 'NO_AUTENTICADO', mensaje);
 
 export const noEncontrado = (mensaje: string) => new ErrorApi(404, 'NO_ENCONTRADO', mensaje);
+
+/** Un servicio externo del que depende la respuesta no está disponible (p. ej. el de ML). */
+export const servicioNoDisponible = (mensaje: string) => new ErrorApi(503, 'SERVICIO_NO_DISPONIBLE', mensaje);
 
 /** Error inesperado al hablar con la base de datos. */
 export class ErrorBaseDatos extends Error {
