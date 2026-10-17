@@ -223,7 +223,54 @@ export const cuerpoEditarDestino = z
   });
 export type CuerpoEditarDestino = z.infer<typeof cuerpoEditarDestino>;
 
-export const cuerpoEstadoDestino = z.strictObject({
-  estado: z.enum(Enums.estado_destino, { error: `Debe ser uno de: ${Enums.estado_destino.join(', ')}.` }),
+export const cuerpoEstadoDestino = z
+  .strictObject({
+    estado: z.enum(Enums.estado_destino, { error: `Debe ser uno de: ${Enums.estado_destino.join(', ')}.` }),
+    /** Solo para cerrado_temporal: se muestra en el aviso y en el detalle. */
+    motivo: z.string().trim().min(3, 'Mínimo 3 caracteres.').max(200, 'Máximo 200 caracteres.').optional(),
+    /** Fin previsto del cierre (ISO 8601); al pasar, el destino se considera abierto. */
+    hasta: z.iso.datetime({ offset: true, error: 'Debe ser una fecha y hora ISO 8601 (p. ej. 2026-10-20T08:00:00-05:00).' }).optional(),
+  })
+  .refine((c) => c.estado === 'cerrado_temporal' || (c.motivo === undefined && c.hasta === undefined), {
+    message: 'motivo y hasta solo aplican al cierre temporal.',
+    path: ['estado'],
+  })
+  .refine((c) => c.hasta === undefined || new Date(c.hasta).getTime() > Date.now(), {
+    message: 'La fecha de fin del cierre debe ser futura.',
+    path: ['hasta'],
+  });
+
+// ---- Favoritos y dispositivos ----
+export const paramsIdDestino = z.object({ idDestino: idPositivo });
+export type ParamsIdDestino = z.infer<typeof paramsIdDestino>;
+
+export const cuerpoFavorito = z.strictObject({
+  idDestino: idDestinoCuerpo,
+  avisarApertura: z.boolean({ error: 'Debe ser verdadero o falso.' }).default(true),
+  avisarCierre: z.boolean({ error: 'Debe ser verdadero o falso.' }).default(true),
 });
+export type CuerpoFavorito = z.infer<typeof cuerpoFavorito>;
+
+export const cuerpoAvisosFavorito = z
+  .strictObject({
+    avisarApertura: z.boolean({ error: 'Debe ser verdadero o falso.' }).optional(),
+    avisarCierre: z.boolean({ error: 'Debe ser verdadero o falso.' }).optional(),
+  })
+  .refine((c) => c.avisarApertura !== undefined || c.avisarCierre !== undefined, { message: 'Indica avisarApertura o avisarCierre.' });
+export type CuerpoAvisosFavorito = z.infer<typeof cuerpoAvisosFavorito>;
+
+const tokenExpo = z
+  .string({ error: 'Es obligatorio.' })
+  .trim()
+  .regex(/^Expo(nent)?PushToken\[.+\]$/,'Debe ser un token de Expo (ExponentPushToken[...]).')
+  .max(200);
+
+export const cuerpoDispositivo = z.strictObject({
+  token: tokenExpo,
+  plataforma: z.enum(Enums.plataforma_dispositivo, { error: 'Debe ser ios, android o web.' }),
+});
+export type CuerpoDispositivo = z.infer<typeof cuerpoDispositivo>;
+
+export const cuerpoQuitarDispositivo = z.strictObject({ token: tokenExpo });
+export type CuerpoQuitarDispositivo = z.infer<typeof cuerpoQuitarDispositivo>;
 export type CuerpoEstadoDestino = z.infer<typeof cuerpoEstadoDestino>;

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as adminController from '../controllers/adminController';
 import * as climaController from '../controllers/climaController';
 import * as destinoController from '../controllers/destinoController';
+import * as favoritoController from '../controllers/favoritoController';
 import * as interaccionController from '../controllers/interaccionController';
 import * as ocupacionController from '../controllers/ocupacionController';
 import * as perfilController from '../controllers/perfilController';
@@ -89,6 +90,19 @@ privadas.get(
 );
 
 privadas.get('/recomendaciones', requerirAuth, recomendacionController.listar);
+
+// ---- Favoritos con avisos y dispositivos para push ----
+privadas.get('/favoritos', requerirAuth, favoritoController.listar);
+privadas.post('/favoritos', requerirAuth, validar({ body: e.cuerpoFavorito }), favoritoController.agregar);
+privadas.patch(
+  '/favoritos/:idDestino',
+  requerirAuth,
+  validar({ params: e.paramsIdDestino, body: e.cuerpoAvisosFavorito }),
+  favoritoController.actualizarAvisos,
+);
+privadas.delete('/favoritos/:idDestino', requerirAuth, validar({ params: e.paramsIdDestino }), favoritoController.quitar);
+privadas.post('/dispositivos', requerirAuth, validar({ body: e.cuerpoDispositivo }), favoritoController.registrarDispositivo);
+privadas.delete('/dispositivos', requerirAuth, validar({ body: e.cuerpoQuitarDispositivo }), favoritoController.quitarDispositivo);
 
 // ---- Tickets de soporte (turista: los suyos; técnico y administrador: todos) ----
 const personal = requiereRol('tecnico', 'administrador');

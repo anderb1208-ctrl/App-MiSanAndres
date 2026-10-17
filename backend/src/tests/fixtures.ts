@@ -14,6 +14,8 @@ const sinContenido = {
   imagen_fuente: null,
   ubicacion_fuente: 'aproximada',
   ubicacion_verificada: false,
+  motivo_cierre: null,
+  cierre_hasta: null,
 } satisfies Partial<DestinoRow>;
 
 /** Cayo con horario 09:00–16:00 e imagen con crédito. */

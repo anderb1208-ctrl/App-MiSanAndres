@@ -1,5 +1,6 @@
 import type { Db } from '../config/supabase';
 import type { CategoriaDestino, DestinoRow, TipoPreferencia } from './database.types';
+import { estadoEfectivo } from '../utils/estadoDestino';
 import { verificar, verificarLista } from './verificar';
 
 export interface EtiquetaDestino {
@@ -24,8 +25,10 @@ export async function listarVisibles(
   let consulta = db.from('destino').select('*').neq('estado', 'inactivo');
   if (filtros.categoria) consulta = consulta.eq('categoria', filtros.categoria);
   if (filtros.nombre) consulta = consulta.ilike('nombre', `%${escaparLike(filtros.nombre)}%`);
-  if (filtros.soloAbiertos) consulta = consulta.eq('estado', 'abierto');
-  return verificarLista(await consulta.order('nombre'), 'Listar destinos');
+  // Un cierre temporal ya vencido cuenta como abierto: se trae y se filtra aquí.
+  if (filtros.soloAbiertos) consulta = consulta.in('estado', ['abierto', 'cerrado_temporal']);
+  const filas = verificarLista(await consulta.order('nombre'), 'Listar destinos');
+  return filtros.soloAbiertos ? filas.filter((f) => estadoEfectivo(f) === 'abierto') : filas;
 }
 
 /** Un destino visible por id, o null si no existe o está inactivo. */

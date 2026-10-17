@@ -19,6 +19,7 @@ import type { Db } from '../config/supabase';
 import type { NivelOcupacion } from '../models/database.types';
 import * as ocupacionModel from '../models/ocupacionModel';
 import { diaSemanaIso, esFinDeSemana, formatearHora, nombreDia } from '../utils/fecha';
+import { estadoEfectivo } from '../utils/estadoDestino';
 import { estaEnHorario } from '../utils/horario';
 import { nivelDesdePorcentaje } from '../utils/nivelOcupacion';
 import * as climaService from './clima/climaService';
@@ -103,7 +104,7 @@ const puntoClima = (d: DestinoAPredecir): climaService.PuntoClima => ({
 
 /** Verdadero si el destino atiende a esa hora (HH:MM). */
 export const estaAbierto = (destino: DestinoAPredecir, hora: string) =>
-  destino.estado !== 'cerrado_temporal' && estaEnHorario(destino, hora);
+  estadoEfectivo(destino) !== 'cerrado_temporal' && estaEnHorario(destino, hora);
 
 function construirPrediccion(
   entrada: EntradaPrediccion,

@@ -8,6 +8,7 @@ import type {
 } from '../models/database.types';
 import * as destinoModel from '../models/destinoModel';
 import { noEncontrado } from '../utils/errores';
+import { estadoEfectivo } from '../utils/estadoDestino';
 import { ahoraEnColombia } from '../utils/fecha';
 import { type Horario, horarioDe } from '../utils/horario';
 import * as climaService from './clima/climaService';
@@ -41,7 +42,10 @@ export interface Destino {
   latitud: number;
   longitud: number;
   capacidad: number;
+  /** Estado operativo efectivo (un cierre temporal vencido cuenta como abierto). */
   estado: EstadoDestino;
+  /** Cierre temporal vigente con su motivo y fin previsto, o null. */
+  cierre: { motivo: string | null; hasta: string | null } | null;
   /** Horario en hora de Colombia; null = sin horario (siempre accesible). */
   horario: Horario | null;
   rangoPrecio: RangoPrecio | null;
@@ -84,7 +88,9 @@ export function aDestino(fila: DestinoRow, prediccion?: prediccionService.Predic
     latitud: Number(fila.latitud),
     longitud: Number(fila.longitud),
     capacidad: fila.capacidad,
-    estado: fila.estado,
+    estado: estadoEfectivo(fila),
+    cierre:
+      estadoEfectivo(fila) === 'cerrado_temporal' ? { motivo: fila.motivo_cierre ?? null, hasta: fila.cierre_hasta ?? null } : null,
     horario: horarioDe(fila),
     rangoPrecio: fila.rango_precio,
     comoLlegar: fila.como_llegar,

@@ -10,6 +10,14 @@ import type { ExpoConfig } from 'expo/config';
  */
 const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || undefined;
 
+/**
+ * EAS_PROJECT_ID: id del proyecto de EAS (lo crea `eas init`). Lo necesita
+ * getExpoPushTokenAsync para las notificaciones push remotas. Sin él, la app sigue
+ * funcionando con notificaciones locales. No es secreto, pero se lee del entorno para no
+ * fijar una cuenta en el repositorio.
+ */
+const easProjectId = process.env.EAS_PROJECT_ID || undefined;
+
 const config: ExpoConfig = {
   name: 'MiSanAndrés',
   slug: 'misanandres',
@@ -51,7 +59,10 @@ const config: ExpoConfig = {
       },
     ],
     ['react-native-maps', { androidGoogleMapsApiKey: googleMapsApiKey }],
+    // Notificaciones locales (avisos de horario de favoritos) y push (cierres temporales).
+    ['expo-notifications', { color: '#0E7490' }],
   ],
+  extra: easProjectId ? { eas: { projectId: easProjectId } } : {},
 };
 
 export default config;

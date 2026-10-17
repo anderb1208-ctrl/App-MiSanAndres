@@ -28,6 +28,10 @@ const esquemaEnv = z
     OPEN_METEO_API_KEY: opcional(z.string().min(1)),
     CLIMA_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(6000),
     CLIMA_REINTENTOS: z.coerce.number().int().min(0).max(3).default(1),
+
+    // Notificaciones push (Expo Push API). Sin clave por defecto; solo hace falta si se activa
+    // "Enhanced Security for Push Notifications" en el proyecto de Expo.
+    EXPO_ACCESS_TOKEN: opcional(z.string().min(1)),
   })
   .superRefine((v, ctx) => {
     if (v.PREDICCION_PROVEEDOR === 'heuristico') return;

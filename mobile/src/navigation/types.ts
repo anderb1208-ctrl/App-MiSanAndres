@@ -10,7 +10,7 @@ export type AuthStackParamList = {
 
 /**
  * Todas las pestañas posibles; cada rol muestra solo las suyas (RootNavigator):
- * turista: Inicio, Explorar, Mapa, Perfil · técnico: Tickets, Perfil ·
+ * turista: Inicio, Explorar, Mapa, Favoritos, Perfil · técnico: Tickets, Perfil ·
  * administrador: Panel, Tickets, Destinos, Usuarios, Perfil.
  */
 export type TabsParamList = {
@@ -18,6 +18,7 @@ export type TabsParamList = {
   Explorar: undefined;
   /** destinoId: destino a resaltar al llegar desde el detalle. */
   Mapa: { destinoId?: number } | undefined;
+  Favoritos: undefined;
   Panel: undefined;
   Tickets: undefined;
   Destinos: undefined;

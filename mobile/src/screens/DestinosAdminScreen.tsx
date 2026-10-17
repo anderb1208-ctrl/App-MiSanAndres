@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FilterChip } from '../components/FilterChip';
 import { GlassPanel } from '../components/GlassPanel';
+import { HojaCierreTemporal } from '../components/HojaCierreTemporal';
 import { PantallaApilada } from '../components/PantallaApilada';
 import { EstadoCargando, EstadoError } from '../components/StateView';
 import { Tag } from '../components/Tag';
@@ -10,7 +11,7 @@ import { useEspacioTabBar } from '../navigation/TabBar';
 import type { TabScreenProps } from '../navigation/types';
 import { cambiarEstadoDestino, listarDestinosAdmin } from '../services/admin';
 import { mensajeDeError } from '../services/api';
-import type { Destino, EstadoDestino } from '../services/tipos';
+import type { Destino, EstadoDestino, ResultadoAviso } from '../services/tipos';
 import { colors, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
 import { ESTADOS_DESTINO, ETIQUETA_ESTADO_DESTINO } from '../utils/tickets';
@@ -20,21 +21,41 @@ export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) 
   const espacio = useEspacioTabBar();
   const [filtro, setFiltro] = useState<EstadoDestino>();
   const { datos, error, cargando, refrescando, recargar } = useAsync(listarDestinosAdmin, [], { recargarAlEnfocar: true });
+  const [cerrando, setCerrando] = useState<Destino | null>(null);
   const lista = useMemo(() => (datos ?? []).filter((d) => !filtro || d.estado === filtro), [datos, filtro]);
 
+  /** Resumen del push enviado (cierre o reapertura) para el administrador. */
+  const informarAviso = (aviso: ResultadoAviso | null) => {
+    if (!aviso) return;
+    const accion = aviso.tipo === 'cierre' ? 'el cierre' : 'la reapertura';
+    Alert.alert(
+      'Aviso enviado',
+      aviso.error
+        ? `El estado cambió, pero no se pudo avisar: ${aviso.error}`
+        : aviso.destinatarios === 0
+          ? `Nadie tiene este destino en favoritos con el aviso de ${aviso.tipo} activo y un teléfono registrado.`
+          : `Se avisó de ${accion} a ${aviso.enviados} de ${aviso.destinatarios} dispositivo(s).`,
+    );
+  };
+
+  const cambiar = async (d: Destino, estado: EstadoDestino, cierre?: { motivo?: string; hasta?: string }) => {
+    try {
+      const { aviso } = await cambiarEstadoDestino(d.id, estado, cierre);
+      recargar();
+      informarAviso(aviso);
+    } catch (e) {
+      Alert.alert('No se pudo cambiar el estado', mensajeDeError(e));
+      throw e;
+    }
+  };
+
   const opciones = (d: Destino) => {
-    const cambiar = (estado: EstadoDestino) => async () => {
-      try {
-        await cambiarEstadoDestino(d.id, estado);
-        recargar();
-      } catch (e) {
-        Alert.alert('No se pudo cambiar el estado', mensajeDeError(e));
-      }
-    };
-    Alert.alert(d.nombre, `Estado actual: ${ETIQUETA_ESTADO_DESTINO[d.estado]}`, [
+    Alert.alert(d.nombre, `Estado actual: ${ETIQUETA_ESTADO_DESTINO[d.estado]}${d.cierre?.motivo ? ` (${d.cierre.motivo})` : ''}`, [
       { text: 'Editar datos', onPress: () => navigation.navigate('EditarDestino', { id: d.id }) },
-      ...(d.estado !== 'abierto' ? [{ text: d.estado === 'inactivo' ? 'Mostrar (abierto)' : 'Reabrir', onPress: cambiar('abierto') }] : []),
-      ...(d.estado !== 'inactivo' ? [{ text: 'Ocultar', style: 'destructive' as const, onPress: cambiar('inactivo') }] : []),
+      ...(d.estado === 'abierto' ? [{ text: 'Cerrar temporalmente', onPress: () => setCerrando(d) }] : []),
+      ...(d.estado === 'cerrado_temporal' ? [{ text: 'Reabrir y avisar', onPress: () => void cambiar(d, 'abierto').catch(() => undefined) }] : []),
+      ...(d.estado === 'inactivo' ? [{ text: 'Mostrar (abierto)', onPress: () => void cambiar(d, 'abierto').catch(() => undefined) }] : []),
+      ...(d.estado !== 'inactivo' ? [{ text: 'Ocultar', style: 'destructive' as const, onPress: () => void cambiar(d, 'inactivo').catch(() => undefined) }] : []),
       { text: 'Cancelar', style: 'cancel' },
     ]);
   };
@@ -68,6 +89,7 @@ export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) 
               </Text>
               <Tag tono={d.estado === 'abierto' ? 'turquoise' : 'neutral'}>{ETIQUETA_ESTADO_DESTINO[d.estado]}</Tag>
             </View>
+            {d.cierre?.motivo ? <Text style={styles.meta}>Motivo: {d.cierre.motivo}</Text> : null}
             <Text style={styles.meta}>
               {CATEGORIAS[d.categoria].singular} · capacidad {d.capacidad}
               {d.horario ? ` · ${d.horario.apertura}–${d.horario.cierre}` : ''}
@@ -75,6 +97,15 @@ export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) 
           </GlassPanel>
         ))
       )}
+      <HojaCierreTemporal
+        destino={cerrando}
+        onCerrar={() => setCerrando(null)}
+        onConfirmar={async (motivo, hasta) => {
+          if (!cerrando) return;
+          await cambiar(cerrando, 'cerrado_temporal', { motivo, hasta });
+          setCerrando(null);
+        }}
+      />
     </PantallaApilada>
   );
 }

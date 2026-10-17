@@ -40,6 +40,6 @@ export async function editarDestino(_req: Request, res: Response) {
 
 export async function estadoDestino(_req: Request, res: Response) {
   const { id } = res.locals.validado.params as ParamsId;
-  const { estado } = res.locals.validado.body as CuerpoEstadoDestino;
-  res.json(await adminService.cambiarEstadoDestino(res.locals.db, id, estado));
+  const cuerpo = res.locals.validado.body as CuerpoEstadoDestino;
+  res.json(await adminService.cambiarEstadoDestino(res.locals.db, id, cuerpo));
 }

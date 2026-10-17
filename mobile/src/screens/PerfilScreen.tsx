@@ -18,6 +18,7 @@ import { mensajeDeError } from '../services/api';
 import { obtenerHistorial } from '../services/interacciones';
 import { actualizarNombre, obtenerPerfil } from '../services/perfil';
 import { obtenerPreferencias } from '../services/preferencias';
+import { probarNotificacion } from '../services/notificaciones';
 import { guardarPedirLoginAlAbrir, leerPedirLoginAlAbrir } from '../services/sesion';
 import type { InteraccionHistorial, TipoInteraccion } from '../services/tipos';
 import { API_BASE_URL } from '../config/env';
@@ -58,6 +59,20 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
   const [guardando, setGuardando] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
   const [pedirLogin, setPedirLogin] = useState(leerPedirLoginAlAbrir);
+
+  const probar = async () => {
+    try {
+      const ok = await probarNotificacion();
+      Alert.alert(
+        ok ? 'Notificación programada' : 'Notificaciones desactivadas',
+        ok
+          ? 'Llegará en 5 segundos. Puedes salir de la app o bloquear el teléfono para verla.'
+          : 'Activa las notificaciones de MiSanAndrés en los ajustes del teléfono para recibir avisos.',
+      );
+    } catch (e) {
+      Alert.alert('No se pudo programar', (e as Error).message);
+    }
+  };
 
   const alternarPedirLogin = () => {
     const nuevo = !pedirLogin;
@@ -207,6 +222,14 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
             descripcion="OpenStreetMap, Open-Meteo y fotos"
             control="chevron"
             onPress={() => navigation.navigate('Creditos')}
+          />
+          <SelectRow
+            icono="notifications-active"
+            tonoIcono="neutral"
+            etiqueta="Probar notificación"
+            descripcion="Aviso local de prueba a los 5 segundos"
+            control="none"
+            onPress={() => void probar()}
           />
           <SelectRow
             icono="lock-clock"

@@ -81,6 +81,7 @@ beforeEach(() => {
   adminM.crearDestino.mockImplementation(async (_db, d) => ({ ...johnnyCay, ...d, id_destino: 31 }) as typeof johnnyCay);
   adminM.editarDestino.mockImplementation(async (_db, id, cambios) => (id === 1 ? ({ ...johnnyCay, ...cambios } as typeof johnnyCay) : null));
   adminM.listarDestinos.mockResolvedValue([{ ...johnnyCay, estado: 'inactivo' }]);
+  adminM.obtenerDestino.mockImplementation(async (_db, id) => (id === 1 ? johnnyCay : null));
 });
 
 describe('GET /v1/me', () => {
@@ -256,7 +257,7 @@ describe('administración', () => {
     expect(editado.body.capacidad).toBe(900);
 
     const oculto = await request(app).patch('/v1/admin/destinos/1/estado').set(como('administrador')).send({ estado: 'inactivo' });
-    expect(oculto.body.estado).toBe('inactivo');
+    expect(oculto.body).toMatchObject({ destino: { estado: 'inactivo' }, aviso: null });
 
     expect((await request(app).get('/v1/admin/destinos').set(como('administrador'))).body[0].estado).toBe('inactivo');
   });

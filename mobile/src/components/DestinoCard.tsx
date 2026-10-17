@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-na
 import type { Destino } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
+import { BotonFavorito } from './BotonFavorito';
 import { GlassPanel } from './GlassPanel';
 import { Icon } from './Icon';
 import { ImagenDestino } from './ImagenDestino';
@@ -18,13 +19,15 @@ interface Props {
   /** Texto destacado a la derecha del nombre (p. ej. "92%" de compatibilidad). */
   destacado?: string;
   onPress: () => void;
+  /** Oculta el corazón de favorito. */
+  sinFavorito?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
 const cerrado = (d: Destino) => d.estado === 'cerrado_temporal';
 
 /** DestinoCard: tarjeta de destino con su IndicadorOcupacion. */
-export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress, style }: Props) {
+export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress, sinFavorito, style }: Props) {
   const categoria = CATEGORIAS[destino.categoria];
   const accesible = `${destino.nombre}, ${categoria.singular}${nota ? `. ${nota}` : ''}`;
 
@@ -40,11 +43,14 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress
         <LinearGradient colors={colors.scrimBottom} locations={[0.35, 0.7, 1]} style={StyleSheet.absoluteFill} />
         <View style={styles.featuredArriba}>
           <IndicadorOcupacion ocupacion={destino.ocupacionActual} mostrarPorcentaje />
-          {destacado && (
-            <View style={styles.featuredDestacado}>
-              <Text style={styles.featuredDestacadoTexto}>{destacado}</Text>
-            </View>
-          )}
+          <View style={styles.featuredAcciones}>
+            {destacado && (
+              <View style={styles.featuredDestacado}>
+                <Text style={styles.featuredDestacadoTexto}>{destacado}</Text>
+              </View>
+            )}
+            {!sinFavorito && <BotonFavorito destino={destino} tono="glass" tamano={20} />}
+          </View>
         </View>
         <GlassPanel tono="dark" padding={14} radius={18} style={styles.featuredLeyenda}>
           <Text style={styles.featuredMeta}>
@@ -74,6 +80,7 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress
               {destino.nombre}
             </Text>
             {destacado && <Text style={styles.destacado}>{destacado}</Text>}
+            {!sinFavorito && <BotonFavorito destino={destino} tamano={20} style={styles.corazon} />}
           </View>
           <View style={styles.meta}>
             <Icon name={categoria.icono} size={14} color={colors.secondary} />
@@ -104,6 +111,8 @@ const styles = StyleSheet.create({
     padding: spacing.gutter,
   },
   featuredArriba: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  featuredAcciones: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  corazon: { marginTop: -8, marginRight: -8 },
   featuredDestacado: {
     paddingHorizontal: 10,
     paddingVertical: 4,

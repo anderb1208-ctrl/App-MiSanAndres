@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BotonFavorito } from '../components/BotonFavorito';
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
@@ -184,6 +185,22 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
             {d.rangoPrecio && <Dato icono="payments">{ETIQUETA_PRECIO[d.rangoPrecio]}</Dato>}
           </View>
 
+          {d.cierre && (
+            <View style={styles.cierre} accessibilityRole="alert">
+              <Icon name="block" size={20} color={colors.error} />
+              <View style={styles.cierreTextos}>
+                <Text style={styles.cierreTitulo}>Cerrado temporalmente</Text>
+                {d.cierre.motivo ? <Text style={styles.cierreTexto}>Motivo: {d.cierre.motivo}</Text> : null}
+                {d.cierre.hasta ? (
+                  <Text style={styles.cierreTexto}>
+                    Reabre previsiblemente el{' '}
+                    {new Date(d.cierre.hasta).toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          )}
+
           <LinearGradient
             colors={colors.gradientOcupacion}
             start={{ x: 0, y: 0 }}
@@ -281,6 +298,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
       </ScrollView>
 
       {botonVolver}
+      <BotonFavorito destino={d} tono="glass" tamano={24} style={[styles.favorito, { top: insets.top + spacing.sm }]} />
 
       <View style={[styles.barraAcciones, shadows.lg, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
         <Button
@@ -305,6 +323,11 @@ const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: colors.white },
   centro: { flex: 1, justifyContent: 'center' },
   volver: { position: 'absolute', left: spacing.screen, zIndex: 5 },
+  favorito: { position: 'absolute', right: spacing.screen, zIndex: 5 },
+  cierre: { flexDirection: 'row', gap: spacing.sm, padding: spacing.gutter, borderRadius: radius.lg, backgroundColor: colors.errorContainer, borderWidth: 1, borderColor: colors.errorBorder },
+  cierreTextos: { flex: 1, gap: 2 },
+  cierreTitulo: { ...typography.labelBold, color: colors.error },
+  cierreTexto: { ...typography.bodyMd, color: colors.textStrong },
   hero: { height: 360, backgroundColor: colors.navy950 },
   scrimSuperior: { position: 'absolute', top: 0, left: 0, right: 0, height: 130 },
   credito: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 44, alignItems: 'flex-start' },

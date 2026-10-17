@@ -16,6 +16,7 @@ import { MisReportesScreen, TicketsScreen } from '../screens/TicketsScreen';
 import { UsuariosAdminScreen } from '../screens/UsuariosAdminScreen';
 import { DetalleDestinoScreen } from '../screens/DetalleDestinoScreen';
 import { ExplorarScreen } from '../screens/ExplorarScreen';
+import { FavoritosScreen } from '../screens/FavoritosScreen';
 import { InicioScreen } from '../screens/InicioScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { MapaScreen } from '../screens/MapaScreen';
@@ -59,6 +60,7 @@ function TabsNavigator() {
           <Tabs.Screen name="Inicio" component={InicioScreen} />
           <Tabs.Screen name="Explorar" component={ExplorarScreen} />
           <Tabs.Screen name="Mapa" component={MapaScreen} />
+          <Tabs.Screen name="Favoritos" component={FavoritosScreen} />
         </>
       )}
       <Tabs.Screen name="Perfil" component={PerfilScreen} />

@@ -7,7 +7,9 @@ import type { Db } from '../config/supabase';
 import type { UsuarioAuth } from '../models/authModel';
 import * as adminModel from '../models/adminModel';
 import type { EstadoDestino, Json, RolUsuario } from '../models/database.types';
-import type { CuerpoEditarDestino, CuerpoNuevoDestino } from '../middleware/esquemas';
+import type { CuerpoEditarDestino, CuerpoEstadoDestino, CuerpoNuevoDestino } from '../middleware/esquemas';
+import { estadoEfectivo } from '../utils/estadoDestino';
+import { avisarCambioDestino, type ResultadoAviso } from './notificaciones/notificacionesService';
 import { noEncontrado, solicitudInvalida } from '../utils/errores';
 import { aDestino, type Destino } from './destinoService';
 
@@ -93,9 +95,37 @@ export async function editarDestino(db: Db, id: number, c: CuerpoEditarDestino):
   return aDestino(fila);
 }
 
-/** Estado operativo: abierto, cerrado_temporal u oculto (inactivo). */
-export async function cambiarEstadoDestino(db: Db, id: number, estado: EstadoDestino): Promise<Destino> {
-  const fila = await adminModel.editarDestino(db, id, { estado });
+/**
+ * Estado operativo: abierto, cerrado_temporal (con motivo y fin opcional) u oculto (inactivo).
+ * - Al pasar de abierto a cerrado_temporal se avisa por push a quienes lo tienen en favoritos
+ *   con "avisar cierre"; al reabrir, a quienes tienen "avisar apertura".
+ * - Ocultar no avisa. Un fallo del push no deshace el cambio: se informa en `aviso`.
+ */
+export async function cambiarEstadoDestino(
+  db: Db,
+  id: number,
+  cuerpo: CuerpoEstadoDestino,
+): Promise<{ destino: Destino; aviso: ResultadoAviso | null }> {
+  const anterior = await adminModel.obtenerDestino(db, id);
+  if (!anterior) throw noEncontrado(`No existe un destino con id ${id}.`);
+  const estadoAnterior: EstadoDestino = estadoEfectivo(anterior);
+
+  const cierre = cuerpo.estado === 'cerrado_temporal';
+  const fila = await adminModel.editarDestino(db, id, {
+    estado: cuerpo.estado,
+    motivo_cierre: cierre ? (cuerpo.motivo ?? null) : null,
+    cierre_hasta: cierre ? (cuerpo.hasta ?? null) : null,
+  });
   if (!fila) throw noEncontrado(`No existe un destino con id ${id}.`);
-  return aDestino(fila);
+
+  const tipo =
+    cuerpo.estado === 'cerrado_temporal' && estadoAnterior === 'abierto'
+      ? 'cierre'
+      : cuerpo.estado === 'abierto' && estadoAnterior === 'cerrado_temporal'
+        ? 'apertura'
+        : null;
+  const aviso = tipo
+    ? await avisarCambioDestino(db, { id, nombre: fila.nombre, motivo: fila.motivo_cierre, hasta: fila.cierre_hasta }, tipo)
+    : null;
+  return { destino: aDestino(fila), aviso };
 }

@@ -1,5 +1,5 @@
 import { solicitud } from './api';
-import type { CamposDestino, Destino, EstadoDestino, MetricasAdmin, Rol, UsuarioAdmin } from './tipos';
+import type { CamposDestino, Destino, EstadoDestino, MetricasAdmin, ResultadoAviso, Rol, UsuarioAdmin } from './tipos';
 
 /** Endpoints del panel del administrador (el backend y la base verifican el rol). */
 export const obtenerMetricas = () => solicitud<MetricasAdmin>('/admin/metricas', { autenticado: true });
@@ -17,5 +17,9 @@ export const crearDestino = (campos: CamposDestino) =>
 export const editarDestino = (id: number, campos: Partial<CamposDestino>) =>
   solicitud<Destino>(`/admin/destinos/${id}`, { metodo: 'PATCH', cuerpo: campos, autenticado: true });
 
-export const cambiarEstadoDestino = (id: number, estado: EstadoDestino) =>
-  solicitud<Destino>(`/admin/destinos/${id}/estado`, { metodo: 'PATCH', cuerpo: { estado }, autenticado: true });
+export const cambiarEstadoDestino = (id: number, estado: EstadoDestino, cierre: { motivo?: string; hasta?: string } = {}) =>
+  solicitud<{ destino: Destino; aviso: ResultadoAviso | null }>(`/admin/destinos/${id}/estado`, {
+    metodo: 'PATCH',
+    cuerpo: { estado, ...cierre },
+    autenticado: true,
+  });

@@ -11,6 +11,7 @@ const TABS: Record<keyof TabsParamList, { etiqueta: string; icono: NombreIcono }
   Inicio: { etiqueta: 'Inicio', icono: 'home' },
   Explorar: { etiqueta: 'Explorar', icono: 'search' },
   Mapa: { etiqueta: 'Mapa', icono: 'map' },
+  Favoritos: { etiqueta: 'Favoritos', icono: 'favorite' },
   Panel: { etiqueta: 'Panel', icono: 'insights' },
   Tickets: { etiqueta: 'Tickets', icono: 'support-agent' },
   Destinos: { etiqueta: 'Destinos', icono: 'place' },

@@ -30,6 +30,8 @@ export interface DestinoAPredecir extends ConHorario {
   latitud: number;
   longitud: number;
   estado?: EstadoDestino;
+  /** Fin del cierre temporal: si ya pasó, el destino atiende normalmente. */
+  cierre_hasta?: string | null;
 }
 
 export interface BasePrediccion {

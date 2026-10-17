@@ -50,6 +50,8 @@ export interface Destino {
   longitud: number;
   capacidad: number;
   estado: EstadoDestino;
+  /** Cierre temporal vigente (motivo y fin previsto), o null. */
+  cierre: { motivo: string | null; hasta: string | null } | null;
   /** null = sin horario (siempre accesible). */
   horario: Horario | null;
   rangoPrecio: RangoPrecio | null;
@@ -346,4 +348,27 @@ export interface CamposDestino {
   horarioCierre: string | null;
   rangoPrecio: RangoPrecio | null;
   comoLlegar: string | null;
+}
+
+// ---- Favoritos y alertas ----
+
+export interface AvisosFavorito {
+  avisarApertura: boolean;
+  avisarCierre: boolean;
+}
+
+export interface Favorito extends AvisosFavorito {
+  idDestino: number;
+  fechaCreacion: string;
+  /** null si el destino se ocultó. */
+  destino: Destino | null;
+}
+
+export interface ResultadoAviso {
+  tipo: 'cierre' | 'apertura';
+  destinatarios: number;
+  enviados: number;
+  fallidos: number;
+  tokensDesactivados: number;
+  error: string | null;
 }
