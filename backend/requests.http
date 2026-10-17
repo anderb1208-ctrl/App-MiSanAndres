@@ -94,7 +94,8 @@ Content-Type: application/json
 GET {{baseUrl}}/preferencias
 Authorization: Bearer {{token}}
 
-### Reemplazar preferencias (códigos del catálogo)
+### Reemplazar preferencias (códigos del catálogo). presupuestoMin/Max: COP por persona
+### por visita, opcionales (los dos o ninguno; null = sin presupuesto)
 PUT {{baseUrl}}/preferencias
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -103,7 +104,9 @@ Content-Type: application/json
   "categorias": ["playa", "cayo"],
   "tiposExperiencia": ["relax", "fotografia"],
   "tiposGrupo": ["pareja"],
-  "nivelOcupacion": "Bajo"
+  "nivelOcupacion": "Bajo",
+  "presupuestoMin": 20000,
+  "presupuestoMax": 80000
 }
 
 ### Restablecer preferencias (borra todas y el nivel preferido)
@@ -124,12 +127,223 @@ Content-Type: application/json
 GET {{baseUrl}}/interacciones?limite=20
 Authorization: Bearer {{token}}
 
-### Recomendaciones personalizadas para ahora
+### Recomendaciones personalizadas para ahora. Cada una trae "razones"
+### [{codigo, texto, tipo: positiva|advertencia}] y una frase corta "porQue"
 GET {{baseUrl}}/recomendaciones
+Authorization: Bearer {{token}}
+
+### Recomendaciones a una hora planeada con filtro rápido de presupuesto
+### (deja fuera lo que empieza por encima del máximo; las razones usan este presupuesto)
+GET {{baseUrl}}/recomendaciones?fecha=2026-10-17&hora=12:00&presupuestoMin=0&presupuestoMax=50000
 Authorization: Bearer {{token}}
 
 ### Sin token → 401
 GET {{baseUrl}}/recomendaciones
+
+### Usuario del token con su rol (turista | tecnico | administrador), leído de la base
+GET {{baseUrl}}/me
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------
+### Reseñas (una por usuario y destino)
+### ---------------------------------------------------------------
+
+### Reseñas visibles de un destino con su promedio (público)
+GET {{baseUrl}}/destinos/1/resenas
+
+### Mi reseña de ese destino (o null)
+GET {{baseUrl}}/destinos/1/resena
+Authorization: Bearer {{token}}
+
+### Crear o reemplazar mi reseña (estrellas 1–5, comentario opcional)
+PUT {{baseUrl}}/destinos/1/resena
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estrellas": 5,
+  "comentario": "Agua cristalina; mejor llegar temprano."
+}
+
+### Borrar mi reseña
+DELETE {{baseUrl}}/destinos/1/resena
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------
+### Favoritos con avisos y dispositivos para push
+### ---------------------------------------------------------------
+
+### Mis favoritos (con el destino y sus avisos)
+GET {{baseUrl}}/favoritos
+Authorization: Bearer {{token}}
+
+### Agregar un favorito (avisos de apertura y cierre activos por defecto)
+POST {{baseUrl}}/favoritos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idDestino": 1
+}
+
+### Cambiar los avisos de un favorito
+PATCH {{baseUrl}}/favoritos/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "avisarApertura": false,
+  "avisarCierre": true
+}
+
+### Quitar un favorito
+DELETE {{baseUrl}}/favoritos/1
+Authorization: Bearer {{token}}
+
+### Registrar el token push de este teléfono (lo hace la app al iniciar sesión)
+POST {{baseUrl}}/dispositivos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]",
+  "plataforma": "android"
+}
+
+### Desasociar el token (lo hace la app al cerrar sesión)
+DELETE {{baseUrl}}/dispositivos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+}
+
+### ---------------------------------------------------------------
+### Tickets de soporte (turista: los suyos; técnico y administrador: todos)
+### ---------------------------------------------------------------
+
+### Reportar un problema (opcionalmente sobre un destino)
+POST {{baseUrl}}/tickets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "asunto": "El horario de Johnny Cay está mal",
+  "descripcion": "Las lanchas salen desde las 8:30, no desde las 9:00.",
+  "categoria": "informacion_incorrecta",
+  "idDestino": 1
+}
+
+### Listar tickets (filtros opcionales: estado, prioridad, asignadosAMi=true para el personal)
+GET {{baseUrl}}/tickets?estado=abierto
+Authorization: Bearer {{token}}
+
+### Detalle de un ticket con sus comentarios
+GET {{baseUrl}}/tickets/1
+Authorization: Bearer {{token}}
+
+### Gestionar un ticket (técnico o administrador): estado, prioridad, técnico asignado
+PATCH {{baseUrl}}/tickets/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "en_revision",
+  "prioridad": "alta"
+}
+
+### Comentar un ticket
+POST {{baseUrl}}/tickets/1/comentarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "comentario": "Gracias, ya lo estamos revisando."
+}
+
+### ---------------------------------------------------------------
+### Administración (solo administrador; con otro rol → 403)
+### ---------------------------------------------------------------
+
+### Usuarios con su rol y correo
+GET {{baseUrl}}/admin/usuarios
+Authorization: Bearer {{token}}
+
+### Cambiar el rol de un usuario (no puedes quitarte el tuyo ni dejar la app sin administrador)
+PATCH {{baseUrl}}/admin/usuarios/00000000-0000-4000-8000-000000000000/rol
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rol": "tecnico"
+}
+
+### Métricas del panel
+GET {{baseUrl}}/admin/metricas
+Authorization: Bearer {{token}}
+
+### Destinos (incluye los ocultos)
+GET {{baseUrl}}/admin/destinos
+Authorization: Bearer {{token}}
+
+### Crear un destino
+POST {{baseUrl}}/admin/destinos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Mirador de prueba",
+  "descripcion": "Destino creado desde requests.http.",
+  "categoria": "naturaleza",
+  "latitud": 12.55,
+  "longitud": -81.72,
+  "ubicacion": "La Loma",
+  "capacidad": 50
+}
+
+### Editar un destino
+PATCH {{baseUrl}}/admin/destinos/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "capacidad": 900
+}
+
+### Cerrar temporalmente con motivo y fecha prevista de reapertura (avisa por push a
+### quienes lo tienen en favoritos con "avisar cierre"; la respuesta trae { destino, aviso })
+PATCH {{baseUrl}}/admin/destinos/1/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "cerrado_temporal",
+  "motivo": "Mar de leva: no salen lanchas",
+  "hasta": "2026-10-18T09:00:00-05:00"
+}
+
+### Reabrir (avisa a quienes tienen "avisar apertura")
+PATCH {{baseUrl}}/admin/destinos/1/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "abierto"
+}
+
+### Reseñas de un destino, también las ocultas
+GET {{baseUrl}}/admin/destinos/1/resenas
+Authorization: Bearer {{token}}
+
+### Ocultar (o mostrar con false) una reseña
+PATCH {{baseUrl}}/admin/resenas/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "oculta": true
+}
 
 ### ---------------------------------------------------------------
 ### Fotos de los destinos (archivos estáticos, fuera de /v1)

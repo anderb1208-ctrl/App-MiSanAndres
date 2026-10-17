@@ -245,3 +245,52 @@ El entregable prevé un modelo Random Forest expuesto con `POST /predict`. Se im
 - Registro de peticiones con morgan (método, ruta, estado y duración) y mensaje de arranque con entorno y puerto.
 
 **Agregar al entregable**: el servicio de ML como componente del diagrama de arquitectura (Backend → Servicio ML por HTTPS con API key), la columna `Ocupacion.origen`, los campos nuevos de la respuesta de predicción y el aviso de datos simulados.
+
+## 15. Roles y permisos
+
+El entregable solo contempla al turista. Se agregan tres roles en `usuario.rol` (enum `rol_usuario`, por defecto `turista`), migración `20261016120000_roles_y_tickets.sql`:
+
+| Rol | Puede |
+| --- | --- |
+| turista | Todo lo anterior (recomendaciones, favoritos, reseñas) y reportar problemas (tickets) y ver los suyos. |
+| tecnico | Ver y gestionar todos los tickets (estado, prioridad, asignación) y comentarlos. |
+| administrador | Lo del técnico, más usuarios y roles, crear/editar/ocultar destinos, cierre temporal con aviso, moderar reseñas y ver métricas. |
+
+- **El rol nunca se elige al registrarse** ni lo puede cambiar el propio usuario: un trigger (`private.proteger_rol`) lo impide y los privilegios por columna solo dejan editar `nombre`, `nivel_ocupacion_preferido` y el presupuesto. Solo la función `cambiar_rol_usuario` (administrador) lo cambia; no deja que un administrador se quite su propio rol ni que la app quede sin administradores.
+- **Sin service role en la API**: el backend sigue trabajando con el JWT del usuario. El middleware `requiereRol(...)` lee el rol **de la base** (no del token ni del cliente) para responder 403 pronto, y RLS lo vuelve a comprobar con las funciones `es_personal()` y `es_administrador()`.
+- Tablas nuevas `ticket` y `ticket_comentario` (categoría, prioridad, estado `abierto → en_revision → resuelto → cerrado`, técnico asignado, fechas de actualización y cierre).
+- Endpoints: `GET /me`, `/tickets` (POST, GET, GET/:id, PATCH/:id para el personal, POST /:id/comentarios) y `/admin/*` (usuarios, rol, métricas, destinos y estado). Errores: **403** `PROHIBIDO` cuando el rol no alcanza.
+- La app muestra pestañas según el rol: turista (Inicio, Explorar, Mapa, Favoritos, Perfil), técnico (Tickets, Perfil) y administrador (Panel, Destinos, Usuarios, Tickets, Perfil). Es solo presentación: la seguridad está en el backend y en RLS.
+- Usuarios de demostración: `backend/scripts/crear-usuarios-demo.ts` (ver `docs/usuarios-y-roles.md`).
+
+## 16. Favoritos, cierre temporal y avisos
+
+Migración `20261016120100_favoritos_y_alertas.sql`.
+
+- **Cierre temporal**: se reutiliza el valor `cerrado_temporal` del enum `estado_destino` en vez de una columna booleana `cierre_temporal` nueva (sería redundante y podría contradecir al estado). Se agregan `destino.motivo_cierre` (3–200 caracteres) y `destino.cierre_hasta` (fin previsto). El **estado efectivo** se evalúa en cada consulta: si `cierre_hasta` ya pasó, el destino cuenta como abierto sin necesidad de tareas programadas.
+- Tabla `favorito` (PK `id_usuario, id_destino`) con `avisar_apertura` y `avisar_cierre` (por defecto activos). El tipo de interacción `favorito` se sigue registrando aparte, para las métricas.
+- Tabla `dispositivo_push` (token de Expo único por teléfono y plataforma). El cliente no la escribe directamente: usa `registrar_dispositivo_push` (reasigna el token si el teléfono cambió de cuenta) y `quitar_dispositivo_push` (al cerrar sesión).
+- **Avisos locales** (horario normal): la app programa en el teléfono, para los próximos 7 días, un aviso a la hora de apertura y otro 30 minutos antes del cierre de cada favorito (máximo 60, por el límite de 64 de iOS, priorizando los más próximos). Funcionan sin internet y en Expo Go.
+- **Push remotas** (cierre temporal o reapertura): `PATCH /admin/destinos/:id/estado` envía el aviso por la Expo Push API a quienes tienen ese favorito con el aviso correspondiente, en lotes de 100, y desactiva los tokens que responden `DeviceNotRegistered`. Un fallo del envío no deshace el cambio de estado; la respuesta trae `{ destino, aviso }` con el resumen.
+- Endpoints: `/favoritos` (GET, POST, PATCH/:idDestino, DELETE/:idDestino) y `/dispositivos` (POST, DELETE).
+
+## 17. Presupuesto, recomendaciones explicadas y reseñas
+
+Migración `20261016120200_presupuesto_y_resenas.sql`.
+
+| Tabla | Campo nuevo | Motivo |
+| --- | --- | --- |
+| destino | `precio_min_cop`, `precio_max_cop` (INT ≥ 0, van juntos, mín ≤ máx) | Costo **por persona por visita** (entrada, tour o consumo típico) para comparar con el presupuesto. `rango_precio` ($, $$, $$$) se mantiene. |
+| destino | `precio_es_estimado` (BOOLEAN, por defecto true) | Todos los precios cargados son aproximados (`docs/datos-por-verificar.md`); la app los marca "Estimado". |
+| usuario | `presupuesto_min_cop`, `presupuesto_max_cop` (opcionales, van juntos) | Presupuesto del turista, editable por él (privilegio de columna). |
+| resena | Tabla nueva: usuario, destino, estrellas 1–5, comentario opcional, `oculta`, única por usuario y destino | Calificación de los destinos. El administrador oculta con `ocultar_resena`; el autor no puede des-ocultar la suya. |
+
+- **Tipos de grupo aptos**: no se agregó una columna; ya existen como etiquetas de grupo del destino en `destino_preferencia` (solo, pareja, familia_ninos, amigos, adulto_mayor) y se reutilizan.
+- **No se siembran reseñas.** El promedio solo cuenta reseñas visibles y la razón "Buena calificación" exige al menos 3 reseñas reales.
+- **Recomendaciones explicadas**: cada recomendación trae `razones: [{ codigo, texto, tipo: 'positiva' | 'advertencia' }]` y una frase `porQue`, calculadas de forma determinista con los mismos datos y reglas del puntaje (`services/razonesRecomendacion.ts`): preferencias que coinciden, presupuesto, tipo de grupo, horario, ocupación a la hora planeada, clima (al aire libre) y calificación. Si falta un dato, la razón se omite; las advertencias son reales ("Ocupación alta a las 12:00 (82 %)").
+- **Puntaje**: a la afinidad y el ajuste por ocupación (sección 9) se suman presupuesto (+5 dentro o por debajo, +2 si el rango se cruza, −10 si está por encima) y calificación (+3 con promedio ≥ 4, −3 con < 3, solo con 3 reseñas o más).
+- `GET /recomendaciones` acepta `fecha`, `hora` (hora planeada) y `presupuestoMin`/`presupuestoMax` (filtro rápido: deja fuera lo que empieza por encima del máximo). La respuesta agrega `presupuesto` (el usado).
+- Endpoints de reseñas: `GET /destinos/:id/resenas` (público), `GET/PUT/DELETE /destinos/:id/resena` (la propia) y, para el administrador, `GET /admin/destinos/:id/resenas` y `PATCH /admin/resenas/:id`. El detalle del destino agrega `precio` y `calificacion`.
+- Las reseñas públicas no muestran el nombre del autor (RLS no deja a anon leer `usuario`); la app muestra "Viajero".
+
+**Agregar al entregable**: los roles y los actores técnico y administrador en los casos de uso, las tablas `ticket`, `ticket_comentario`, `favorito`, `dispositivo_push` y `resena`, los campos de precio y presupuesto, y la Expo Push API en el diagrama de arquitectura (Backend → Expo Push → FCM/APNs → teléfono).

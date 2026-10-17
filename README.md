@@ -19,11 +19,20 @@ App móvil de turismo para San Andrés (Colombia) que recomienda destinos según
            │                               └──────────────────────┘                   │
            │              inicio de sesión y registro (Supabase Auth)                 │
            └──────────────────────────────────────────────────────────────────────────┘
+           ▲                                          │ avisos de cierre/reapertura
+           │  push remota (FCM en Android,            ▼ (lotes de 100)
+           │  APNs en iPhone)              ┌──────────────────────┐
+           └────────────────────────────── │  Expo Push API       │
+                                           └──────────────────────┘
 ```
+
+Opcionalmente, el backend llama al **servicio de ML** (`ml/`, `POST /predict/lote` con API key) para la predicción de ocupación; ver [Proveedores de predicción](#proveedores-de-predicción).
 
 1. **Presentación (`mobile/`)**: pantallas, navegación y estado de la sesión. No accede a la base de datos: todos los datos llegan por la API REST. Solo habla directamente con Supabase Auth para iniciar sesión, registrarse y renovar el token.
 2. **Lógica de negocio (`backend/`)**: valida las entradas, aplica las reglas (recomendaciones, predicción de ocupación con clima y calendario) y responde JSON con errores en un formato consistente. Consulta el clima a [Open-Meteo](https://open-meteo.com/) (gratis para uso no comercial, sin clave).
-3. **Datos (Supabase)**: PostgreSQL con las tablas `usuario`, `destino`, `preferencia`, `destino_preferencia`, `usuario_preferencia`, `interaccion`, `ocupacion` y `clima_hora`, y políticas RLS.
+3. **Datos (Supabase)**: PostgreSQL con las tablas `usuario` (con `rol`), `destino`, `preferencia`, `destino_preferencia`, `usuario_preferencia`, `interaccion`, `ocupacion`, `clima_hora`, `ticket`, `ticket_comentario`, `favorito`, `dispositivo_push` y `resena`, y políticas RLS.
+
+**Roles:** `turista` (por defecto), `tecnico` y `administrador`. El rol vive en la base, nunca se elige al registrarse y solo lo cambia un administrador. El backend lo lee de la base en cada petición que lo necesita (`requiereRol`, 403 si no alcanza) y RLS lo vuelve a comprobar; la app solo decide qué pestañas mostrar. Detalles en `docs/usuarios-y-roles.md`.
 
 **Autenticación:** la app envía el JWT de Supabase en `Authorization: Bearer <token>`. El backend obtiene el usuario **del token** (nunca de un ID enviado por el cliente) y consulta la base con ese mismo token para que se apliquen las políticas RLS. Por eso el backend solo necesita la publishable key, no la secret key.
 
@@ -38,16 +47,16 @@ routes → middleware → controllers → services → models → Supabase
 | Capa | Carpeta | Responsabilidad |
 | --- | --- | --- |
 | Rutas | `routes/` | Solo asocian método + URL con su middleware y controller. |
-| Middleware | `middleware/` | Autenticación (`requerirAuth`), validación con zod (IDs, `fecha` YYYY-MM-DD, `hora` HH:MM, `nivelOcupacion`) y manejo central de errores (400, 401, 404, 500). |
+| Middleware | `middleware/` | Autenticación (`requerirAuth`), rol leído de la base (`requiereRol`, 403), validación con zod (IDs, `fecha` YYYY-MM-DD, `hora` HH:MM, `nivelOcupacion`) y manejo central de errores (400, 401, 403, 404, 500, 503). |
 | Controllers | `controllers/` | Leen la petición ya validada, llaman a un service y responden. Sin lógica de negocio ni consultas. |
-| Services | `services/` | Lógica de negocio: recomendaciones, predicción, clima (`clima/climaService`), calendario (`calendarioService`), armado de las respuestas. |
+| Services | `services/` | Lógica de negocio: recomendaciones y sus razones (`razonesRecomendacion`), predicción (proveedores heurístico/ML), tickets, administración, favoritos, reseñas, avisos push (`notificaciones/`), clima (`clima/climaService`), calendario (`calendarioService`), armado de las respuestas. |
 | Models | `models/` | Únicos que consultan Supabase (`.from`, `.rpc`). |
 
-La predicción de ocupación vive solo en `services/prediccionService.ts`: parte del promedio histórico de esa hora en ese día de la semana y lo ajusta con factores de clima y calendario (ver [Predicción de ocupación](#predicción-de-ocupación)). Para usar el modelo de ML (`POST /predict`) basta con reimplementar ese service conservando sus firmas y enviarle las `FeaturesPrediccion`, sin tocar controllers, rutas ni la app.
+La predicción de ocupación vive solo en `services/prediccionService.ts`: parte del promedio histórico de esa hora en ese día de la semana y lo ajusta con factores de clima y calendario (ver [Predicción de ocupación](#predicción-de-ocupación)). El cálculo lo hace un `ProveedorPrediccion` intercambiable (heurístico, ML o auto), elegido con `PREDICCION_PROVEEDOR`, sin tocar controllers, rutas ni la app. Del mismo modo, el envío de push pasa por un `ProveedorPush` (Expo Push API por defecto) que se puede reemplazar o simular en las pruebas.
 
 ### Monorepo
 
-Un solo repositorio con un subproyecto independiente por componente (`backend/`, `mobile/` y, más adelante, `ml/`), cada uno con sus dependencias, comandos y `.env.example`. El esquema de la base vive en `supabase/` como migraciones versionadas.
+Un solo repositorio con un subproyecto independiente por componente (`backend/`, `mobile/` y `ml/`), cada uno con sus dependencias, comandos y `.env.example`. El esquema de la base vive en `supabase/` como migraciones versionadas.
 
 ## Stack tecnológico
 
@@ -129,7 +138,24 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 | GET / PUT / DELETE | `/preferencias` 🔒 | Preferencias del usuario |
 | GET / PUT | `/perfil` 🔒 | Perfil del usuario |
 | GET / POST | `/interacciones` 🔒 | Historial y registro de interacciones |
-| GET | `/recomendaciones` 🔒 | Recomendaciones personalizadas para ahora |
+| GET | `/recomendaciones?fecha=&hora=&presupuestoMin=&presupuestoMax=` 🔒 | Recomendaciones personalizadas con `razones` (✓/⚠) y `porQue`; hora planeada y filtro rápido de presupuesto opcionales |
+| GET | `/me` 🔒 | Usuario del token con su rol |
+| GET | `/destinos/:id/resenas` | Reseñas visibles y promedio |
+| GET / PUT / DELETE | `/destinos/:id/resena` 🔒 | Reseña propia (una por destino) |
+| GET / POST | `/favoritos` 🔒 | Favoritos con sus avisos |
+| PATCH / DELETE | `/favoritos/:idDestino` 🔒 | Cambiar los avisos o quitar el favorito |
+| POST / DELETE | `/dispositivos` 🔒 | Registrar o desasociar el token push del teléfono |
+| GET / POST | `/tickets` 🔒 | Reportes de soporte (el turista ve los suyos; el personal, todos) |
+| GET / PATCH | `/tickets/:id` 🔒 | Detalle; gestionar estado, prioridad y técnico (técnico o administrador) |
+| POST | `/tickets/:id/comentarios` 🔒 | Comentar un ticket |
+| GET | `/admin/usuarios` 🔒 administrador | Usuarios con su rol |
+| PATCH | `/admin/usuarios/:id/rol` 🔒 administrador | Cambiar un rol |
+| GET | `/admin/metricas` 🔒 administrador | Métricas del panel |
+| GET / POST | `/admin/destinos` 🔒 administrador | Destinos (incluye ocultos) y crear |
+| PATCH | `/admin/destinos/:id` 🔒 administrador | Editar u ocultar |
+| PATCH | `/admin/destinos/:id/estado` 🔒 administrador | Abrir / cerrar temporalmente con motivo; avisa por push |
+| GET | `/admin/destinos/:id/resenas` 🔒 administrador | Reseñas, también las ocultas |
+| PATCH | `/admin/resenas/:id` 🔒 administrador | Ocultar o mostrar una reseña |
 
 ## Base de datos
 
@@ -234,6 +260,8 @@ Variables de `backend/.env` (ver `backend/.env.example`):
 | `ML_SERVICE_URL`, `ML_API_KEY` | URL del servicio de `ml/` y su API key; obligatorias solo con `ml` o `auto` |
 | `ML_TIMEOUT_MS` | Espera máxima al servicio de ML (por defecto 2500) |
 | `ORIGEN_DATOS_HISTORICOS` | `sintetico` (por defecto) o `real`: origen de la tabla `ocupacion` que usa el heurístico |
+| `EXPO_ACCESS_TOKEN` | Opcional. Solo si activas "Enhanced Security for Push Notifications" en Expo |
+| `SUPABASE_SERVICE_ROLE_KEY`, `DEMO_PASSWORD` | **Solo para el script local** `npm run usuarios:demo`; no van en Render. `DEMO_PASSWORD` se define en la terminal, no en el archivo |
 
 Comprobar que responde: abre `http://localhost:3000/v1/health` en el navegador. `backend/requests.http` tiene una petición de ejemplo por endpoint (extensión REST Client de VS Code).
 
@@ -269,6 +297,7 @@ Variables de `mobile/.env` (ver `mobile/.env.example`):
 | `EXPO_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key. La secret / service role key nunca va en la app. |
 | `GOOGLE_MAPS_API_KEY` | Opcional. Clave de Google Maps SDK for Android, solo para builds propios de Android (ver [Mapa](#mapa)). Vacía en desarrollo con Expo Go. |
+| `EAS_PROJECT_ID` | Opcional. Id del proyecto de EAS (`npx eas init`); lo necesitan las push remotas (ver [Notificaciones](#notificaciones)). |
 
 3. Escanea el código QR con Expo Go (Android) o con la cámara (iOS).
 4. Si cambias el `.env`, reinicia con `npm run start:limpio` (`npx expo start --clear`). Expo **incrusta** las variables `EXPO_PUBLIC_*` en el bundle; sin limpiar la caché, la app sigue usando el valor anterior. En desarrollo la app imprime la URL de la API al arrancar y la muestra al final de **Perfil**; la configuración está centralizada en `mobile/src/config/env.ts` y, si falta una variable, la app lo dice en vez de usar otra URL.
@@ -305,6 +334,32 @@ eas build --platform android --profile preview
 Durante el build, EAS expone la variable a `app.config.ts`. Para un build local (`npx expo run:android`), pon la clave en `mobile/.env` (`GOOGLE_MAPS_API_KEY=...`); ese archivo nunca se sube.
 
 **Ubicación:** se pide solo en primer plano, con el texto en español definido en `app.config.ts` (en Expo Go, iOS muestra el texto de Expo Go). Si el permiso se niega, el mapa y la lista funcionan igual y la lista se ordena por nombre.
+
+### Usuarios de demostración y roles
+
+Requiere `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en `backend/.env` (solo en tu PC, nunca en Render ni en la app):
+
+```powershell
+cd backend
+$env:DEMO_PASSWORD="<contraseña de 8+ caracteres>"
+npm run usuarios:demo     # turista@, tecnico@ y admin@misanandres.test, con su rol
+Remove-Item Env:DEMO_PASSWORD
+```
+
+Las contraseñas nunca se guardan en el repositorio. Para promover a mano a un usuario existente, ver `docs/usuarios-y-roles.md`.
+
+### Notificaciones
+
+| Tipo | Para qué | Expo Go (SDK 57) | Build propio (EAS) |
+| --- | --- | --- | --- |
+| **Locales** | Apertura y cierre del horario normal de los favoritos (próximos 7 días, máx. 60) | Android e iPhone | Sí |
+| **Push remotas** | Cierre temporal o reapertura enviados por el administrador | **Solo iPhone**. En Android, Expo Go no recibe push remotas desde SDK 53: hace falta un development build | Android (FCM) e iPhone (APNs, cuenta paga de Apple Developer) |
+
+Para las push remotas: `npx eas init` (crea el proyecto y su id), poner `EAS_PROJECT_ID` en `mobile/.env`, y en un build propio configurar las credenciales de FCM (Android) y APNs (iPhone) con `eas credentials`. Sin `EAS_PROJECT_ID`, sin permiso o en Expo Go Android, la app sigue funcionando con avisos locales e informa el motivo en la hoja de Alertas. Perfil → "Probar notificación" programa un aviso local a 5 segundos.
+
+### Presupuesto y reseñas
+
+Los precios por persona de los destinos son **estimados** (`docs/datos-por-verificar.md`) y la app los marca así. El presupuesto se define en Preferencias o como filtro rápido en Inicio, con una barra de rango en JS puro (funciona en Expo Go). No hay reseñas de ejemplo: la razón "Buena calificación" solo aparece con 3 o más reseñas reales.
 
 ### Problemas frecuentes
 
