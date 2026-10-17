@@ -6,7 +6,9 @@
  *   PowerShell:  $env:DEMO_PASSWORD="<contraseña>"; npm run usuarios:demo; Remove-Item Env:DEMO_PASSWORD
  *   bash:        DEMO_PASSWORD='<contraseña>' npm run usuarios:demo
  *
- * - La contraseña nunca se escribe en el repositorio: se lee de DEMO_PASSWORD al ejecutar.
+ * - Contraseña distinta por rol (opcional): DEMO_PASSWORD_TURISTA, DEMO_PASSWORD_TECNICO y
+ *   DEMO_PASSWORD_ADMINISTRADOR; la que falte usa DEMO_PASSWORD.
+ * - Las contraseñas nunca se escriben en el repositorio: se leen del entorno al ejecutar.
  * - Necesita SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY (en backend/.env). La service role
  *   key solo la usa este script, en tu PC: el servidor de la API no la necesita.
  * - Requiere la migración 20261016120000_roles_y_tickets aplicada (columna usuario.rol).
@@ -25,10 +27,13 @@ export const USUARIOS_DEMO: { correo: string; nombre: string; rol: RolUsuario }[
 async function main() {
   const url = process.env.SUPABASE_URL;
   const claveServicio = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const contrasena = process.env.DEMO_PASSWORD;
   if (!url || !claveServicio) throw new Error('Faltan SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en backend/.env.');
-  if (!contrasena || contrasena.length < 8) {
-    throw new Error('Define DEMO_PASSWORD (mínimo 8 caracteres) solo para esta ejecución; ver el comentario del script.');
+  const contrasenaDe = (rol: RolUsuario) => process.env[`DEMO_PASSWORD_${rol.toUpperCase()}`] || process.env.DEMO_PASSWORD;
+  for (const demo of USUARIOS_DEMO) {
+    const c = contrasenaDe(demo.rol);
+    if (!c || c.length < 8) {
+      throw new Error(`Define DEMO_PASSWORD_${demo.rol.toUpperCase()} o DEMO_PASSWORD (mínimo 8 caracteres) solo para esta ejecución.`);
+    }
   }
 
   const admin = createClient<Database>(url, claveServicio, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -36,6 +41,7 @@ async function main() {
   if (errorLista) throw new Error(`No se pudieron listar los usuarios: ${errorLista.message}`);
 
   for (const demo of USUARIOS_DEMO) {
+    const contrasena = contrasenaDe(demo.rol)!;
     const existente = lista.users.find((u) => u.email?.toLowerCase() === demo.correo);
     let id: string;
     if (existente) {
@@ -59,7 +65,7 @@ async function main() {
     if (errorRol) throw new Error(`${demo.correo}: no se pudo asignar el rol (${errorRol.message}). ¿Aplicaste la migración de roles?`);
     console.log(`✔ ${demo.correo} → ${demo.rol}${existente ? ' (ya existía: contraseña y rol actualizados)' : ''}`);
   }
-  console.log('\nListo. Inicia sesión en la app con cada correo y la contraseña de DEMO_PASSWORD.');
+  console.log('\nListo. Inicia sesión en la app con cada correo y su contraseña.');
 }
 
 if (require.main === module) {
