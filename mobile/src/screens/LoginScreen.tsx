@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { AuthSheet } from '../components/AuthSheet';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { TextField } from '../components/TextField';
 import { useBarraEstado } from '../hooks/useBarraEstado';
 import type { AuthScreenProps } from '../navigation/types';
-import { ErrorAuth, iniciarSesion } from '../services/auth';
+import { ErrorAuth, iniciarSesion, recuperarContrasena } from '../services/auth';
+import { useAuth } from '../store/AuthContext';
 import { colors, radius, spacing, typography } from '../theme';
 import { IMAGENES } from '../utils/imagenes';
 import { validarCorreo } from '../utils/validacion';
@@ -19,7 +20,37 @@ export function LoginScreen({ navigation, route }: AuthScreenProps<'Login'>) {
   const [errorGeneral, setErrorGeneral] = useState<string>();
   const [enviando, setEnviando] = useState(false);
   const campoContrasena = useRef<TextInput>(null);
-  const aviso = route.params?.aviso;
+  const { aviso: avisoSesion, limpiarAviso } = useAuth();
+  const aviso = route.params?.aviso ?? avisoSesion;
+  const [recuperando, setRecuperando] = useState(false);
+
+  const cambiarCorreo = (v: string) => {
+    setCorreo(v);
+    if (errores.correo) setErrores((e) => ({ ...e, correo: undefined }));
+    setErrorGeneral(undefined);
+  };
+  const cambiarContrasena = (v: string) => {
+    setContrasena(v);
+    if (errores.contrasena) setErrores((e) => ({ ...e, contrasena: undefined }));
+    setErrorGeneral(undefined);
+  };
+
+  const recuperar = async () => {
+    const error = validarCorreo(correo);
+    if (error) {
+      setErrores((e) => ({ ...e, correo: 'Escribe tu correo para enviarte el enlace de recuperación.' }));
+      return;
+    }
+    setRecuperando(true);
+    try {
+      await recuperarContrasena(correo);
+      Alert.alert('Revisa tu correo', `Si ${correo.trim()} tiene una cuenta, te enviamos un enlace para crear una contraseña nueva.`);
+    } catch (e) {
+      setErrorGeneral(e instanceof ErrorAuth ? e.message : 'No pudimos enviar el correo. Intenta de nuevo.');
+    } finally {
+      setRecuperando(false);
+    }
+  };
 
   const enviar = async () => {
     const nuevos = {
@@ -32,7 +63,8 @@ export function LoginScreen({ navigation, route }: AuthScreenProps<'Login'>) {
 
     setEnviando(true);
     try {
-      await iniciarSesion(correo.trim(), contrasena);
+      await iniciarSesion(correo, contrasena);
+      limpiarAviso();
       // AuthContext detecta la sesión y cambia de flujo.
     } catch (e) {
       setErrorGeneral(e instanceof ErrorAuth ? e.message : 'No pudimos iniciar sesión. Intenta de nuevo.');
@@ -51,7 +83,7 @@ export function LoginScreen({ navigation, route }: AuthScreenProps<'Login'>) {
 
       {aviso ? (
         <View style={styles.aviso}>
-          <Icon name="mark-email-read" size={20} color={colors.secondary} />
+          <Icon name={avisoSesion && !route.params?.aviso ? 'info-outline' : 'mark-email-read'} size={20} color={colors.secondary} />
           <Text style={styles.avisoTexto}>{aviso}</Text>
         </View>
       ) : null}
@@ -61,7 +93,7 @@ export function LoginScreen({ navigation, route }: AuthScreenProps<'Login'>) {
           etiqueta="Correo electrónico"
           placeholder="ejemplo@correo.com"
           value={correo}
-          onChangeText={setCorreo}
+          onChangeText={cambiarCorreo}
           error={errores.correo}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -75,7 +107,7 @@ export function LoginScreen({ navigation, route }: AuthScreenProps<'Login'>) {
           etiqueta="Contraseña"
           placeholder="Ingresa tu contraseña"
           value={contrasena}
-          onChangeText={setContrasena}
+          onChangeText={cambiarContrasena}
           error={errores.contrasena}
           contrasena
           autoComplete="current-password"
@@ -83,6 +115,9 @@ export function LoginScreen({ navigation, route }: AuthScreenProps<'Login'>) {
           returnKeyType="go"
           onSubmitEditing={enviar}
         />
+        <Text style={styles.olvido} onPress={recuperando ? undefined : () => void recuperar()} accessibilityRole="link">
+          {recuperando ? 'Enviando enlace…' : '¿Olvidaste tu contraseña?'}
+        </Text>
         {errorGeneral ? (
           <Text style={styles.errorGeneral} accessibilityLiveRegion="polite">
             {errorGeneral}
@@ -118,6 +153,7 @@ const styles = StyleSheet.create({
   avisoTexto: { ...typography.bodyMd, color: colors.turq800, flex: 1 },
   formulario: { gap: spacing.md },
   errorGeneral: { ...typography.bodyMd, color: colors.error, textAlign: 'center' },
+  olvido: { ...typography.labelBold, color: colors.textLink, alignSelf: 'flex-end' },
   boton: { marginTop: spacing.sm },
   pie: { marginTop: 'auto', paddingTop: 28, flexDirection: 'row', justifyContent: 'center', gap: 4 },
   pieTexto: { ...typography.bodyMd, color: colors.textMuted },

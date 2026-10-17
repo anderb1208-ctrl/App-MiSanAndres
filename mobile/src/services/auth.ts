@@ -18,6 +18,15 @@ function mensajeAuth(error: AuthError): string {
       return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
     case 'email_address_invalid':
       return 'El correo no es válido.';
+    case 'user_banned':
+      return 'Esta cuenta está bloqueada. Escríbenos si crees que es un error.';
+    case 'signup_disabled':
+      return 'El registro de cuentas nuevas está desactivado en este momento.';
+    case 'same_password':
+      return 'La nueva contraseña debe ser distinta de la anterior.';
+    case 'session_expired':
+    case 'refresh_token_not_found':
+      return 'Tu sesión venció. Inicia sesión de nuevo.';
     default:
       return error.status === 0 || !error.status
         ? 'No pudimos conectar. Verifica tu conexión e intenta de nuevo.'
@@ -28,7 +37,7 @@ function mensajeAuth(error: AuthError): string {
 export class ErrorAuth extends Error {}
 
 export async function iniciarSesion(correo: string, contrasena: string): Promise<void> {
-  const { error } = await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
+  const { error } = await supabase.auth.signInWithPassword({ email: correo.trim().toLowerCase(), password: contrasena });
   if (error) throw new ErrorAuth(mensajeAuth(error));
 }
 
@@ -42,7 +51,7 @@ export async function registrarse(
   contrasena: string,
 ): Promise<{ requiereConfirmacion: boolean }> {
   const { data, error } = await supabase.auth.signUp({
-    email: correo,
+    email: correo.trim().toLowerCase(),
     password: contrasena,
     options: { data: { nombre } },
   });
@@ -54,8 +63,20 @@ export async function registrarse(
   return { requiereConfirmacion: !data.session };
 }
 
+/**
+ * Cierra la sesión en ESTE dispositivo (borra la sesión guardada). Las sesiones en otros
+ * dispositivos siguen activas.
+ */
 export async function cerrarSesion(): Promise<void> {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  // Si falla la red, la sesión local igual se borra; no hay nada más que hacer.
+  if (error && error.status !== 0) console.warn('[auth] cerrar sesión:', error.message);
+}
+
+/** Envía el correo para restablecer la contraseña. */
+export async function recuperarContrasena(correo: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(correo.trim().toLowerCase());
+  if (error) throw new ErrorAuth(mensajeAuth(error));
 }
 
 export async function obtenerSesion(): Promise<Session | null> {

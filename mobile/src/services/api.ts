@@ -1,4 +1,5 @@
 import { obtenerApiBaseUrl } from '../config/env';
+import { MENSAJE_SESION_VENCIDA, notificarSesionVencida } from './sesion';
 import { supabase } from './supabase';
 
 const TIEMPO_LIMITE_MS = 15_000;
@@ -31,7 +32,10 @@ interface Opciones {
 async function tokenDeSesion(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new ErrorApi(401, 'NO_AUTENTICADO', 'Tu sesión expiró. Inicia sesión de nuevo.');
+  if (!token) {
+    notificarSesionVencida();
+    throw new ErrorApi(401, 'NO_AUTENTICADO', MENSAJE_SESION_VENCIDA);
+  }
   return token;
 }
 
@@ -76,6 +80,11 @@ export async function solicitud<T>(ruta: string, opciones: Opciones = {}): Promi
   if (respuesta.status === 204) return undefined as T;
 
   const datos: unknown = await respuesta.json().catch(() => null);
+  // Sesión vencida o revocada: la app vuelve al login con un mensaje claro.
+  if (respuesta.status === 401 && autenticado) {
+    notificarSesionVencida();
+    throw new ErrorApi(401, 'NO_AUTENTICADO', MENSAJE_SESION_VENCIDA);
+  }
   if (!respuesta.ok) {
     const error = (datos as { error?: { codigo?: string; mensaje?: string } } | null)?.error;
     throw new ErrorApi(

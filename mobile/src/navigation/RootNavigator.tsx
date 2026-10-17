@@ -75,7 +75,7 @@ function OnboardingPantalla() {
  * autenticación → (primer ingreso) configuración de preferencias → tabs y detalle.
  */
 export function RootNavigator() {
-  const { estado, mensajeError, reintentar, cerrarSesion } = useAuth();
+  const { estado, mensajeError, aviso, reintentar, cerrarSesion } = useAuth();
 
   if (estado === 'cargando' || estado === 'verificando') {
     return (
@@ -108,7 +108,8 @@ export function RootNavigator() {
 
   if (estado === 'sin_sesion') {
     return (
-      <AuthStack.Navigator screenOptions={sinEncabezado}>
+      // Con un aviso (sesión vencida, modo demostración) se abre directamente el login.
+      <AuthStack.Navigator screenOptions={sinEncabezado} initialRouteName={aviso ? 'Login' : 'Bienvenida'}>
         <AuthStack.Screen name="Bienvenida" component={BienvenidaScreen} />
         <AuthStack.Screen name="Login" component={LoginScreen} />
         <AuthStack.Screen name="Registro" component={RegistroScreen} />

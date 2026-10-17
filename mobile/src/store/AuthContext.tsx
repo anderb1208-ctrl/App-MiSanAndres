@@ -4,6 +4,12 @@ import { mensajeDeError } from '../services/api';
 import * as authService from '../services/auth';
 import { obtenerMe } from '../services/perfil';
 import { obtenerPreferencias } from '../services/preferencias';
+import {
+  ejecutarAlCerrarSesion,
+  escucharSesionVencida,
+  leerPedirLoginAlAbrir,
+  MENSAJE_SESION_VENCIDA,
+} from '../services/sesion';
 import type { Rol } from '../services/tipos';
 
 /**
@@ -26,6 +32,9 @@ interface ValorAuth {
    */
   rol: Rol | null;
   mensajeError: string | null;
+  /** Mensaje para mostrar en el login (sesión vencida, modo demostración). */
+  aviso: string | null;
+  limpiarAviso: () => void;
   reintentar: () => void;
   /** Llamar al guardar las preferencias del onboarding. */
   completarOnboarding: () => void;
@@ -40,15 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mensajeError, setMensajeError] = useState<string | null>(null);
   const [intento, setIntento] = useState(0);
   const [rol, setRol] = useState<Rol | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const idUsuario = sesion?.user.id ?? null;
 
   useEffect(() => {
     let activo = true;
-    authService.obtenerSesion().then((s) => {
+    (async () => {
+      // Modo demostración: al abrir la app se cierra la sesión local y se pide iniciar sesión.
+      if (leerPedirLoginAlAbrir() && (await authService.obtenerSesion())) {
+        await authService.cerrarSesion();
+        if (activo) setAviso('Modo demostración: inicia sesión para continuar.');
+      }
+      const s = await authService.obtenerSesion();
       if (!activo) return;
       setSesion(s);
       if (!s) setEstado('sin_sesion');
-    });
+    })();
     const cancelar = authService.escucharSesion((s) => {
       setSesion(s);
       if (!s) setEstado('sin_sesion');
@@ -84,9 +100,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [idUsuario, intento]);
 
+  // El backend respondió 401 (sesión vencida o revocada): volver al login con un mensaje claro.
+  useEffect(
+    () =>
+      escucharSesionVencida(() => {
+        setAviso(MENSAJE_SESION_VENCIDA);
+        void authService.cerrarSesion();
+      }),
+    [],
+  );
+
   const reintentar = useCallback(() => setIntento((n) => n + 1), []);
+  const limpiarAviso = useCallback(() => setAviso(null), []);
   const completarOnboarding = useCallback(() => setEstado('lista'), []);
-  const cerrarSesion = useCallback(() => authService.cerrarSesion(), []);
+  const cerrarSesion = useCallback(async () => {
+    // Primero lo que necesita la sesión (p. ej. desasociar el token de notificaciones).
+    await ejecutarAlCerrarSesion();
+    await authService.cerrarSesion();
+    setRol(null);
+  }, []);
 
   const valor = useMemo<ValorAuth>(
     () => ({
@@ -95,11 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       correo: sesion?.user.email ?? null,
       rol: sesion ? rol : null,
       mensajeError,
+      aviso,
+      limpiarAviso,
       reintentar,
       completarOnboarding,
       cerrarSesion,
     }),
-    [estado, sesion, rol, mensajeError, reintentar, completarOnboarding, cerrarSesion],
+    [estado, sesion, rol, mensajeError, aviso, limpiarAviso, reintentar, completarOnboarding, cerrarSesion],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

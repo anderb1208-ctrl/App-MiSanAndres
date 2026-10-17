@@ -8,7 +8,20 @@ import type { AuthScreenProps } from '../navigation/types';
 import { ErrorAuth, registrarse } from '../services/auth';
 import { colors, spacing, typography } from '../theme';
 import { IMAGENES } from '../utils/imagenes';
-import { MIN_CONTRASENA, validarContrasena, validarCorreo, validarNombre } from '../utils/validacion';
+import {
+  type Fortaleza,
+  fortalezaContrasena,
+  MIN_CONTRASENA,
+  validarContrasena,
+  validarCorreo,
+  validarNombre,
+} from '../utils/validacion';
+
+const FORTALEZA: Record<Fortaleza, { texto: string; color: string; partes: number }> = {
+  debil: { texto: 'Débil', color: colors.error, partes: 1 },
+  media: { texto: 'Aceptable', color: colors.tertiary, partes: 2 },
+  fuerte: { texto: 'Fuerte', color: colors.secondary, partes: 3 },
+};
 
 interface Errores {
   nombre?: string;
@@ -29,6 +42,14 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
   const campoCorreo = useRef<TextInput>(null);
   const campoContrasena = useRef<TextInput>(null);
   const campoConfirmacion = useRef<TextInput>(null);
+  const fortaleza = FORTALEZA[fortalezaContrasena(contrasena)];
+
+  /** Al editar un campo se borra su error (y el error general). */
+  const cambiar = (setter: (v: string) => void, campo: keyof Errores) => (v: string) => {
+    setter(v);
+    if (errores[campo]) setErrores((e) => ({ ...e, [campo]: undefined }));
+    setErrorGeneral(undefined);
+  };
 
   const enviar = async () => {
     const nuevos: Errores = {
@@ -70,7 +91,7 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
           etiqueta="Nombre completo"
           placeholder="Ingresa tu nombre"
           value={nombre}
-          onChangeText={setNombre}
+          onChangeText={cambiar(setNombre, 'nombre')}
           error={errores.nombre}
           autoComplete="name"
           textContentType="name"
@@ -83,7 +104,7 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
           etiqueta="Correo electrónico"
           placeholder="ejemplo@correo.com"
           value={correo}
-          onChangeText={setCorreo}
+          onChangeText={cambiar(setCorreo, 'correo')}
           error={errores.correo}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -97,21 +118,29 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
           etiqueta="Contraseña"
           placeholder="Crea una contraseña"
           value={contrasena}
-          onChangeText={setContrasena}
+          onChangeText={cambiar(setContrasena, 'contrasena')}
           error={errores.contrasena}
-          ayuda={`Mínimo ${MIN_CONTRASENA} caracteres`}
+          ayuda={`Mínimo ${MIN_CONTRASENA} caracteres, con letras y números`}
           contrasena
           autoComplete="new-password"
           textContentType="newPassword"
           returnKeyType="next"
           onSubmitEditing={() => campoConfirmacion.current?.focus()}
         />
+        {contrasena ? (
+          <View style={styles.fortaleza} accessibilityLabel={`Fortaleza de la contraseña: ${fortaleza.texto}`}>
+            {[1, 2, 3].map((n) => (
+              <View key={n} style={[styles.segmento, { backgroundColor: n <= fortaleza.partes ? fortaleza.color : colors.track }]} />
+            ))}
+            <Text style={[styles.fortalezaTexto, { color: fortaleza.color }]}>{fortaleza.texto}</Text>
+          </View>
+        ) : null}
         <TextField
           ref={campoConfirmacion}
           etiqueta="Confirmar contraseña"
           placeholder="Confirma tu contraseña"
           value={confirmacion}
-          onChangeText={setConfirmacion}
+          onChangeText={cambiar(setConfirmacion, 'confirmacion')}
           error={errores.confirmacion}
           contrasena
           autoComplete="new-password"
@@ -144,6 +173,9 @@ const styles = StyleSheet.create({
   subtitulo: { ...typography.bodyMd, color: colors.textMuted, marginTop: 4, marginBottom: spacing.lg },
   formulario: { gap: 14 },
   errorGeneral: { ...typography.bodyMd, color: colors.error, textAlign: 'center' },
+  fortaleza: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -6 },
+  segmento: { flex: 1, height: 4, borderRadius: 2 },
+  fortalezaTexto: { ...typography.labelBold, minWidth: 70, textAlign: 'right' },
   boton: { marginTop: spacing.sm },
   pie: { marginTop: 'auto', paddingTop: spacing.lg, flexDirection: 'row', justifyContent: 'center', gap: 4 },
   pieTexto: { ...typography.bodyMd, color: colors.textMuted },

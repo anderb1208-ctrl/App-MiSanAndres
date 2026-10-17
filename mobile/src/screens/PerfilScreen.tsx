@@ -18,6 +18,7 @@ import { mensajeDeError } from '../services/api';
 import { obtenerHistorial } from '../services/interacciones';
 import { actualizarNombre, obtenerPerfil } from '../services/perfil';
 import { obtenerPreferencias } from '../services/preferencias';
+import { guardarPedirLoginAlAbrir, leerPedirLoginAlAbrir } from '../services/sesion';
 import type { InteraccionHistorial, TipoInteraccion } from '../services/tipos';
 import { API_BASE_URL } from '../config/env';
 import { useAuth } from '../store/AuthContext';
@@ -56,6 +57,13 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
   const [errorNombre, setErrorNombre] = useState<string>();
   const [guardando, setGuardando] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
+  const [pedirLogin, setPedirLogin] = useState(leerPedirLoginAlAbrir);
+
+  const alternarPedirLogin = () => {
+    const nuevo = !pedirLogin;
+    if (guardarPedirLoginAlAbrir(nuevo)) setPedirLogin(nuevo);
+    else Alert.alert('No se pudo guardar', 'El almacenamiento del dispositivo no está disponible.');
+  };
 
   const empezarEdicion = () => {
     setNombre(datos?.perfil.nombre ?? '');
@@ -82,7 +90,7 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
   };
 
   const confirmarSalida = () =>
-    Alert.alert('Cerrar sesión', '¿Quieres cerrar sesión en este dispositivo?', [
+    Alert.alert('Cerrar sesión', '¿Quieres cerrar sesión en este dispositivo? Dejarás de recibir avisos de tus favoritos aquí.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Cerrar sesión',
@@ -198,8 +206,17 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
             etiqueta="Créditos y licencias"
             descripcion="OpenStreetMap, Open-Meteo y fotos"
             control="chevron"
-            divisor={false}
             onPress={() => navigation.navigate('Creditos')}
+          />
+          <SelectRow
+            icono="lock-clock"
+            tonoIcono="neutral"
+            etiqueta="Pedir inicio de sesión al abrir la app"
+            descripcion="Modo demostración: al abrir la app se cierra la sesión y se pide el login"
+            control="checkbox"
+            marcado={pedirLogin}
+            divisor={false}
+            onPress={alternarPedirLogin}
           />
         </GlassPanel>
 
