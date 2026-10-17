@@ -87,12 +87,24 @@ const listaCodigos = z
   .max(20, 'Máximo 20 elementos.')
   .transform((codigos) => [...new Set(codigos)]);
 
-export const cuerpoPreferencias = z.strictObject({
-  categorias: listaCodigos.refine((c) => c.length > 0, 'Selecciona al menos una categoría.'),
-  tiposExperiencia: listaCodigos.default([]),
-  tiposGrupo: listaCodigos.default([]),
-  nivelOcupacion: nivelOcupacion.nullable().default(null),
-});
+const MENSAJE_COP = 'Debe ser un valor en pesos entre 0 y 5.000.000.';
+const pesos = z.number({ error: MENSAJE_COP }).int(MENSAJE_COP).min(0, MENSAJE_COP).max(5_000_000, MENSAJE_COP);
+const presupuestoCoherente = (c: { presupuestoMin?: number | null; presupuestoMax?: number | null }) =>
+  (c.presupuestoMin == null) === (c.presupuestoMax == null) &&
+  (c.presupuestoMin == null || c.presupuestoMax == null || c.presupuestoMin <= c.presupuestoMax);
+const MENSAJE_PRESUPUESTO = 'Envía presupuestoMin y presupuestoMax juntos, con el mínimo menor o igual al máximo.';
+
+export const cuerpoPreferencias = z
+  .strictObject({
+    categorias: listaCodigos.refine((c) => c.length > 0, 'Selecciona al menos una categoría.'),
+    tiposExperiencia: listaCodigos.default([]),
+    tiposGrupo: listaCodigos.default([]),
+    nivelOcupacion: nivelOcupacion.nullable().default(null),
+    /** Presupuesto por persona por visita, COP (opcional). */
+    presupuestoMin: pesos.nullable().default(null),
+    presupuestoMax: pesos.nullable().default(null),
+  })
+  .refine(presupuestoCoherente, { message: MENSAJE_PRESUPUESTO, path: ['presupuestoMax'] });
 export type CuerpoPreferencias = z.infer<typeof cuerpoPreferencias>;
 
 // ---- Interacciones ----
@@ -274,3 +286,33 @@ export type CuerpoDispositivo = z.infer<typeof cuerpoDispositivo>;
 export const cuerpoQuitarDispositivo = z.strictObject({ token: tokenExpo });
 export type CuerpoQuitarDispositivo = z.infer<typeof cuerpoQuitarDispositivo>;
 export type CuerpoEstadoDestino = z.infer<typeof cuerpoEstadoDestino>;
+
+// ---- Recomendaciones ----
+const pesosConsulta = z.coerce.number({ error: MENSAJE_COP }).int(MENSAJE_COP).min(0, MENSAJE_COP).max(5_000_000, MENSAJE_COP);
+
+/** Hora planeada (fecha y hora) y filtro rápido de presupuesto, todos opcionales. */
+export const consultaRecomendaciones = z
+  .object({
+    fecha: fecha.optional(),
+    hora: hora.optional(),
+    presupuestoMin: pesosConsulta.optional(),
+    presupuestoMax: pesosConsulta.optional(),
+  })
+  .refine((c) => (c.presupuestoMin === undefined) === (c.presupuestoMax === undefined) && (c.presupuestoMin === undefined || c.presupuestoMin <= c.presupuestoMax!), {
+    message: MENSAJE_PRESUPUESTO,
+    path: ['presupuestoMax'],
+  });
+export type ConsultaRecomendaciones = z.infer<typeof consultaRecomendaciones>;
+
+// ---- Reseñas ----
+export const cuerpoResena = z.strictObject({
+  estrellas: z.number({ error: 'Debe ser un número del 1 al 5.' }).int('Debe ser un número entero.').min(1, 'Mínimo 1 estrella.').max(5, 'Máximo 5 estrellas.'),
+  comentario: z.string().trim().max(1000, 'Máximo 1000 caracteres.').nullable().default(null).transform((c) => (c ? c : null)),
+});
+export type CuerpoResena = z.infer<typeof cuerpoResena>;
+
+export const cuerpoOcultarResena = z.strictObject({ oculta: z.boolean({ error: 'Debe ser verdadero o falso.' }) });
+export type CuerpoOcultarResena = z.infer<typeof cuerpoOcultarResena>;
+
+export const consultaResenasAdmin = z.object({ idDestino: idPositivo.optional() });
+export type ConsultaResenasAdmin = z.infer<typeof consultaResenasAdmin>;

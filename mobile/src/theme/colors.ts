@@ -69,6 +69,9 @@ export const colors = {
   /** Fondo del círculo del estado de error (rojo de ocupación Alta, suave). */
   dangerSoft: 'rgba(217,48,37,0.12)',
 
+  /** Estrellas de las reseñas. */
+  estrella: '#f2a900',
+
   /** Fondos turquesa translúcidos (etiquetas y avisos). */
   turquoiseTint: 'rgba(179,235,255,0.45)',
   turquoiseTintSoft: 'rgba(179,235,255,0.4)',

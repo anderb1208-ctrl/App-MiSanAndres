@@ -8,6 +8,7 @@ import * as ocupacionController from '../controllers/ocupacionController';
 import * as perfilController from '../controllers/perfilController';
 import * as preferenciaController from '../controllers/preferenciaController';
 import * as recomendacionController from '../controllers/recomendacionController';
+import * as resenaController from '../controllers/resenaController';
 import * as ticketController from '../controllers/ticketController';
 import { requerirAuth } from '../middleware/auth';
 import * as e from '../middleware/esquemas';
@@ -32,6 +33,9 @@ publicas.get(
   validar({ params: e.paramsId, query: e.consultaClima }),
   climaController.delDestino,
 );
+
+// Reseñas visibles de un destino con su promedio.
+publicas.get('/destinos/:id/resenas', validar({ params: e.paramsId }), resenaController.deDestino);
 
 publicas.get('/clima', validar({ query: e.consultaClima }), climaController.deLaIsla);
 
@@ -89,7 +93,22 @@ privadas.get(
   interaccionController.historial,
 );
 
-privadas.get('/recomendaciones', requerirAuth, recomendacionController.listar);
+privadas.get(
+  '/recomendaciones',
+  requerirAuth,
+  validar({ query: e.consultaRecomendaciones }),
+  recomendacionController.listar,
+);
+
+// ---- Reseña propia (una por usuario y destino) ----
+privadas.get('/destinos/:id/resena', requerirAuth, validar({ params: e.paramsId }), resenaController.propia);
+privadas.put(
+  '/destinos/:id/resena',
+  requerirAuth,
+  validar({ params: e.paramsId, body: e.cuerpoResena }),
+  resenaController.guardar,
+);
+privadas.delete('/destinos/:id/resena', requerirAuth, validar({ params: e.paramsId }), resenaController.borrar);
 
 // ---- Favoritos con avisos y dispositivos para push ----
 privadas.get('/favoritos', requerirAuth, favoritoController.listar);
@@ -134,6 +153,20 @@ privadas.patch(
   adminController.cambiarRol,
 );
 privadas.get('/admin/metricas', requerirAuth, admin, adminController.metricas);
+privadas.get(
+  '/admin/destinos/:id/resenas',
+  requerirAuth,
+  admin,
+  validar({ params: e.paramsId }),
+  resenaController.listarAdmin,
+);
+privadas.patch(
+  '/admin/resenas/:id',
+  requerirAuth,
+  admin,
+  validar({ params: e.paramsId, body: e.cuerpoOcultarResena }),
+  resenaController.ocultar,
+);
 privadas.get('/admin/destinos', requerirAuth, admin, adminController.destinos);
 privadas.post('/admin/destinos', requerirAuth, admin, validar({ body: e.cuerpoNuevoDestino }), adminController.crearDestino);
 privadas.patch(

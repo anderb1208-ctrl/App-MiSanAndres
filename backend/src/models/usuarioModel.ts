@@ -4,7 +4,7 @@ import { verificar } from './verificar';
 
 type CambiosUsuario = Pick<
   Database['public']['Tables']['usuario']['Update'],
-  'nombre' | 'nivel_ocupacion_preferido'
+  'nombre' | 'nivel_ocupacion_preferido' | 'presupuesto_min_cop' | 'presupuesto_max_cop'
 >;
 
 /** Perfil del usuario, o null si no existe (RLS solo deja ver el propio). */

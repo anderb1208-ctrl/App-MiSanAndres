@@ -500,6 +500,47 @@ join public.destino d on d.nombre = e.destino
 join public.preferencia p on p.tipo = e.tipo::public.tipo_preferencia and p.codigo = e.codigo;
 
 -- ------------------------------------------------------------
+-- Precio por persona por visita (COP), ESTIMADO (migración 20261016120200).
+-- Aproximaciones de octubre de 2026; verificar con docs/datos-por-verificar.md.
+-- No se siembran reseñas: solo cuentan las de usuarios reales.
+-- ------------------------------------------------------------
+update public.destino as d
+set precio_min_cop = v.minimo, precio_max_cop = v.maximo, precio_es_estimado = true
+from (values
+  ('Playa de Spratt Bight', 0, 30000),
+  ('Playa de San Luis', 0, 20000),
+  ('Rocky Cay', 0, 20000),
+  ('Playa de Sound Bay', 0, 10000),
+  ('Cocoplum Bay', 0, 30000),
+  ('Playa Los Charquitos', 0, 0),
+  ('Bahía Sardina', 0, 30000),
+  ('Johnny Cay', 85000, 125000),
+  ('El Acuario (Rose Cay)', 70000, 110000),
+  ('Haynes Cay', 70000, 110000),
+  ('Cayo Bolívar', 250000, 400000),
+  ('La Regatta', 120000, 250000),
+  ('Miss Celia', 50000, 100000),
+  ('Donde Francesca', 60000, 120000),
+  ('Fishermen''s Place', 40000, 90000),
+  ('Gourmet Shop Assho', 70000, 150000),
+  ('Capitán Mandy', 60000, 150000),
+  ('West View', 10000, 30000),
+  ('La Piscinita', 5000, 15000),
+  ('Kayak en el Manglar de Old Point', 60000, 120000),
+  ('Paseo en semisubmarino', 110000, 180000),
+  ('Aquanautas (caminata submarina)', 200000, 300000),
+  ('Buceo con Karibik Diver', 250000, 400000),
+  ('Vuelta a la isla', 30000, 80000),
+  ('Hoyo Soplador', 0, 5000),
+  ('Laguna Big Pond', 5000, 15000),
+  ('Jardín Botánico de San Andrés', 10000, 20000),
+  ('Primera Iglesia Bautista', 0, 10000),
+  ('Cueva de Morgan', 15000, 25000),
+  ('Casa Museo Isleña', 15000, 25000)
+) as v (nombre, minimo, maximo)
+where d.nombre = v.nombre;
+
+-- ------------------------------------------------------------
 -- Clima real restaurado (si existía antes del TRUNCATE)
 -- ------------------------------------------------------------
 insert into public.clima_hora (id_destino, fecha_hora, temperatura, prob_lluvia, precipitacion, codigo_clima, viento)

@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
+import { RangoPresupuesto } from '../components/RangoPresupuesto';
 import { Overline, ScreenHeader } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SelectRow } from '../components/SelectRow';
@@ -17,8 +18,16 @@ import { useAuth } from '../store/AuthContext';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
 import { OPCIONES_NIVEL } from '../utils/ocupacion';
+import { PRESUPUESTO_INICIAL } from '../utils/presupuesto';
 
-const VACIAS: Preferencias = { categorias: [], tiposExperiencia: [], tiposGrupo: [], nivelOcupacion: null };
+const VACIAS: Preferencias = {
+  categorias: [],
+  tiposExperiencia: [],
+  tiposGrupo: [],
+  nivelOcupacion: null,
+  presupuestoMin: null,
+  presupuestoMax: null,
+};
 
 async function cargar() {
   const [catalogo, preferencias] = await Promise.all([obtenerCatalogo(), obtenerPreferencias()]);
@@ -126,6 +135,7 @@ export function PreferenciasScreen({ onboarding = false }: Props) {
     if (cargando) return <EstadoCargando mensaje="Cargando preferencias…" />;
     if (!datos) return <EstadoError error={error} onReintentar={recargar} />;
     const { catalogo } = datos;
+    const conPresupuesto = seleccion.presupuestoMin !== null && seleccion.presupuestoMax !== null;
 
     return (
       <View style={styles.cuerpo}>
@@ -168,6 +178,33 @@ export function PreferenciasScreen({ onboarding = false }: Props) {
           ))}
         </GlassPanel>
         <Text style={styles.ayuda}>Opcional. Toca de nuevo la opción elegida para quitarla.</Text>
+
+        <Overline>Presupuesto</Overline>
+        <GlassPanel tono="strong" padding={0} radius={radius.xl} style={styles.grupo}>
+          <SelectRow
+            icono="payments"
+            tonoIcono={conPresupuesto ? 'turquoise' : 'neutral'}
+            etiqueta="Tener en cuenta mi presupuesto"
+            descripcion="Por persona por visita: entrada, tour o consumo típico."
+            marcado={conPresupuesto}
+            onPress={() =>
+              cambiar(
+                conPresupuesto
+                  ? { presupuestoMin: null, presupuestoMax: null }
+                  : { presupuestoMin: PRESUPUESTO_INICIAL.minCop, presupuestoMax: PRESUPUESTO_INICIAL.maxCop },
+              )
+            }
+            divisor={conPresupuesto}
+          />
+          {conPresupuesto && (
+            <RangoPresupuesto
+              valor={{ minCop: seleccion.presupuestoMin ?? 0, maxCop: seleccion.presupuestoMax ?? 0 }}
+              onCambioFinal={(p) => cambiar({ presupuestoMin: p.minCop, presupuestoMax: p.maxCop })}
+              style={styles.rango}
+            />
+          )}
+        </GlassPanel>
+        <Text style={styles.ayuda}>Los precios de los destinos son aproximados y se marcan como "Estimado".</Text>
 
         {!onboarding && (
           <Text style={styles.enlacePeligro} onPress={confirmarRestablecer} accessibilityRole="button">
@@ -224,6 +261,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   cuerpo: { paddingHorizontal: spacing.screen, gap: spacing.gutter },
   grupo: { overflow: 'hidden', marginBottom: spacing.sm },
+  rango: { padding: spacing.md },
   error: { ...typography.labelMd, color: colors.error },
   ayuda: { ...typography.labelMd, color: colors.textSubtle, marginTop: -spacing.xs },
   enlacePeligro: { ...typography.labelBold, fontSize: 14, color: colors.error, textAlign: 'center', marginTop: spacing.lg },

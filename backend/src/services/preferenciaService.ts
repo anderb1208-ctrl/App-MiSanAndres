@@ -23,6 +23,14 @@ export interface PreferenciasUsuario {
   tiposExperiencia: string[];
   tiposGrupo: string[];
   nivelOcupacion: NivelOcupacion | null;
+  /** Presupuesto por persona por visita, COP (null si no lo definió). */
+  presupuestoMin: number | null;
+  presupuestoMax: number | null;
+}
+
+export interface PresupuestoUsuario {
+  minCop: number;
+  maxCop: number;
 }
 
 /** Preferencia del usuario con su tipo y nombre (la usa el recomendador). */
@@ -50,7 +58,7 @@ export async function obtenerCatalogo(db: Db): Promise<Catalogo> {
 export async function obtenerDetalladas(
   db: Db,
   idUsuario: string,
-): Promise<{ preferencias: PreferenciaDetallada[]; nivelOcupacion: NivelOcupacion | null }> {
+): Promise<{ preferencias: PreferenciaDetallada[]; nivelOcupacion: NivelOcupacion | null; presupuesto: PresupuestoUsuario | null }> {
   const [catalogo, ids, usuario] = await Promise.all([
     preferenciaModel.listarCatalogo(db),
     preferenciaModel.listarIdsDelUsuario(db, idUsuario),
@@ -62,12 +70,17 @@ export async function obtenerDetalladas(
   const preferencias = catalogo
     .filter((p) => propias.has(p.id_preferencia))
     .map((p) => ({ id: p.id_preferencia, tipo: p.tipo, codigo: p.codigo, nombre: p.nombre }));
-  return { preferencias, nivelOcupacion: usuario.nivel_ocupacion_preferido };
+  const presupuesto =
+    usuario.presupuesto_min_cop != null && usuario.presupuesto_max_cop != null
+      ? { minCop: usuario.presupuesto_min_cop, maxCop: usuario.presupuesto_max_cop }
+      : null;
+  return { preferencias, nivelOcupacion: usuario.nivel_ocupacion_preferido, presupuesto };
 }
 
 function aPreferenciasUsuario(
   preferencias: PreferenciaDetallada[],
   nivelOcupacion: NivelOcupacion | null,
+  presupuesto: PresupuestoUsuario | null,
 ): PreferenciasUsuario {
   const codigos = (tipo: TipoPreferencia) =>
     preferencias.filter((p) => p.tipo === tipo).map((p) => p.codigo);
@@ -76,12 +89,14 @@ function aPreferenciasUsuario(
     tiposExperiencia: codigos('experiencia'),
     tiposGrupo: codigos('grupo'),
     nivelOcupacion,
+    presupuestoMin: presupuesto?.minCop ?? null,
+    presupuestoMax: presupuesto?.maxCop ?? null,
   };
 }
 
 export async function obtener(db: Db, idUsuario: string): Promise<PreferenciasUsuario> {
-  const { preferencias, nivelOcupacion } = await obtenerDetalladas(db, idUsuario);
-  return aPreferenciasUsuario(preferencias, nivelOcupacion);
+  const { preferencias, nivelOcupacion, presupuesto } = await obtenerDetalladas(db, idUsuario);
+  return aPreferenciasUsuario(preferencias, nivelOcupacion, presupuesto);
 }
 
 /**
@@ -117,6 +132,8 @@ export async function reemplazar(
   const actuales = new Set(await preferenciaModel.listarIdsDelUsuario(db, idUsuario));
   const usuario = await usuarioModel.actualizar(db, idUsuario, {
     nivel_ocupacion_preferido: cuerpo.nivelOcupacion,
+    presupuesto_min_cop: cuerpo.presupuestoMin,
+    presupuesto_max_cop: cuerpo.presupuestoMax,
   });
   if (!usuario) throw noEncontrado('No se encontró el perfil del usuario.');
 
@@ -128,7 +145,11 @@ export async function reemplazar(
 
 /** Borra todas las preferencias y el nivel de ocupación preferido. */
 export async function restablecer(db: Db, idUsuario: string): Promise<void> {
-  const usuario = await usuarioModel.actualizar(db, idUsuario, { nivel_ocupacion_preferido: null });
+  const usuario = await usuarioModel.actualizar(db, idUsuario, {
+    nivel_ocupacion_preferido: null,
+    presupuesto_min_cop: null,
+    presupuesto_max_cop: null,
+  });
   if (!usuario) throw noEncontrado('No se encontró el perfil del usuario.');
   await preferenciaModel.quitarTodas(db, idUsuario);
 }

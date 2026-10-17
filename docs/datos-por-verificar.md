@@ -90,6 +90,49 @@ Punto de acceso de cada destino (siempre en tierra; ver la convención en `docs/
 | Laguna Big Pond, Jardín Botánico, Casa Museo Isleña | $ | Confirmar si cobran entrada o piden aporte voluntario. |
 | Cueva de Morgan | $$ | Entrada al parque temático. |
 
+## Precio por persona (COP)
+
+Columnas `destino.precio_min_cop`, `precio_max_cop` y `precio_es_estimado` (migración `20261016120200_presupuesto_y_resenas.sql`, también en `supabase/seed.sql`). Es el costo **por persona por visita**: entrada, tour o consumo típico. Todos están marcados como **estimados** (`precio_es_estimado = true`) y la app los muestra con la etiqueta "Estimado". No incluyen la tarjeta de turismo del archipiélago ni el transporte desde el hotel.
+
+Al confirmar un precio: actualizarlo con una migración aditiva (o desde el panel del administrador cuando se agregue el campo), poner `precio_es_estimado = false` y tachar la fila.
+
+Consultado en octubre de 2026. Fuentes públicas: operadores y guías turísticas ([Viator](https://www.viator.com/tours/San-Andres/Combo-Jhony-Cay-Aquarius-Bahia-Mangroves-and-Manta-Rays/d28673-191475P1), [Islaventura](https://islaventura.com.co/tour/tour-acuario-johnny-cay/), [Guía San Andrés Islas](https://guiasanandresislas.com/producto/acuario-y-jhony-cay/), [Viaja San Andrés: Cueva de Morgan](https://viajasanandres.com/sitios-turisticos/cueva-de-morgan/), [Viaja San Andrés: West View](https://viajasanandres.com/sitios-turisticos/west-view/), [Mi Gue bajo el agua: West View y La Piscinita](https://www.miguebajoelagua.com/blog/san_andres/west-view-poseidon-san-andres-la-piscinita), [sanandres.travel: semisubmarino](https://sanandres.travel/tour/semisubmarino), [sanandres.travel: Aquanautas](https://sanandres.travel/tour/aquanautas-san-andres)). Cuando no hubo una fuente clara, se usó una estimación prudente (indicada en la tabla).
+
+| Destino | Mínimo | Máximo | Qué incluye / supuesto | Base |
+| --- | ---: | ---: | --- | --- |
+| Johnny Cay | 85.000 | 125.000 | Tour en lancha (con El Acuario en muchos combos) + impuesto de ingreso al cayo (~15.000) y muelle | Fuente: tours de 70.000–110.000 + impuesto |
+| El Acuario (Rose Cay) | 70.000 | 110.000 | Tour en lancha (suele ir con Haynes Cay) | Fuente: precios de tours combinados |
+| Haynes Cay | 70.000 | 110.000 | Mismo tour que El Acuario | Fuente: precios de tours combinados |
+| Cayo Bolívar | 250.000 | 400.000 | Tour de día en lancha rápida, normalmente con almuerzo | Estimación prudente |
+| West View | 10.000 | 30.000 | Entrada (10.000–20.000) + alquiler de chaleco o snorkel | Fuente |
+| La Piscinita | 5.000 | 15.000 | Entrada (~5.000) + chaleco | Fuente |
+| Cueva de Morgan | 15.000 | 25.000 | Entrada al parque | Fuente (15.000–25.000; 20.000 lo más citado) |
+| Paseo en semisubmarino | 110.000 | 180.000 | Tour de unas 2 horas (Manatí y similares) | Fuente (110.000–176.000) |
+| Aquanautas (caminata submarina) | 200.000 | 300.000 | Caminata submarina con casco | Estimación prudente: confirmar con el operador |
+| Buceo con Karibik Diver | 250.000 | 400.000 | Bautizo o inmersión guiada con equipo | Estimación prudente |
+| Kayak en el Manglar de Old Point | 60.000 | 120.000 | Tour guiado en kayak | Estimación prudente |
+| Vuelta a la isla | 30.000 | 80.000 | Por persona: bus/chiva o la parte de un carrito compartido | Estimación prudente |
+| La Regatta | 120.000 | 250.000 | Plato fuerte + bebida | Estimación prudente |
+| Miss Celia | 50.000 | 100.000 | Plato típico + bebida | Estimación prudente |
+| Donde Francesca | 60.000 | 120.000 | Plato fuerte + bebida | Estimación prudente |
+| Fishermen's Place | 40.000 | 90.000 | Almuerzo de pescado + bebida | Estimación prudente |
+| Gourmet Shop Assho | 70.000 | 150.000 | Plato + bebida | Estimación prudente |
+| Capitán Mandy | 60.000 | 150.000 | Mariscos + bebida | Estimación prudente |
+| Jardín Botánico de San Andrés | 10.000 | 20.000 | Entrada | Estimación prudente: confirmar |
+| Casa Museo Isleña | 15.000 | 25.000 | Entrada con recorrido | Estimación prudente: confirmar |
+| Laguna Big Pond | 5.000 | 15.000 | Aporte o entrada | Estimación prudente: confirmar si es gratis |
+| Hoyo Soplador | 0 | 5.000 | Gratis; consumo opcional en los puestos | Estimación prudente |
+| Primera Iglesia Bautista | 0 | 10.000 | Gratis o aporte para subir al campanario | Estimación prudente: confirmar |
+| Playa de Spratt Bight | 0 | 30.000 | Playa pública; carpa o silla opcional | Estimación prudente |
+| Playa de San Luis | 0 | 20.000 | Playa pública; silla o bebida opcional | Estimación prudente |
+| Rocky Cay | 0 | 20.000 | Playa pública; snorkel o bebida opcional | Estimación prudente |
+| Playa de Sound Bay | 0 | 10.000 | Playa pública | Estimación prudente |
+| Cocoplum Bay | 0 | 30.000 | Playa pública; consumo en el hotel opcional | Estimación prudente |
+| Bahía Sardina | 0 | 30.000 | Playa pública; carpa o silla opcional | Estimación prudente |
+| Playa Los Charquitos | 0 | 0 | Gratis | Estimación prudente |
+
+**Reseñas:** no se siembran reseñas de ejemplo. El promedio y la razón "Buena calificación" solo aparecen con reseñas reales (la razón exige al menos 3).
+
 ## Otros datos
 
 - **Capacidades** (`destino.capacidad`): todas son estimaciones para el cálculo de personas; no hay fuente oficial.

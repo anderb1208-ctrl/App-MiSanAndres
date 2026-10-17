@@ -1,11 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClimaIsla } from '../components/ClimaIsla';
 import { DestinoCard } from '../components/DestinoCard';
+import { FilterChip } from '../components/FilterChip';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { PressableScale } from '../components/PressableScale';
+import { RangoPresupuesto } from '../components/RangoPresupuesto';
 import { SectionHeader } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateView';
@@ -16,22 +19,19 @@ import type { TabScreenProps } from '../navigation/types';
 import { listarDestinos } from '../services/destinos';
 import { obtenerPerfil } from '../services/perfil';
 import { obtenerRecomendaciones } from '../services/recomendaciones';
-import type { Destino, NivelOcupacion } from '../services/tipos';
+import type { Destino, NivelOcupacion, Presupuesto } from '../services/tipos';
 import { colors, occupancyColors, radius, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
 import { IMAGENES } from '../utils/imagenes';
 import { ADJETIVO_NIVEL, NIVELES } from '../utils/ocupacion';
+import { formatearPresupuesto, PRESUPUESTO_INICIAL } from '../utils/presupuesto';
 import { primerNombre } from '../utils/validacion';
 
 const DESTACADOS = 3;
 
 async function cargarInicio() {
-  const [recomendaciones, destinos, perfil] = await Promise.all([
-    obtenerRecomendaciones(),
-    listarDestinos(),
-    obtenerPerfil(),
-  ]);
-  return { recomendaciones, destinos, perfil };
+  const [destinos, perfil] = await Promise.all([listarDestinos(), obtenerPerfil()]);
+  return { destinos, perfil };
 }
 
 function contarPorNivel(destinos: Destino[]): Record<NivelOcupacion, number> {
@@ -44,7 +44,19 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
   useBarraEstado('light');
   const insets = useSafeAreaInsets();
   const espacioInferior = useEspacioTabBar();
-  const { datos, error, cargando, refrescando, recargar } = useAsync(cargarInicio, [], { recargarAlEnfocar: true });
+  const inicio = useAsync(cargarInicio, [], { recargarAlEnfocar: true });
+  // Filtro rápido de presupuesto: null = el de las preferencias (si lo hay).
+  const [filtro, setFiltro] = useState<Presupuesto | null>(null);
+  const [verFiltro, setVerFiltro] = useState(false);
+  const recs = useAsync(() => obtenerRecomendaciones(filtro), [filtro?.minCop, filtro?.maxCop], { recargarAlEnfocar: true });
+  const datos = inicio.datos;
+  const error = recs.error ?? inicio.error;
+  const cargando = recs.cargando || inicio.cargando;
+  const refrescando = recs.refrescando || inicio.refrescando;
+  const recargar = () => {
+    inicio.recargar();
+    recs.recargar();
+  };
 
   const abrir = (id: number) => navigation.navigate('DetalleDestino', { id });
   const irAPreferencias = () => navigation.navigate('Preferencias');
@@ -56,13 +68,13 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
   ];
 
   const nombre = primerNombre(datos?.perfil.nombre);
-  const resultado = datos?.recomendaciones;
+  const resultado = recs.datos;
   const lista = resultado?.recomendaciones ?? [];
   const conteo = datos ? contarPorNivel(datos.destinos) : null;
 
   const contenido = () => {
     if (cargando) return <EstadoCargando mensaje="Buscando tus recomendaciones…" />;
-    if (error && !datos) return <EstadoError error={error} onReintentar={recargar} />;
+    if (error && !resultado) return <EstadoError error={error} onReintentar={recargar} />;
     if (!resultado) return null;
     if (!resultado.tienePreferencias) {
       return (
@@ -75,7 +87,14 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
       );
     }
     if (lista.length === 0) {
-      return (
+      return filtro ? (
+        <EstadoMensaje
+          icono="payments"
+          titulo="Nada en ese presupuesto"
+          mensaje={`Ningún destino que te guste entra en ${formatearPresupuesto(filtro)}. Amplía el rango.`}
+          accion={{ texto: 'Quitar el filtro', onPress: () => setFiltro(null) }}
+        />
+      ) : (
         <EstadoMensaje
           icono="travel-explore"
           titulo="Sin coincidencias por ahora"
@@ -108,7 +127,8 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
               layout="featured"
               destino={r}
               destacado={`${r.puntaje}% compatible`}
-              nota={r.razon}
+              nota={r.porQue || r.razon}
+              razones={r.razones}
               onPress={() => abrir(r.id)}
               style={styles.tarjetaDestacada}
             />
@@ -120,7 +140,14 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
             <SectionHeader titulo="También te pueden gustar" />
             <View style={styles.lista}>
               {otros.map((r) => (
-                <DestinoCard key={r.id} destino={r} destacado={`${r.puntaje}%`} nota={r.razon} onPress={() => abrir(r.id)} />
+                <DestinoCard
+                  key={r.id}
+                  destino={r}
+                  destacado={`${r.puntaje}%`}
+                  nota={r.porQue || r.razon}
+                  razones={r.razones}
+                  onPress={() => abrir(r.id)}
+                />
               ))}
             </View>
           </View>
@@ -198,6 +225,34 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
           ))}
         </View>
 
+        {recs.datos?.tienePreferencias && (
+          <View style={styles.filtro}>
+            <View style={styles.filtroFila}>
+              <FilterChip
+                icono="payments"
+                acento="turquoise"
+                activo={filtro !== null || verFiltro}
+                onPress={() => setVerFiltro((v) => !v)}
+              >
+                {filtro
+                  ? formatearPresupuesto(filtro)
+                  : recs.datos.presupuesto
+                    ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}`
+                    : 'Filtrar por presupuesto'}
+              </FilterChip>
+              {filtro && <FilterChip icono="close" activo={false} compacto onPress={() => setFiltro(null)}>Quitar</FilterChip>}
+            </View>
+            {verFiltro && (
+              <GlassPanel tono="strong" radius={radius.xl} padding={spacing.md}>
+                <RangoPresupuesto
+                  valor={filtro ?? recs.datos.presupuesto ?? PRESUPUESTO_INICIAL}
+                  onCambioFinal={setFiltro}
+                />
+              </GlassPanel>
+            )}
+          </View>
+        )}
+
         {contenido()}
       </ScrollView>
     </ScreenBackground>
@@ -268,6 +323,8 @@ const styles = StyleSheet.create({
   },
   accesoTexto: { ...typography.labelBold, fontSize: 13, color: colors.textStrong },
   seccion: { paddingHorizontal: spacing.screen, paddingTop: 28 },
+  filtro: { paddingHorizontal: spacing.screen, paddingTop: spacing.md, gap: spacing.sm },
+  filtroFila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   carrusel: { gap: spacing.gutter, paddingHorizontal: spacing.screen, paddingBottom: spacing.xs },
   tarjetaDestacada: { width: 272 },
   lista: { gap: spacing.gutter },

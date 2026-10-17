@@ -33,6 +33,8 @@ const fila = (rol: RolUsuario): UsuarioRow => ({
   nivel_ocupacion_preferido: null,
   fecha_registro: '2026-10-01T15:00:00+00:00',
   rol,
+  presupuesto_min_cop: null,
+  presupuesto_max_cop: null,
 });
 
 const ticket = (extra: Partial<ticketModel.TicketConRelaciones> = {}): ticketModel.TicketConRelaciones => ({

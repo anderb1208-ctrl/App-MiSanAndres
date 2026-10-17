@@ -55,10 +55,23 @@ export interface Destino {
   /** null = sin horario (siempre accesible). */
   horario: Horario | null;
   rangoPrecio: RangoPrecio | null;
+  /** Costo por persona por visita (COP); estimado = aún sin confirmar. */
+  precio: PrecioDestino | null;
   comoLlegar: string | null;
   imagenUrl: string | null;
   imagen: ImagenDestino | null;
   ocupacionActual: OcupacionActual | null;
+}
+
+export interface PrecioDestino {
+  minCop: number;
+  maxCop: number;
+  estimado: boolean;
+}
+
+export interface Calificacion {
+  promedio: number;
+  cantidad: number;
 }
 
 export interface Etiqueta {
@@ -68,6 +81,7 @@ export interface Etiqueta {
 
 export interface DestinoDetalle extends Destino {
   etiquetas: { experiencias: Etiqueta[]; grupos: Etiqueta[] };
+  calificacion: Calificacion | null;
 }
 
 export interface RegistroOcupacion {
@@ -125,6 +139,9 @@ export interface Preferencias {
   tiposExperiencia: string[];
   tiposGrupo: string[];
   nivelOcupacion: NivelOcupacion | null;
+  /** Por persona por visita (COP); ambos null si no lo definió. */
+  presupuestoMin: number | null;
+  presupuestoMax: number | null;
 }
 
 export interface Perfil {
@@ -144,10 +161,44 @@ export interface InteraccionHistorial {
   destino: { id: number; nombre: string; categoria: CategoriaDestino } | null;
 }
 
+export interface Razon {
+  codigo: 'preferencias' | 'presupuesto' | 'grupo' | 'ocupacion' | 'clima' | 'horario' | 'calificacion';
+  texto: string;
+  tipo: 'positiva' | 'advertencia';
+}
+
 export interface Recomendacion extends Destino {
   puntaje: number;
   coincidencias: string[];
   razon: string;
+  /** Frase corta con lo más importante. */
+  porQue: string;
+  /** Positivas primero y advertencias después. */
+  razones: Razon[];
+  calificacion: Calificacion | null;
+}
+
+export interface Presupuesto {
+  minCop: number;
+  maxCop: number;
+}
+
+// ---- Reseñas ----
+
+export interface Resena {
+  id: number;
+  idDestino: number;
+  estrellas: number;
+  comentario: string | null;
+  fecha: string;
+  autor: string | null;
+  esMia: boolean;
+  oculta: boolean;
+}
+
+export interface ResenasDestino {
+  calificacion: Calificacion | null;
+  resenas: Resena[];
 }
 
 // ---- Mapa ----
@@ -273,6 +324,7 @@ export interface ResultadoRecomendaciones {
   fecha: string;
   hora: string;
   nivelOcupacionPreferido: NivelOcupacion | null;
+  presupuesto: Presupuesto | null;
   tienePreferencias: boolean;
   recomendaciones: Recomendacion[];
 }

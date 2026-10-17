@@ -16,6 +16,9 @@ const sinContenido = {
   ubicacion_verificada: false,
   motivo_cierre: null,
   cierre_hasta: null,
+  precio_min_cop: null,
+  precio_max_cop: null,
+  precio_es_estimado: true,
 } satisfies Partial<DestinoRow>;
 
 /** Cayo con horario 09:00–16:00 e imagen con crédito. */

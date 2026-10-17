@@ -28,6 +28,9 @@ export type Database = {
           longitud: number;
           motivo_cierre: string | null;
           nombre: string;
+          precio_es_estimado: boolean;
+          precio_max_cop: number | null;
+          precio_min_cop: number | null;
           rango_precio: Database['public']['Enums']['rango_precio'] | null;
           ubicacion_fuente: Database['public']['Enums']['ubicacion_fuente'];
           ubicacion_texto: string;
@@ -51,6 +54,9 @@ export type Database = {
           longitud: number;
           motivo_cierre?: string | null;
           nombre: string;
+          precio_es_estimado?: boolean;
+          precio_max_cop?: number | null;
+          precio_min_cop?: number | null;
           rango_precio?: Database['public']['Enums']['rango_precio'] | null;
           ubicacion_fuente?: Database['public']['Enums']['ubicacion_fuente'];
           ubicacion_texto: string;
@@ -74,6 +80,9 @@ export type Database = {
           longitud?: number;
           motivo_cierre?: string | null;
           nombre?: string;
+          precio_es_estimado?: boolean;
+          precio_max_cop?: number | null;
+          precio_min_cop?: number | null;
           rango_precio?: Database['public']['Enums']['rango_precio'] | null;
           ubicacion_fuente?: Database['public']['Enums']['ubicacion_fuente'];
           ubicacion_texto?: string;
@@ -271,6 +280,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      resena: {
+        Row: {
+          comentario: string | null;
+          estrellas: number;
+          fecha_actualizacion: string;
+          fecha_creacion: string;
+          id_destino: number;
+          id_resena: number;
+          id_usuario: string;
+          oculta: boolean;
+        };
+        Insert: {
+          comentario?: string | null;
+          estrellas: number;
+          fecha_actualizacion?: string;
+          fecha_creacion?: string;
+          id_destino: number;
+          id_resena?: never;
+          id_usuario: string;
+          oculta?: boolean;
+        };
+        Update: {
+          comentario?: string | null;
+          estrellas?: number;
+          fecha_actualizacion?: string;
+          fecha_creacion?: string;
+          id_destino?: number;
+          id_resena?: never;
+          id_usuario?: string;
+          oculta?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'resena_id_destino_fkey';
+            columns: ['id_destino'];
+            isOneToOne: false;
+            referencedRelation: 'destino';
+            referencedColumns: ['id_destino'];
+          },
+          {
+            foreignKeyName: 'resena_id_usuario_fkey';
+            columns: ['id_usuario'];
+            isOneToOne: false;
+            referencedRelation: 'usuario';
+            referencedColumns: ['id_usuario'];
+          },
+        ];
+      };
       ticket: {
         Row: {
           asunto: string;
@@ -383,6 +440,8 @@ export type Database = {
           id_usuario: string;
           nivel_ocupacion_preferido: Database['public']['Enums']['nivel_ocupacion'] | null;
           nombre: string | null;
+          presupuesto_max_cop: number | null;
+          presupuesto_min_cop: number | null;
           rol: Database['public']['Enums']['rol_usuario'];
         };
         Insert: {
@@ -390,6 +449,8 @@ export type Database = {
           id_usuario: string;
           nivel_ocupacion_preferido?: Database['public']['Enums']['nivel_ocupacion'] | null;
           nombre?: string | null;
+          presupuesto_max_cop?: number | null;
+          presupuesto_min_cop?: number | null;
           rol?: Database['public']['Enums']['rol_usuario'];
         };
         Update: {
@@ -397,6 +458,8 @@ export type Database = {
           id_usuario?: string;
           nivel_ocupacion_preferido?: Database['public']['Enums']['nivel_ocupacion'] | null;
           nombre?: string | null;
+          presupuesto_max_cop?: number | null;
+          presupuesto_min_cop?: number | null;
           rol?: Database['public']['Enums']['rol_usuario'];
         };
         Relationships: [];
@@ -436,6 +499,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      ocultar_resena: {
+        Args: { p_id_resena: number; p_oculta: boolean };
+        Returns: Database['public']['Tables']['resena']['Row'];
+      };
       desactivar_tokens_push: { Args: { p_tokens: string[] }; Returns: number };
       quitar_dispositivo_push: { Args: { p_token: string }; Returns: undefined };
       registrar_dispositivo_push: {
@@ -520,6 +587,7 @@ export type UsuarioRow = Database['public']['Tables']['usuario']['Row'];
 export type OcupacionRow = Database['public']['Tables']['ocupacion']['Row'];
 export type InteraccionRow = Database['public']['Tables']['interaccion']['Row'];
 export type FavoritoRow = Database['public']['Tables']['favorito']['Row'];
+export type ResenaRow = Database['public']['Tables']['resena']['Row'];
 export type TicketRow = Database['public']['Tables']['ticket']['Row'];
 export type TicketComentarioRow = Database['public']['Tables']['ticket_comentario']['Row'];
 

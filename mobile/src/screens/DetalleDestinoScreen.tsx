@@ -11,6 +11,9 @@ import { ImagenDestino } from '../components/ImagenDestino';
 import { MiniMapa } from '../components/MiniMapa';
 import { IndicadorOcupacion } from '../components/IndicadorOcupacion';
 import { OcupacionChart } from '../components/OcupacionChart';
+import { ListaRazones } from '../components/Razones';
+import { SeccionResenas } from '../components/SeccionResenas';
+import { Estrellas } from '../components/Estrellas';
 import { Overline } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { EstadoCargando, EstadoError } from '../components/StateView';
@@ -25,6 +28,7 @@ import { obtenerDestino } from '../services/destinos';
 import { registrarInteraccion } from '../services/interacciones';
 import { obtenerClimaDestino } from '../services/clima';
 import { obtenerOcupacionDelDia, obtenerOcupacionTipica, obtenerPrediccion } from '../services/ocupacion';
+import { obtenerRecomendaciones } from '../services/recomendaciones';
 import type { OcupacionTipicaDelDia } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
@@ -32,6 +36,8 @@ import { creditoFoto, ETIQUETA_PRECIO, formatearHorario } from '../utils/conteni
 import { horaEnColombia, horaMinutoEnColombia, hoyEnColombia } from '../utils/fecha';
 import { abrirUbicacion } from '../utils/mapa';
 import { NOTA_NIVEL } from '../utils/ocupacion';
+import { formatearPrecio } from '../utils/presupuesto';
+import { useAuth } from '../store/AuthContext';
 
 /** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
 async function cargarCurva(id: number) {
@@ -73,12 +79,18 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
   const { id } = route.params;
   const insets = useSafeAreaInsets();
   const registrada = useRef<number | null>(null);
+  const { rol } = useAuth();
 
   const destino = useAsync(() => obtenerDestino(id), [id]);
   const curva = useAsync(() => cargarCurva(id), [id]);
   // Clima y factores son opcionales: si fallan, el resto del detalle funciona igual.
   const clima = useAsync(() => obtenerClimaDestino(id), [id]);
   const prediccion = useAsync(() => obtenerPrediccion(id, hoyEnColombia(), horaMinutoEnColombia()), [id]);
+  // "Por qué es para ti": las razones de la recomendación (solo turistas; si el destino no está entre sus recomendaciones, se omite).
+  const porQue = useAsync(
+    () => (rol === 'turista' ? obtenerRecomendaciones().then((r) => r.recomendaciones.find((x) => x.id === id) ?? null) : Promise.resolve(null)),
+    [id, rol],
+  );
 
   // Registro automático de la vista (una vez por destino abierto; si falla, no molesta al usuario).
   useEffect(() => {
@@ -134,6 +146,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
     curva.recargar();
     clima.recargar();
     prediccion.recargar();
+    porQue.recargar();
   };
 
   return (
@@ -182,7 +195,22 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
                 {`${formatearHorario(d.horario)}${d.ocupacionActual ? (cerradoAhora ? ' · Cerrado ahora' : ' · Abierto ahora') : ''}`}
               </Dato>
             )}
-            {d.rangoPrecio && <Dato icono="payments">{ETIQUETA_PRECIO[d.rangoPrecio]}</Dato>}
+            {d.precio ? (
+              <Dato icono="payments">{`${formatearPrecio(d.precio)} por persona`}</Dato>
+            ) : (
+              d.rangoPrecio && <Dato icono="payments">{ETIQUETA_PRECIO[d.rangoPrecio]}</Dato>
+            )}
+            {d.precio?.estimado && (
+              <Tag icono="info-outline" style={styles.tagEstimado}>
+                Estimado
+              </Tag>
+            )}
+            {d.calificacion && (
+              <View style={styles.dato}>
+                <Estrellas valor={d.calificacion.promedio} tamano={16} />
+                <Text style={styles.datoTexto}>{`${d.calificacion.promedio.toFixed(1).replace('.', ',')} (${d.calificacion.cantidad})`}</Text>
+              </View>
+            )}
           </View>
 
           {d.cierre && (
@@ -199,6 +227,14 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
                 ) : null}
               </View>
             </View>
+          )}
+
+          {porQue.datos && porQue.datos.razones.length > 0 && (
+            <GlassPanel tono="strong" radius={radius.panel} padding={spacing.md} style={styles.porQue}>
+              <Overline>Por qué es para ti</Overline>
+              {porQue.datos.porQue ? <Text style={styles.porQueFrase}>{porQue.datos.porQue}</Text> : null}
+              <ListaRazones razones={porQue.datos.razones} />
+            </GlassPanel>
           )}
 
           <LinearGradient
@@ -285,6 +321,9 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
             </Text>
           )}
 
+          <Text style={styles.subtitulo}>Reseñas</Text>
+          <SeccionResenas idDestino={d.id} onCambio={destino.recargar} />
+
           <Pressable
             onPress={() => navigation.navigate('NuevoTicket', { idDestino: d.id, nombreDestino: d.nombre })}
             accessibilityRole="button"
@@ -351,6 +390,9 @@ const styles = StyleSheet.create({
   },
   etiquetasFila: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm, flexWrap: 'wrap' },
   tagCerrado: { backgroundColor: colors.errorContainer },
+  tagEstimado: { paddingVertical: 1 },
+  porQue: { marginTop: spacing.screen, gap: spacing.sm },
+  porQueFrase: { ...typography.bodyMd, color: colors.textStrong },
   nombre: { ...typography.display, color: colors.textStrong },
   datos: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.md, rowGap: 4, marginTop: spacing.sm },
   dato: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, maxWidth: '100%' },

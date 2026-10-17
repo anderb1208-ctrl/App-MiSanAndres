@@ -7,6 +7,7 @@ import type {
   RangoPrecio,
 } from '../models/database.types';
 import * as destinoModel from '../models/destinoModel';
+import * as resenaModel from '../models/resenaModel';
 import { noEncontrado } from '../utils/errores';
 import { estadoEfectivo } from '../utils/estadoDestino';
 import { ahoraEnColombia } from '../utils/fecha';
@@ -49,6 +50,8 @@ export interface Destino {
   /** Horario en hora de Colombia; null = sin horario (siempre accesible). */
   horario: Horario | null;
   rangoPrecio: RangoPrecio | null;
+  /** Costo por persona por visita en COP; estimado = aún no confirmado. null si no se conoce. */
+  precio: { minCop: number; maxCop: number; estimado: boolean } | null;
   comoLlegar: string | null;
   /** Se mantiene por compatibilidad; igual a `imagen.url`. */
   imagenUrl: string | null;
@@ -64,6 +67,8 @@ export interface Etiqueta {
 
 export interface DestinoDetalle extends Destino {
   etiquetas: { experiencias: Etiqueta[]; grupos: Etiqueta[] };
+  /** Promedio de reseñas visibles; null si aún no tiene. */
+  calificacion: { promedio: number; cantidad: number } | null;
 }
 
 export function aOcupacionActual(p: prediccionService.Prediccion | undefined | null): OcupacionActual | null {
@@ -93,6 +98,10 @@ export function aDestino(fila: DestinoRow, prediccion?: prediccionService.Predic
       estadoEfectivo(fila) === 'cerrado_temporal' ? { motivo: fila.motivo_cierre ?? null, hasta: fila.cierre_hasta ?? null } : null,
     horario: horarioDe(fila),
     rangoPrecio: fila.rango_precio,
+    precio:
+      fila.precio_min_cop != null && fila.precio_max_cop != null
+        ? { minCop: fila.precio_min_cop, maxCop: fila.precio_max_cop, estimado: fila.precio_es_estimado }
+        : null,
     comoLlegar: fila.como_llegar,
     imagenUrl: fila.imagen_url,
     imagen: fila.imagen_url
@@ -143,9 +152,10 @@ export async function climaDelDestino(db: Db, id: number, horas: number) {
 export async function obtenerDetalle(db: Db, id: number): Promise<DestinoDetalle> {
   const fila = await obtenerOFallar(db, id);
   const { fecha, hora } = ahoraEnColombia();
-  const [etiquetas, prediccion] = await Promise.all([
+  const [etiquetas, prediccion, calificaciones] = await Promise.all([
     destinoModel.listarEtiquetas(db, [id]),
     prediccionService.predecir(db, fila, fecha, hora),
+    resenaModel.resumen(db, [id]),
   ]);
 
   const deTipo = (tipo: 'experiencia' | 'grupo') =>
@@ -154,5 +164,6 @@ export async function obtenerDetalle(db: Db, id: number): Promise<DestinoDetalle
   return {
     ...aDestino(fila, prediccion),
     etiquetas: { experiencias: deTipo('experiencia'), grupos: deTipo('grupo') },
+    calificacion: calificaciones.get(id) ?? null,
   };
 }

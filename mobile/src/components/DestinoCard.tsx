@@ -1,14 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import type { Destino } from '../services/tipos';
+import type { Destino, Razon } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
+import { formatearPrecio } from '../utils/presupuesto';
 import { BotonFavorito } from './BotonFavorito';
 import { GlassPanel } from './GlassPanel';
 import { Icon } from './Icon';
 import { ImagenDestino } from './ImagenDestino';
 import { IndicadorOcupacion } from './IndicadorOcupacion';
 import { PressableScale } from './PressableScale';
+import { ChipsRazones } from './Razones';
 
 interface Props {
   destino: Destino;
@@ -19,6 +21,8 @@ interface Props {
   /** Texto destacado a la derecha del nombre (p. ej. "92%" de compatibilidad). */
   destacado?: string;
   onPress: () => void;
+  /** Razones de la recomendación (se muestran 2–3 como chips). */
+  razones?: Razon[];
   /** Oculta el corazón de favorito. */
   sinFavorito?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -27,9 +31,10 @@ interface Props {
 const cerrado = (d: Destino) => d.estado === 'cerrado_temporal';
 
 /** DestinoCard: tarjeta de destino con su IndicadorOcupacion. */
-export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress, sinFavorito, style }: Props) {
+export function DestinoCard({ destino, layout = 'list', nota, destacado, razones, onPress, sinFavorito, style }: Props) {
   const categoria = CATEGORIAS[destino.categoria];
-  const accesible = `${destino.nombre}, ${categoria.singular}${nota ? `. ${nota}` : ''}`;
+  const precio = destino.precio ? `${formatearPrecio(destino.precio)}${destino.precio.estimado ? ' · Estimado' : ''}` : null;
+  const accesible = `${destino.nombre}, ${categoria.singular}${precio ? `. Precio por persona: ${precio}` : ''}${nota ? `. ${nota}` : ''}`;
 
   if (layout === 'featured') {
     return (
@@ -65,6 +70,8 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress
               {nota}
             </Text>
           ) : null}
+          {razones ? <ChipsRazones razones={razones} max={2} style={styles.chips} /> : null}
+          {precio ? <Text style={styles.featuredMeta}>{precio}</Text> : null}
         </GlassPanel>
       </PressableScale>
     );
@@ -89,11 +96,20 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, onPress
               {cerrado(destino) ? ' • Cerrado temporalmente' : ''}
             </Text>
           </View>
+          {precio ? (
+            <View style={styles.meta}>
+              <Icon name="payments" size={14} color={colors.secondary} />
+              <Text style={styles.metaTexto} numberOfLines={1}>
+                {precio}
+              </Text>
+            </View>
+          ) : null}
           {nota ? (
             <Text style={styles.nota} numberOfLines={2}>
               {nota}
             </Text>
           ) : null}
+          {razones ? <ChipsRazones razones={razones} max={3} /> : null}
           <IndicadorOcupacion ocupacion={destino.ocupacionActual} mostrarPorcentaje />
         </View>
       </View>
@@ -121,6 +137,7 @@ const styles = StyleSheet.create({
   },
   featuredDestacadoTexto: { ...typography.labelBold, color: colors.secondary },
   featuredLeyenda: { gap: 2 },
+  chips: { marginTop: 4 },
   featuredMeta: { ...typography.labelMd, color: colors.textOnDarkMuted },
   featuredNombre: { ...typography.headlineSm, color: colors.white },
   featuredNota: { ...typography.bodyMd, color: colors.textOnDarkMuted },

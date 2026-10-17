@@ -3,6 +3,7 @@ import { crearApp } from '../app';
 import type { UsuarioRow } from '../models/database.types';
 import * as authModel from '../models/authModel';
 import * as destinoModel from '../models/destinoModel';
+import * as resenaModel from '../models/resenaModel';
 import * as interaccionModel from '../models/interaccionModel';
 import * as ocupacionModel from '../models/ocupacionModel';
 import * as preferenciaModel from '../models/preferenciaModel';
@@ -12,6 +13,7 @@ import { catalogo, destinos, etiquetas, johnnyCay, promediosHora } from './fixtu
 
 jest.mock('../models/authModel');
 jest.mock('../models/destinoModel');
+jest.mock('../models/resenaModel');
 jest.mock('../models/interaccionModel');
 jest.mock('../models/ocupacionModel');
 jest.mock('../models/preferenciaModel');
@@ -36,9 +38,13 @@ const perfil: UsuarioRow = {
   nivel_ocupacion_preferido: 'Bajo',
   fecha_registro: '2026-09-29T15:00:00+00:00',
   rol: 'turista',
+  presupuesto_min_cop: null,
+  presupuesto_max_cop: null,
 };
 
 beforeEach(() => {
+  jest.mocked(resenaModel.resumen).mockResolvedValue(new Map());
+  jest.mocked(resenaModel.listarPorDestino).mockResolvedValue([]);
   // Miércoles al mediodía: todos los destinos de prueba están abiertos.
   ahora.mockReturnValue({ fecha: '2026-09-30', hora: '12:30' });
   authM.obtenerUsuarioDelToken.mockImplementation(async (token) =>
@@ -157,6 +163,8 @@ describe('/v1/preferencias', () => {
       tiposExperiencia: ['relax', 'fotografia'],
       tiposGrupo: ['pareja'],
       nivelOcupacion: 'Bajo',
+      presupuestoMin: null,
+      presupuestoMax: null,
     });
   });
 
@@ -173,6 +181,8 @@ describe('/v1/preferencias', () => {
     expect(res.status).toBe(200);
     expect(usuarioM.actualizar).toHaveBeenCalledWith(expect.anything(), ID_USUARIO, {
       nivel_ocupacion_preferido: 'Medio',
+      presupuesto_min_cop: null,
+      presupuesto_max_cop: null,
     });
     expect(preferenciaM.agregar).toHaveBeenCalledWith(expect.anything(), ID_USUARIO, [1, 8]);
     expect(preferenciaM.quitar).toHaveBeenCalledWith(expect.anything(), ID_USUARIO, [3, 7, 12, 14]);
@@ -182,6 +192,8 @@ describe('/v1/preferencias', () => {
     await request(app).put('/v1/preferencias').set(auth).send({ categorias: ['cayo'] });
     expect(usuarioM.actualizar).toHaveBeenCalledWith(expect.anything(), ID_USUARIO, {
       nivel_ocupacion_preferido: null,
+      presupuesto_min_cop: null,
+      presupuesto_max_cop: null,
     });
   });
 
@@ -217,6 +229,8 @@ describe('/v1/preferencias', () => {
     expect(preferenciaM.quitarTodas).toHaveBeenCalledWith(expect.anything(), ID_USUARIO);
     expect(usuarioM.actualizar).toHaveBeenCalledWith(expect.anything(), ID_USUARIO, {
       nivel_ocupacion_preferido: null,
+      presupuesto_min_cop: null,
+      presupuesto_max_cop: null,
     });
   });
 

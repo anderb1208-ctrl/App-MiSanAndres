@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { crearApp } from '../app';
 import * as destinoModel from '../models/destinoModel';
+import * as resenaModel from '../models/resenaModel';
 import * as ocupacionModel from '../models/ocupacionModel';
 import * as preferenciaModel from '../models/preferenciaModel';
 import * as fecha from '../utils/fecha';
@@ -8,6 +9,7 @@ import { proveedorFalso } from './climaFalso';
 import { catalogo, destinos, etiquetas, hoyoSoplador, johnnyCay, promediosHora } from './fixtures';
 
 jest.mock('../models/destinoModel');
+jest.mock('../models/resenaModel');
 jest.mock('../models/ocupacionModel');
 jest.mock('../models/preferenciaModel');
 
@@ -18,6 +20,8 @@ const preferenciaM = jest.mocked(preferenciaModel);
 const ahora = jest.spyOn(fecha, 'ahoraEnColombia');
 
 beforeEach(() => {
+  jest.mocked(resenaModel.resumen).mockResolvedValue(new Map());
+  jest.mocked(resenaModel.listarPorDestino).mockResolvedValue([]);
   // Miércoles al mediodía: Johnny Cay (09:00–16:00) está abierto.
   ahora.mockReturnValue({ fecha: '2026-09-30', hora: '12:30' });
   destinoM.listarVisibles.mockResolvedValue(destinos);

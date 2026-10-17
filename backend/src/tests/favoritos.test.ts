@@ -4,6 +4,7 @@ import * as adminModel from '../models/adminModel';
 import * as authModel from '../models/authModel';
 import type { DestinoRow } from '../models/database.types';
 import * as destinoModel from '../models/destinoModel';
+import * as resenaModel from '../models/resenaModel';
 import * as dispositivoModel from '../models/dispositivoModel';
 import * as favoritoModel from '../models/favoritoModel';
 import * as ocupacionModel from '../models/ocupacionModel';
@@ -22,6 +23,7 @@ import { johnnyCay, promediosHora } from './fixtures';
 jest.mock('../models/authModel');
 jest.mock('../models/usuarioModel');
 jest.mock('../models/destinoModel');
+jest.mock('../models/resenaModel');
 jest.mock('../models/favoritoModel');
 jest.mock('../models/dispositivoModel');
 jest.mock('../models/adminModel');
@@ -53,6 +55,8 @@ let push: PushFalso;
 
 let destinoActual: DestinoRow;
 beforeEach(() => {
+  jest.mocked(resenaModel.resumen).mockResolvedValue(new Map());
+  jest.mocked(resenaModel.listarPorDestino).mockResolvedValue([]);
   push = new PushFalso();
   usarProveedorPush(push);
   destinoActual = { ...johnnyCay };
