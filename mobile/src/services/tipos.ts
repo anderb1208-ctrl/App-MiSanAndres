@@ -13,6 +13,7 @@ export type RangoPrecio = 'Gratis' | '$' | '$$' | '$$$';
 /** "Cerrado" fuera del horario del destino o si está cerrado temporalmente. */
 export type EstadoAtencion = 'Abierto' | 'Cerrado';
 export type EstadoDestino = 'abierto' | 'cerrado_temporal' | 'inactivo';
+export type Rol = 'turista' | 'tecnico' | 'administrador';
 export type TipoInteraccion = 'vista' | 'favorito' | 'visita' | 'compartir';
 
 export interface OcupacionActual {
@@ -130,6 +131,7 @@ export interface Perfil {
   correo: string | null;
   nivelOcupacionPreferido: NivelOcupacion | null;
   fechaRegistro: string;
+  rol: Rol;
 }
 
 export interface InteraccionHistorial {
@@ -271,4 +273,77 @@ export interface ResultadoRecomendaciones {
   nivelOcupacionPreferido: NivelOcupacion | null;
   tienePreferencias: boolean;
   recomendaciones: Recomendacion[];
+}
+
+// ---- Tickets de soporte ----
+
+export type CategoriaTicket = 'informacion_incorrecta' | 'destino' | 'app' | 'sugerencia' | 'otro';
+export type PrioridadTicket = 'baja' | 'media' | 'alta';
+export type EstadoTicket = 'abierto' | 'en_revision' | 'resuelto' | 'cerrado';
+
+export interface Ticket {
+  id: number;
+  categoria: CategoriaTicket;
+  asunto: string;
+  descripcion: string;
+  prioridad: PrioridadTicket;
+  estado: EstadoTicket;
+  destino: { id: number; nombre: string } | null;
+  creador: { id: string; nombre: string | null };
+  tecnico: { id: string; nombre: string | null } | null;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  fechaCierre: string | null;
+  esPropio: boolean;
+}
+
+export interface ComentarioTicket {
+  id: number;
+  comentario: string;
+  fecha: string;
+  /** nombre y rol son null si no se pueden ver (el turista ve "Equipo de soporte"). */
+  autor: { id: string; nombre: string | null; rol: Rol | null; esYo: boolean };
+}
+
+export interface TicketDetalle extends Ticket {
+  comentarios: ComentarioTicket[];
+}
+
+export interface NuevoTicket {
+  categoria: CategoriaTicket;
+  asunto: string;
+  descripcion: string;
+  prioridad: PrioridadTicket;
+  idDestino: number | null;
+}
+
+// ---- Administración ----
+
+export interface UsuarioAdmin {
+  id: string;
+  nombre: string | null;
+  correo: string | null;
+  rol: Rol;
+  fechaRegistro: string;
+}
+
+export interface MetricasAdmin {
+  usuarios: { total: number; porRol: Partial<Record<Rol, number>>; ultimos30Dias: number };
+  interacciones: { total: number; ultimos7Dias: number; porTipo: Partial<Record<TipoInteraccion, number>> };
+  ticketsPorEstado: Partial<Record<EstadoTicket, number>>;
+  destinosMasVistos: { idDestino: number; nombre: string; vistas: number }[];
+}
+
+export interface CamposDestino {
+  nombre: string;
+  descripcion: string | null;
+  categoria: CategoriaDestino;
+  latitud: number;
+  longitud: number;
+  ubicacion: string;
+  capacidad: number;
+  horarioApertura: string | null;
+  horarioCierre: string | null;
+  rangoPrecio: RangoPrecio | null;
+  comoLlegar: string | null;
 }

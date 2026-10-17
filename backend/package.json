@@ -11,7 +11,8 @@
     "clima:historico": "tsx scripts/generarClimaHistorico.ts",
     "ubicaciones:geolocalizar": "tsx scripts/geolocalizar-destinos.ts",
     "ubicaciones:corregir": "tsx scripts/corregir-ubicaciones.ts",
-    "verificar:ubicaciones": "tsx scripts/verificar-ubicaciones.ts"
+    "verificar:ubicaciones": "tsx scripts/verificar-ubicaciones.ts",
+    "usuarios:demo": "tsx scripts/crear-usuarios-demo.ts"
   },
   "author": "",
   "license": "ISC",

@@ -267,6 +267,16 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
                 : 'No pudimos cargar la ocupación típica. Desliza hacia abajo para reintentar.'}
             </Text>
           )}
+
+          <Pressable
+            onPress={() => navigation.navigate('NuevoTicket', { idDestino: d.id, nombreDestino: d.nombre })}
+            accessibilityRole="button"
+            hitSlop={8}
+            style={styles.reportar}
+          >
+            <Icon name="report-problem" size={18} color={colors.textLink} />
+            <Text style={styles.reportarTexto}>¿Algo está mal? Reportar un problema con este destino</Text>
+          </Pressable>
         </View>
       </ScrollView>
 
@@ -290,6 +300,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
 }
 
 const styles = StyleSheet.create({
+  reportar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
+  reportarTexto: { ...typography.labelBold, color: colors.textLink, flex: 1 },
   fondo: { flex: 1, backgroundColor: colors.white },
   centro: { flex: 1, justifyContent: 'center' },
   volver: { position: 'absolute', left: spacing.screen, zIndex: 5 },

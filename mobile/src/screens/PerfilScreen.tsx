@@ -8,6 +8,7 @@ import { ScreenHeader, SectionHeader } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SelectRow } from '../components/SelectRow';
 import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateView';
+import { Tag } from '../components/Tag';
 import { TextField } from '../components/TextField';
 import { useAsync } from '../hooks/useAsync';
 import { useBarraEstado } from '../hooks/useBarraEstado';
@@ -22,6 +23,7 @@ import { API_BASE_URL } from '../config/env';
 import { useAuth } from '../store/AuthContext';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS, type NombreIcono } from '../utils/categorias';
+import { ETIQUETA_ROL, ICONO_ROL } from '../utils/tickets';
 import { formatearFechaHora, formatearMesAnio } from '../utils/fecha';
 import { ETIQUETA_NIVEL } from '../utils/ocupacion';
 import { validarNombre } from '../utils/validacion';
@@ -45,7 +47,8 @@ async function cargarPerfil() {
 export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
   useBarraEstado('dark');
   const espacioInferior = useEspacioTabBar();
-  const { correo, cerrarSesion } = useAuth();
+  const { correo, rol, cerrarSesion } = useAuth();
+  const esTurista = rol === 'turista';
   const { datos, error, cargando, refrescando, recargar } = useAsync(cargarPerfil, [], { recargarAlEnfocar: true });
 
   const [editando, setEditando] = useState(false);
@@ -137,6 +140,11 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
                   {perfil.correo ?? correo}
                 </Text>
                 <Text style={styles.desde}>Desde {formatearMesAnio(perfil.fechaRegistro)}</Text>
+                <View style={styles.rol}>
+                  <Tag icono={ICONO_ROL[perfil.rol]} tono={perfil.rol === 'turista' ? 'neutral' : 'turquoise'}>
+                    {ETIQUETA_ROL[perfil.rol]}
+                  </Tag>
+                </View>
               </View>
               <IconButton icono="edit" etiqueta="Editar nombre" tono="tonal" onPress={empezarEdicion} />
             </View>
@@ -157,13 +165,33 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
         </View>
 
         <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
-          <SelectRow
-            icono="tune"
-            etiqueta="Mis preferencias"
-            descripcion="Ver y editar preferencias"
-            control="chevron"
-            onPress={() => navigation.navigate('Preferencias')}
-          />
+          {esTurista && (
+            <>
+              <SelectRow
+                icono="tune"
+                etiqueta="Mis preferencias"
+                descripcion="Ver y editar preferencias"
+                control="chevron"
+                onPress={() => navigation.navigate('Preferencias')}
+              />
+              <SelectRow
+                icono="report-problem"
+                tonoIcono="neutral"
+                etiqueta="Reportar un problema"
+                descripcion="Información incorrecta, fallas o sugerencias"
+                control="chevron"
+                onPress={() => navigation.navigate('NuevoTicket')}
+              />
+              <SelectRow
+                icono="assignment"
+                tonoIcono="neutral"
+                etiqueta="Mis reportes"
+                descripcion="Estado de lo que reportaste"
+                control="chevron"
+                onPress={() => navigation.navigate('MisReportes')}
+              />
+            </>
+          )}
           <SelectRow
             icono="info-outline"
             tonoIcono="neutral"
@@ -256,6 +284,7 @@ const styles = StyleSheet.create({
   nombre: { ...typography.headlineSm, color: colors.textStrong },
   correo: { ...typography.bodyMd, color: colors.textMuted },
   desde: { ...typography.labelMd, color: colors.textSubtle, marginTop: 2 },
+  rol: { flexDirection: 'row', marginTop: 6 },
   edicion: { gap: spacing.gutter },
   edicionAcciones: { flexDirection: 'row', gap: spacing.sm },
   estadisticas: { flexDirection: 'row', gap: 10 },

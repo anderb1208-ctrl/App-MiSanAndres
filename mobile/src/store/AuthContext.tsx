@@ -2,7 +2,9 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { mensajeDeError } from '../services/api';
 import * as authService from '../services/auth';
+import { obtenerMe } from '../services/perfil';
 import { obtenerPreferencias } from '../services/preferencias';
+import type { Rol } from '../services/tipos';
 
 /**
  * - cargando: leyendo la sesión guardada.
@@ -18,6 +20,11 @@ interface ValorAuth {
   estado: EstadoAuth;
   sesion: Session | null;
   correo: string | null;
+  /**
+   * Rol del usuario según el backend (null hasta verificarlo). Solo decide qué pantallas
+   * se muestran: la seguridad real está en el backend y en RLS.
+   */
+  rol: Rol | null;
   mensajeError: string | null;
   reintentar: () => void;
   /** Llamar al guardar las preferencias del onboarding. */
@@ -32,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<EstadoAuth>('cargando');
   const [mensajeError, setMensajeError] = useState<string | null>(null);
   const [intento, setIntento] = useState(0);
+  const [rol, setRol] = useState<Rol | null>(null);
   const idUsuario = sesion?.user.id ?? null;
 
   useEffect(() => {
@@ -57,8 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let activo = true;
     setEstado('verificando');
     setMensajeError(null);
-    obtenerPreferencias()
-      .then((p) => activo && setEstado(p.categorias.length === 0 ? 'onboarding' : 'lista'))
+    (async () => {
+      const me = await obtenerMe();
+      if (!activo) return;
+      setRol(me.rol);
+      // Técnicos y administradores trabajan sin preferencias de viaje: no pasan por el onboarding.
+      if (me.rol !== 'turista') return setEstado('lista');
+      const p = await obtenerPreferencias();
+      if (activo) setEstado(p.categorias.length === 0 ? 'onboarding' : 'lista');
+    })()
       .catch((e: unknown) => {
         if (!activo) return;
         setMensajeError(mensajeDeError(e));
@@ -78,12 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       estado,
       sesion,
       correo: sesion?.user.email ?? null,
+      rol: sesion ? rol : null,
       mensajeError,
       reintentar,
       completarOnboarding,
       cerrarSesion,
     }),
-    [estado, sesion, mensajeError, reintentar, completarOnboarding, cerrarSesion],
+    [estado, sesion, rol, mensajeError, reintentar, completarOnboarding, cerrarSesion],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

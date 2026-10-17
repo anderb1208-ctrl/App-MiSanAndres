@@ -1,5 +1,5 @@
 import type { Db } from '../config/supabase';
-import type { NivelOcupacion, UsuarioRow } from '../models/database.types';
+import type { NivelOcupacion, RolUsuario, UsuarioRow } from '../models/database.types';
 import type { UsuarioAuth } from '../models/authModel';
 import * as usuarioModel from '../models/usuarioModel';
 import type { CuerpoPerfil } from '../middleware/esquemas';
@@ -12,6 +12,8 @@ export interface Perfil {
   correo: string | null;
   nivelOcupacionPreferido: NivelOcupacion | null;
   fechaRegistro: string;
+  /** turista, tecnico o administrador (lo asigna un administrador; nunca el propio usuario). */
+  rol: RolUsuario;
 }
 
 const PERFIL_NO_ENCONTRADO = 'No se encontró el perfil del usuario.';
@@ -22,6 +24,7 @@ const aPerfil = (fila: UsuarioRow, usuario: UsuarioAuth): Perfil => ({
   correo: usuario.correo,
   nivelOcupacionPreferido: fila.nivel_ocupacion_preferido,
   fechaRegistro: fila.fecha_registro,
+  rol: fila.rol,
 });
 
 export async function obtener(db: Db, usuario: UsuarioAuth): Promise<Perfil> {

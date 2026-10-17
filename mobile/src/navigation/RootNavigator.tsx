@@ -7,6 +7,13 @@ import { ScreenBackground } from '../components/ScreenBackground';
 import { EstadoCargando, EstadoMensaje } from '../components/StateView';
 import { BienvenidaScreen } from '../screens/BienvenidaScreen';
 import { CreditosScreen } from '../screens/CreditosScreen';
+import { DestinosAdminScreen } from '../screens/DestinosAdminScreen';
+import { EditarDestinoScreen } from '../screens/EditarDestinoScreen';
+import { NuevoTicketScreen } from '../screens/NuevoTicketScreen';
+import { PanelScreen } from '../screens/PanelScreen';
+import { TicketDetalleScreen } from '../screens/TicketDetalleScreen';
+import { MisReportesScreen, TicketsScreen } from '../screens/TicketsScreen';
+import { UsuariosAdminScreen } from '../screens/UsuariosAdminScreen';
 import { DetalleDestinoScreen } from '../screens/DetalleDestinoScreen';
 import { ExplorarScreen } from '../screens/ExplorarScreen';
 import { InicioScreen } from '../screens/InicioScreen';
@@ -30,12 +37,30 @@ const sinEncabezado = {
   contentStyle: { backgroundColor: colors.surfaceApp },
 } as const;
 
+/**
+ * Pestañas según el rol (el rol lo informa el backend). Ocultar pantallas es solo
+ * comodidad: el backend y RLS rechazan lo que un rol no puede hacer.
+ */
 function TabsNavigator() {
+  const { rol } = useAuth();
   return (
     <Tabs.Navigator screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
-      <Tabs.Screen name="Inicio" component={InicioScreen} />
-      <Tabs.Screen name="Explorar" component={ExplorarScreen} />
-      <Tabs.Screen name="Mapa" component={MapaScreen} />
+      {rol === 'administrador' ? (
+        <>
+          <Tabs.Screen name="Panel" component={PanelScreen} />
+          <Tabs.Screen name="Tickets" component={TicketsScreen} />
+          <Tabs.Screen name="Destinos" component={DestinosAdminScreen} />
+          <Tabs.Screen name="Usuarios" component={UsuariosAdminScreen} />
+        </>
+      ) : rol === 'tecnico' ? (
+        <Tabs.Screen name="Tickets" component={TicketsScreen} />
+      ) : (
+        <>
+          <Tabs.Screen name="Inicio" component={InicioScreen} />
+          <Tabs.Screen name="Explorar" component={ExplorarScreen} />
+          <Tabs.Screen name="Mapa" component={MapaScreen} />
+        </>
+      )}
       <Tabs.Screen name="Perfil" component={PerfilScreen} />
     </Tabs.Navigator>
   );
@@ -105,6 +130,10 @@ export function RootNavigator() {
       <AppStack.Screen name="DetalleDestino" component={DetalleDestinoScreen} />
       <AppStack.Screen name="Preferencias" component={PreferenciasScreen} />
       <AppStack.Screen name="Creditos" component={CreditosScreen} />
+      <AppStack.Screen name="TicketDetalle" component={TicketDetalleScreen} />
+      <AppStack.Screen name="NuevoTicket" component={NuevoTicketScreen} />
+      <AppStack.Screen name="MisReportes" component={MisReportesScreen} />
+      <AppStack.Screen name="EditarDestino" component={EditarDestinoScreen} />
     </AppStack.Navigator>
   );
 }

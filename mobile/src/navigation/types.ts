@@ -8,11 +8,20 @@ export type AuthStackParamList = {
   Registro: undefined;
 };
 
+/**
+ * Todas las pestañas posibles; cada rol muestra solo las suyas (RootNavigator):
+ * turista: Inicio, Explorar, Mapa, Perfil · técnico: Tickets, Perfil ·
+ * administrador: Panel, Tickets, Destinos, Usuarios, Perfil.
+ */
 export type TabsParamList = {
   Inicio: undefined;
   Explorar: undefined;
   /** destinoId: destino a resaltar al llegar desde el detalle. */
   Mapa: { destinoId?: number } | undefined;
+  Panel: undefined;
+  Tickets: undefined;
+  Destinos: undefined;
+  Usuarios: undefined;
   Perfil: undefined;
 };
 
@@ -21,6 +30,12 @@ export type AppStackParamList = {
   DetalleDestino: { id: number };
   Preferencias: undefined;
   Creditos: undefined;
+  TicketDetalle: { id: number };
+  /** Desde el detalle de un destino llega con el destino ya elegido. */
+  NuevoTicket: { idDestino?: number; nombreDestino?: string } | undefined;
+  MisReportes: undefined;
+  /** Sin id: crear un destino nuevo. */
+  EditarDestino: { id?: number } | undefined;
 };
 
 export type OnboardingStackParamList = {

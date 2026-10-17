@@ -1,5 +1,5 @@
 import type { Db } from '../config/supabase';
-import type { Database, UsuarioRow } from './database.types';
+import type { Database, RolUsuario, UsuarioRow } from './database.types';
 import { verificar } from './verificar';
 
 type CambiosUsuario = Pick<
@@ -26,4 +26,13 @@ export async function actualizar(
     .select('*')
     .maybeSingle();
   return verificar(resultado, 'Actualizar perfil');
+}
+
+/**
+ * Rol del usuario, leído siempre de la base (nunca del cuerpo de la petición ni del
+ * token). null si no tiene perfil.
+ */
+export async function obtenerRol(db: Db, idUsuario: string): Promise<RolUsuario | null> {
+  const resultado = await db.from('usuario').select('rol').eq('id_usuario', idUsuario).maybeSingle();
+  return verificar(resultado, 'Obtener rol')?.rol ?? null;
 }

@@ -35,6 +35,7 @@ const perfil: UsuarioRow = {
   nombre: 'Ana Martínez',
   nivel_ocupacion_preferido: 'Bajo',
   fecha_registro: '2026-09-29T15:00:00+00:00',
+  rol: 'turista',
 };
 
 beforeEach(() => {
@@ -107,6 +108,7 @@ describe('/v1/perfil', () => {
       correo: 'ana@correo.com',
       nivelOcupacionPreferido: 'Bajo',
       fechaRegistro: '2026-09-29T15:00:00+00:00',
+      rol: 'turista',
     });
     expect(usuarioM.obtener).toHaveBeenCalledWith(expect.anything(), ID_USUARIO);
   });

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import * as adminController from '../controllers/adminController';
 import * as climaController from '../controllers/climaController';
 import * as destinoController from '../controllers/destinoController';
 import * as interaccionController from '../controllers/interaccionController';
@@ -6,8 +7,10 @@ import * as ocupacionController from '../controllers/ocupacionController';
 import * as perfilController from '../controllers/perfilController';
 import * as preferenciaController from '../controllers/preferenciaController';
 import * as recomendacionController from '../controllers/recomendacionController';
+import * as ticketController from '../controllers/ticketController';
 import { requerirAuth } from '../middleware/auth';
 import * as e from '../middleware/esquemas';
+import { cargarRol, requiereRol } from '../middleware/roles';
 import { adjuntarClienteAnonimo } from '../middleware/supabase';
 import { estadoClima } from '../services/clima/climaService';
 import { validar } from '../middleware/validar';
@@ -58,6 +61,8 @@ publicas.get('/preferencias/catalogo', preferenciaController.catalogo);
  */
 const privadas = Router();
 
+// Usuario del token con su rol (leído de la base).
+privadas.get('/me', requerirAuth, perfilController.obtener);
 privadas.get('/perfil', requerirAuth, perfilController.obtener);
 privadas.put('/perfil', requerirAuth, validar({ body: e.cuerpoPerfil }), perfilController.actualizar);
 
@@ -84,6 +89,53 @@ privadas.get(
 );
 
 privadas.get('/recomendaciones', requerirAuth, recomendacionController.listar);
+
+// ---- Tickets de soporte (turista: los suyos; técnico y administrador: todos) ----
+const personal = requiereRol('tecnico', 'administrador');
+privadas.post('/tickets', requerirAuth, validar({ body: e.cuerpoTicket }), ticketController.crear);
+privadas.get('/tickets', requerirAuth, cargarRol, validar({ query: e.consultaTickets }), ticketController.listar);
+privadas.get('/tickets/:id', requerirAuth, validar({ params: e.paramsId }), ticketController.obtener);
+privadas.patch(
+  '/tickets/:id',
+  requerirAuth,
+  personal,
+  validar({ params: e.paramsId, body: e.cuerpoActualizarTicket }),
+  ticketController.actualizar,
+);
+privadas.post(
+  '/tickets/:id/comentarios',
+  requerirAuth,
+  validar({ params: e.paramsId, body: e.cuerpoComentario }),
+  ticketController.comentar,
+);
+
+// ---- Administración (solo administrador; la base vuelve a comprobar el rol) ----
+const admin = requiereRol('administrador');
+privadas.get('/admin/usuarios', requerirAuth, admin, adminController.usuarios);
+privadas.patch(
+  '/admin/usuarios/:id/rol',
+  requerirAuth,
+  admin,
+  validar({ params: e.paramsIdUsuario, body: e.cuerpoRol }),
+  adminController.cambiarRol,
+);
+privadas.get('/admin/metricas', requerirAuth, admin, adminController.metricas);
+privadas.get('/admin/destinos', requerirAuth, admin, adminController.destinos);
+privadas.post('/admin/destinos', requerirAuth, admin, validar({ body: e.cuerpoNuevoDestino }), adminController.crearDestino);
+privadas.patch(
+  '/admin/destinos/:id',
+  requerirAuth,
+  admin,
+  validar({ params: e.paramsId, body: e.cuerpoEditarDestino }),
+  adminController.editarDestino,
+);
+privadas.patch(
+  '/admin/destinos/:id/estado',
+  requerirAuth,
+  admin,
+  validar({ params: e.paramsId, body: e.cuerpoEstadoDestino }),
+  adminController.estadoDestino,
+);
 
 export const rutasV1 = Router();
 rutasV1.use(publicas);

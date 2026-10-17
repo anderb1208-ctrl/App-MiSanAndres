@@ -21,7 +21,7 @@ export class ErrorApi extends Error {
 }
 
 interface Opciones {
-  metodo?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  metodo?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   cuerpo?: unknown;
   /** Envía el JWT de la sesión en Authorization. */
   autenticado?: boolean;

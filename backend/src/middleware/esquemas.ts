@@ -118,3 +118,112 @@ export const consultaInteracciones = z.object({
     .default(50),
 });
 export type ConsultaInteracciones = z.infer<typeof consultaInteracciones>;
+
+// ---- Roles y usuarios ----
+const MENSAJE_UUID = 'Debe ser un identificador (UUID) válido.';
+export const uuid = z.uuid({ error: MENSAJE_UUID });
+
+export const rol = z.enum(Enums.rol_usuario, { error: `Debe ser uno de: ${Enums.rol_usuario.join(', ')}.` });
+
+export const paramsIdUsuario = z.object({ id: uuid });
+export type ParamsIdUsuario = z.infer<typeof paramsIdUsuario>;
+
+export const cuerpoRol = z.strictObject({ rol });
+export type CuerpoRol = z.infer<typeof cuerpoRol>;
+
+// ---- Tickets ----
+const prioridadTicket = z.enum(Enums.prioridad_ticket, { error: `Debe ser una de: ${Enums.prioridad_ticket.join(', ')}.` });
+const estadoTicket = z.enum(Enums.estado_ticket, { error: `Debe ser uno de: ${Enums.estado_ticket.join(', ')}.` });
+const idDestinoCuerpo = z.number({ error: MENSAJE_ID }).int(MENSAJE_ID).positive(MENSAJE_ID).max(2_147_483_647, MENSAJE_ID);
+
+export const cuerpoTicket = z.strictObject({
+  categoria: z.enum(Enums.categoria_ticket, { error: `Debe ser una de: ${Enums.categoria_ticket.join(', ')}.` }),
+  asunto: z.string({ error: 'Es obligatorio.' }).trim().min(3, 'Mínimo 3 caracteres.').max(120, 'Máximo 120 caracteres.'),
+  descripcion: z
+    .string({ error: 'Es obligatoria.' })
+    .trim()
+    .min(5, 'Mínimo 5 caracteres.')
+    .max(2000, 'Máximo 2000 caracteres.'),
+  prioridad: prioridadTicket.default('media'),
+  idDestino: idDestinoCuerpo.nullable().default(null),
+});
+export type CuerpoTicket = z.infer<typeof cuerpoTicket>;
+
+export const consultaTickets = z.object({
+  estado: estadoTicket.optional(),
+  prioridad: prioridadTicket.optional(),
+  /** Técnico/administrador: solo los asignados a mí. */
+  asignadosAMi: z
+    .enum(['true', 'false'], { error: 'Debe ser true o false.' })
+    .transform((v) => v === 'true')
+    .optional(),
+  limite: z.coerce.number({ error: MENSAJE_LIMITE }).int(MENSAJE_LIMITE).min(1, MENSAJE_LIMITE).max(100, MENSAJE_LIMITE).default(50),
+});
+export type ConsultaTickets = z.infer<typeof consultaTickets>;
+
+export const cuerpoActualizarTicket = z
+  .strictObject({
+    estado: estadoTicket.optional(),
+    prioridad: prioridadTicket.optional(),
+    idTecnico: uuid.nullable().optional(),
+  })
+  .refine((c) => c.estado !== undefined || c.prioridad !== undefined || c.idTecnico !== undefined, {
+    message: 'Indica al menos estado, prioridad o idTecnico.',
+  });
+export type CuerpoActualizarTicket = z.infer<typeof cuerpoActualizarTicket>;
+
+export const cuerpoComentario = z.strictObject({
+  comentario: z.string({ error: 'Es obligatorio.' }).trim().min(1, 'No puede estar vacío.').max(2000, 'Máximo 2000 caracteres.'),
+});
+export type CuerpoComentario = z.infer<typeof cuerpoComentario>;
+
+// ---- Administración de destinos ----
+const textoOpcional = (max: number) => z.string().trim().max(max, `Máximo ${max} caracteres.`).nullable();
+const horaOpcional = hora.nullable();
+
+const camposDestino = {
+  nombre: z.string({ error: 'Es obligatorio.' }).trim().min(2, 'Mínimo 2 caracteres.').max(150, 'Máximo 150 caracteres.'),
+  descripcion: textoOpcional(2000),
+  categoria,
+  latitud: z.number({ error: 'Debe ser un número.' }).min(-90).max(90),
+  longitud: z.number({ error: 'Debe ser un número.' }).min(-180).max(180),
+  ubicacion: z.string({ error: 'Es obligatoria.' }).trim().min(2, 'Mínimo 2 caracteres.').max(255, 'Máximo 255 caracteres.'),
+  capacidad: z.number({ error: 'Debe ser un número.' }).int('Debe ser entero.').positive('Debe ser mayor que 0.'),
+  horarioApertura: horaOpcional,
+  horarioCierre: horaOpcional,
+  rangoPrecio: z.enum(Enums.rango_precio).nullable(),
+  comoLlegar: textoOpcional(1000),
+};
+
+const horarioCoherente = (d: { horarioApertura?: string | null; horarioCierre?: string | null }) =>
+  (d.horarioApertura == null) === (d.horarioCierre == null) &&
+  (d.horarioApertura == null || d.horarioCierre == null || d.horarioApertura < d.horarioCierre);
+const MENSAJE_HORARIO = 'El horario va completo (apertura y cierre) y la apertura debe ser anterior al cierre.';
+
+export const cuerpoNuevoDestino = z
+  .strictObject({
+    ...camposDestino,
+    descripcion: camposDestino.descripcion.default(null),
+    horarioApertura: horaOpcional.default(null),
+    horarioCierre: horaOpcional.default(null),
+    rangoPrecio: camposDestino.rangoPrecio.default(null),
+    comoLlegar: camposDestino.comoLlegar.default(null),
+  })
+  .refine(horarioCoherente, { message: MENSAJE_HORARIO, path: ['horarioCierre'] });
+export type CuerpoNuevoDestino = z.infer<typeof cuerpoNuevoDestino>;
+
+export const cuerpoEditarDestino = z
+  .strictObject(Object.fromEntries(Object.entries(camposDestino).map(([k, v]) => [k, v.optional()])) as {
+    [K in keyof typeof camposDestino]: z.ZodOptional<(typeof camposDestino)[K]>;
+  })
+  .refine((c) => Object.keys(c).length > 0, { message: 'Indica al menos un campo para editar.' })
+  .refine((c) => c.horarioApertura === undefined && c.horarioCierre === undefined ? true : c.horarioApertura !== undefined && c.horarioCierre !== undefined && horarioCoherente(c), {
+    message: `${MENSAJE_HORARIO} Envía ambos campos.`,
+    path: ['horarioCierre'],
+  });
+export type CuerpoEditarDestino = z.infer<typeof cuerpoEditarDestino>;
+
+export const cuerpoEstadoDestino = z.strictObject({
+  estado: z.enum(Enums.estado_destino, { error: `Debe ser uno de: ${Enums.estado_destino.join(', ')}.` }),
+});
+export type CuerpoEstadoDestino = z.infer<typeof cuerpoEstadoDestino>;
