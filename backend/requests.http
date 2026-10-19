@@ -3,10 +3,19 @@
 
 @baseUrl = http://localhost:3000/v1
 
-### Estado del servicio. Incluye "clima": proveedor, estado (ok | fallando | sin_consultar |
-### no_configurado) y la última falla con su motivo (timeout, error_red, limite_excedido,
-### error_http, respuesta_invalida). Útil para diagnosticar el clima en Render.
+### Estado del servicio. Incluye "clima": proveedor, estado (ok | desactualizado | fallando |
+### sin_consultar | no_configurado), última respuesta buena, última falla con su motivo
+### (timeout, error_red, limite_excedido, error_http, respuesta_invalida), consultasUltimaHora
+### (consultas a Open-Meteo en la última hora: 1 en uso normal) y proximoIntento tras un fallo.
+### Útil para diagnosticar el clima en Render.
 GET {{baseUrl}}/health
+
+### Clima de la isla. desactualizado = true si Open-Meteo falla y se sirve el último
+### pronóstico bueno (hasta 24 h); actualizadoEn = cuándo se obtuvo.
+GET {{baseUrl}}/clima?horas=3
+
+### La predicción trae climaDesactualizado y climaActualizadoEn junto al clima usado
+GET {{baseUrl}}/ocupacion/5/prediccion?fecha=2026-10-20&hora=12:00
 
 ### ---------------------------------------------------------------
 ### Destinos (público)

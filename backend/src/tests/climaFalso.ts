@@ -24,6 +24,10 @@ export class ProveedorClimaFalso implements ProveedorClima {
   fallar = false;
   /** Tipo de falla que simula cuando `fallar` es true. */
   tipoFalla: FallaClima = 'error_red';
+  /** Retry-After simulado de la falla, ms. */
+  reintentarEnMs: number | undefined = undefined;
+  /** Demora de cada respuesta, ms (para probar consultas simultáneas). */
+  retrasoMs = 0;
   desde = '2026-09-29';
   /** Clima de todas las horas, salvo las que se fijen con `enHora`. */
   clima: ClimaParcial = CLIMA_DESPEJADO;
@@ -33,6 +37,8 @@ export class ProveedorClimaFalso implements ProveedorClima {
     this.llamadas = [];
     this.fallar = false;
     this.tipoFalla = 'error_red';
+    this.reintentarEnMs = undefined;
+    this.retrasoMs = 0;
     this.desde = '2026-09-29';
     this.clima = CLIMA_DESPEJADO;
     this.porHora.clear();
@@ -45,7 +51,10 @@ export class ProveedorClimaFalso implements ProveedorClima {
 
   async pronostico(puntos: Coordenada[], opciones: OpcionesPronostico = {}): Promise<ClimaHora[][]> {
     this.llamadas.push(puntos);
-    if (this.fallar) throw new ErrorProveedorClima(this.tipoFalla, `falla simulada (${this.tipoFalla})`);
+    if (this.retrasoMs > 0) await new Promise((r) => setTimeout(r, this.retrasoMs));
+    if (this.fallar) {
+      throw new ErrorProveedorClima(this.tipoFalla, `falla simulada (${this.tipoFalla})`, this.tipoFalla === 'limite_excedido' ? 429 : undefined, this.reintentarEnMs);
+    }
     const dias = (opciones.diasPasados ?? 1) + (opciones.diasPronostico ?? 16);
     const serie: ClimaHora[] = [];
     for (let d = 0; d < dias; d++) {

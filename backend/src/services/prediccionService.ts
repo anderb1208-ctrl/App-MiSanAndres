@@ -81,6 +81,10 @@ export interface Prediccion {
   features: FeaturesPrediccion;
   /** Clima usado, o null si no hubo (ver motivoSinClima). */
   clima: ClimaHora | null;
+  /** true si el clima es el último pronóstico guardado porque el proveedor está fallando. */
+  climaDesactualizado: boolean;
+  /** Cuándo se obtuvo el pronóstico usado (ISO); null sin clima. */
+  climaActualizadoEn: string | null;
   motivoSinClima: climaService.MotivoSinClima | null;
   /** Factores aplicados sobre la base (heurístico), con su explicación. */
   factores: Factor[];
@@ -136,6 +140,8 @@ function construirPrediccion(
     base: r.base,
     features: entrada.features,
     clima: clima.clima,
+    climaDesactualizado: clima.desactualizado,
+    climaActualizadoEn: clima.actualizadoEn,
     motivoSinClima: clima.motivo,
     factores: r.factores,
   };
@@ -162,6 +168,8 @@ function prediccionCerrado(destino: DestinoAPredecir, fecha: string, hora: strin
     base: null,
     features: construirFeatures(fecha, hora, null).features,
     clima: null,
+    climaDesactualizado: false,
+    climaActualizadoEn: null,
     motivoSinClima: null,
     factores: [],
   };
@@ -183,7 +191,7 @@ export async function predecirVarios(
 
   const climas = await climaService.climaEnHora(abiertos.map(puntoClima), fecha, hora);
   const climaDe = (d: DestinoAPredecir): climaService.ResultadoClima =>
-    climas.get(puntoClima(d).clave) ?? { clima: null, motivo: 'sin_datos' };
+    climas.get(puntoClima(d).clave) ?? { clima: null, motivo: 'sin_datos', desactualizado: false, actualizadoEn: null };
   const entradas: EntradaPrediccion[] = abiertos.map((destino) => {
     const { features, calendario } = construirFeatures(fecha, hora, climaDe(destino).clima);
     return { destino, features, calendario, clima: climaDe(destino).clima };

@@ -205,13 +205,13 @@ describe('caché del clima', () => {
   });
   afterEach(() => reloj.mockRestore());
 
-  it('el listado pide el clima de todos los destinos en una sola llamada', async () => {
+  it('el listado pide UN solo punto (la isla) para todos los destinos', async () => {
     await request(app).get('/v1/destinos');
     expect(proveedorFalso.llamadas).toHaveLength(1);
-    expect(proveedorFalso.llamadas[0]).toHaveLength(3);
+    expect(proveedorFalso.llamadas[0]).toEqual([expect.objectContaining({ clave: 'isla' })]);
   });
 
-  it('reutiliza el clima durante 30 minutos', async () => {
+  it('reutiliza el clima durante 60 minutos', async () => {
     await predecir(1, '2026-09-30');
     await predecir(1, '2026-09-30', '13:00');
     await request(app).get('/v1/destinos/1/clima');
@@ -255,7 +255,9 @@ describe('GET /v1/destinos/:id/clima', () => {
     });
     expect(res.body.proximasHoras).toHaveLength(12);
     expect(res.body.proximasHoras[0].fechaHora).toBe('2026-09-30T13:00');
-    expect(proveedorFalso.llamadas[0]).toMatchObject([{ latitud: johnnyCay.latitud, longitud: johnnyCay.longitud }]);
+    // Todos los destinos usan el pronóstico de la isla (12 km de punta a punta).
+    expect(proveedorFalso.llamadas[0]).toEqual([expect.objectContaining({ clave: 'isla' })]);
+    expect(res.body).toMatchObject({ desactualizado: false, actualizadoEn: expect.any(String) });
   });
 
   it('acepta la cantidad de horas', async () => {

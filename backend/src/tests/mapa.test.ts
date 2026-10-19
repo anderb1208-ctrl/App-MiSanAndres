@@ -47,7 +47,7 @@ describe('GET /v1/mapa', () => {
     expect(destinoM.listarVisibles).toHaveBeenCalledTimes(1);
     expect(ocupacionM.promedioPorHora).toHaveBeenCalledTimes(1);
     expect(proveedorFalso.llamadas).toHaveLength(1);
-    expect(proveedorFalso.llamadas[0]).toHaveLength(3);
+    expect(proveedorFalso.llamadas[0]).toHaveLength(1);
   });
 
   it('aplica los mismos factores que la predicción (lluvia)', async () => {
@@ -56,11 +56,11 @@ describe('GET /v1/mapa', () => {
     expect(porId(res.body, 1)?.ocupacion).toEqual({ estado: 'Abierto', porcentaje: 61.8, nivel: 'Medio' });
   });
 
-  it('marca como cerrado un destino fuera de su horario, sin pedirle clima', async () => {
+  it('marca como cerrado un destino fuera de su horario', async () => {
     ahora.mockReturnValue({ fecha: '2026-09-30', hora: '18:00' });
     const res = await request(app).get('/v1/mapa');
     expect(porId(res.body, 1)?.ocupacion).toEqual({ estado: 'Cerrado', porcentaje: 0, nivel: null });
-    expect(proveedorFalso.llamadas[0]).toHaveLength(2);
+    expect(proveedorFalso.llamadas).toHaveLength(1);
   });
 
   it('marca como cerrado un destino cerrado temporalmente', async () => {

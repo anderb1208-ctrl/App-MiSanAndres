@@ -53,6 +53,8 @@ export class ErrorProveedorClima extends Error {
     mensaje: string,
     /** Código HTTP, si hubo respuesta. */
     public readonly estadoHttp?: number,
+    /** Cuánto pide esperar el proveedor antes de reintentar (cabecera Retry-After), ms. */
+    public readonly reintentarEnMs?: number,
   ) {
     super(mensaje);
   }

@@ -144,6 +144,8 @@ describe('motivoSinClima en la API', () => {
       estado: 'no_configurado',
       ultimaRespuestaOk: null,
       ultimaFalla: null,
+      consultasUltimaHora: 0,
+      proximoIntento: null,
     });
   });
 

@@ -152,7 +152,7 @@ El entregable menciona la predicción por hora y día, pero no las variables de 
 
 | Módulo | Responsabilidad |
 | --- | --- |
-| `clima/climaService` | Clima por hora de cada destino con caché en memoria (30 min por destino; 1 min de espera tras un fallo). Depende de la interfaz `ProveedorClima`; la implementación actual es `OpenMeteoProvider` (Open-Meteo, sin clave, timeout de 4 s, todos los destinos en una llamada). |
+| `clima/climaService` | Clima por hora de la isla con caché en memoria (una sola serie compartida por todos los destinos, 60 min; ver la sección 21). Depende de la interfaz `ProveedorClima`; la implementación actual es `OpenMeteoProvider` (Open-Meteo, sin clave). |
 | `calendarioService` | Día de la semana, fin de semana, festivos de Colombia (Ley 51 de 1983, "Ley Emiliani", calculados sin API ni paquete externo), puentes (3 o más días no laborales seguidos) y temporada (alta / normal). |
 | `featuresPrediccion` | Define en un solo lugar las variables de entrada (`FeaturesPrediccion`): hora, díaSemana, esFinDeSemana, esFestivo, esPuente, temporada y clima opcional (temperatura, probLluvia, precipitacion, codigoClima, viento). El modelo de ML recibirá exactamente estas. |
 | `factoresPrediccion` | Convierte las variables en factores multiplicativos con su explicación ("Lluvia probable: -20 %"). Los valores viven en `config/factoresPrediccion.ts`. |
@@ -322,4 +322,17 @@ El entregable prevé un solo modelo (Random Forest). Para justificar la elecció
 - Favoritos muestra la ocupación actual: `GET /favoritos` la calcula en lote con el mismo `prediccionService` que Inicio (antes no la calculaba y la app mostraba "Sin datos de ocupación").
 - Accesos rápidos de Inicio sin tarjetas: ícono circular plano y texto.
 - Botón flotante de regresar (`BotonVolver`) en las pantallas secundarias, con desenfoque esmerilado (expo-blur), dos variantes (sobre imagen y sobre fondo claro) y respaldo a Inicio si no hay historial.
+
+## 21. Clima: una sola consulta para toda la isla
+
+**Problema en producción**: la predicción respondía `clima: null` con `motivoSinClima: "limite_excedido"`. Ese motivo solo se genera cuando Open-Meteo responde **HTTP 429** (no hay un tope interno nuestro). El límite gratuito de Open-Meteo es por dirección IP y en el plan gratuito de Render la IP de salida es compartida; además, el diseño anterior lo agravaba: la caché era **por destino** (30 min) y cada conjunto distinto de destinos (recomendaciones, mapa, detalle, favoritos, isla) disparaba otra consulta con hasta 30 coordenadas, que Open-Meteo cuenta como una llamada por coordenada. Tras un 429, el backend dejaba de consultar 5 minutos y respondía sin clima.
+
+**Cambio** (`services/clima/climaService.ts`, `openMeteoProvider.ts`):
+
+- Una sola serie horaria para toda la isla (centro, 1 día atrás y 16 adelante), en memoria **60 minutos**, compartida por todos los destinos y todas las peticiones. Las peticiones simultáneas con la caché vencida comparten una única consulta.
+- Si Open-Meteo falla o responde 429, se sirve el **último pronóstico bueno** hasta 24 horas, marcado `desactualizado`. Solo sin ningún dato guardado se responde `clima: null` con el motivo concreto.
+- Espera creciente entre intentos (1, 2, 4… minutos; desde 5 tras un 429; máximo 30) y se respeta `Retry-After`. Dentro de una petición, un 429 solo se reintenta si `Retry-After` pide 3 s o menos.
+- User-Agent con el nombre de la app y la URL del repositorio. La atribución "Datos del clima: Open-Meteo.com (CC BY 4.0)" sigue en el detalle, en Inicio y en Créditos.
+- Respuestas: la predicción agrega `climaDesactualizado` y `climaActualizadoEn`; `GET /clima` y `GET /destinos/:id/clima` agregan `desactualizado` y `actualizadoEn`; el estado del clima en `GET /health` agrega `desactualizado`, `consultasUltimaHora` y `proximoIntento`.
+- Resultado: **1 consulta por hora** a Open-Meteo en uso normal (24 al día), sin importar cuántos usuarios o destinos se consulten.
 

@@ -270,6 +270,8 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
         codigoClima: 1,
         viento: 15,
       },
+      climaDesactualizado: false,
+      climaActualizadoEn: expect.any(String),
       motivoSinClima: null,
       factores: [
         {
@@ -324,6 +326,8 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       base: null,
       features: expect.objectContaining({ hora: 8, diaSemana: 3, clima: null }),
       clima: null,
+      climaDesactualizado: false,
+      climaActualizadoEn: null,
       motivoSinClima: null,
       factores: [],
     });

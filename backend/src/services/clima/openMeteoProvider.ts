@@ -9,7 +9,13 @@
  *   cuesta una llamada.
  *
  * Cada falla se clasifica (timeout, error_red, limite_excedido, error_http,
- * respuesta_invalida) y las transitorias (timeout, red, HTTP 5xx) se reintentan.
+ * respuesta_invalida). Las transitorias (timeout, red, HTTP 5xx) se reintentan con espera
+ * creciente (esperaReintentoMs × 2^intento). Un 429 se reintenta solo si trae Retry-After
+ * corto (≤ MAX_RETRY_AFTER_EN_PETICION_MS); si pide más, el error lleva `reintentarEnMs`
+ * y climaService espera eso antes de volver a consultar.
+ *
+ * Identificación: cada petición manda un User-Agent con el nombre de la app y el repositorio
+ * (Open-Meteo pide uso no comercial, sin abuso, y atribución CC BY 4.0).
  */
 import { ZONA_HORARIA } from '../../utils/fecha';
 import {
@@ -25,7 +31,10 @@ export { ErrorProveedorClima } from './tipos';
 
 export const URL_OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
 const VARIABLES = ['temperature_2m', 'precipitation_probability', 'precipitation', 'weather_code', 'wind_speed_10m'];
-const USER_AGENT = 'MiSanAndres/1.0 (backend; app de turismo de San Andres; proyecto academico)';
+export const USER_AGENT =
+  'MiSanAndres/1.1 (backend de una app de turismo de San Andres, proyecto academico no comercial; +https://github.com/anderb1208-ctrl/App-MiSanAndres)';
+/** Un Retry-After más largo que esto no se espera dentro de la petición del usuario. */
+export const MAX_RETRY_AFTER_EN_PETICION_MS = 3000;
 
 export const ATRIBUCION_OPEN_METEO: Atribucion = {
   texto: 'Weather data by Open-Meteo.com',
@@ -62,9 +71,21 @@ export interface OpcionesOpenMeteo {
 
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Las fallas que pueden resolverse solas al reintentar. */
+/** Las fallas que pueden resolverse solas al reintentar (un 429 solo si pide esperar poco). */
 const esTransitoria = (e: ErrorProveedorClima) =>
-  e.tipo === 'timeout' || e.tipo === 'error_red' || (e.tipo === 'error_http' && (e.estadoHttp ?? 0) >= 500);
+  e.tipo === 'timeout' ||
+  e.tipo === 'error_red' ||
+  (e.tipo === 'error_http' && (e.estadoHttp ?? 0) >= 500) ||
+  (e.tipo === 'limite_excedido' && e.reintentarEnMs !== undefined && e.reintentarEnMs <= MAX_RETRY_AFTER_EN_PETICION_MS);
+
+/** Cabecera Retry-After en ms: segundos ("120") o fecha HTTP. undefined si no viene o no se entiende. */
+export function leerRetryAfter(valor: string | null | undefined, ahora = Date.now()): number | undefined {
+  if (!valor) return undefined;
+  const texto = valor.trim();
+  if (/^\d+$/.test(texto)) return Number(texto) * 1000;
+  const fecha = Date.parse(texto);
+  return Number.isNaN(fecha) ? undefined : Math.max(0, fecha - ahora);
+}
 
 /** Clasifica un error lanzado por fetch (antes de recibir respuesta). */
 function errorDeConexion(e: unknown, timeoutMs: number): ErrorProveedorClima {
@@ -132,7 +153,8 @@ export class OpenMeteoProvider implements ProveedorClima {
           if (intento > 0) error.message += ` (tras ${intento + 1} intentos)`;
           throw error;
         }
-        await esperar(this.esperaReintentoMs);
+        // Espera creciente; si el proveedor dijo cuánto esperar (Retry-After), se respeta.
+        await esperar(Math.max(this.esperaReintentoMs * 2 ** intento, error.reintentarEnMs ?? 0));
       }
     }
   }
@@ -151,7 +173,8 @@ export class OpenMeteoProvider implements ProveedorClima {
     if (!respuesta.ok) {
       const motivo = await motivoDelCuerpo(respuesta);
       const tipo = respuesta.status === 429 ? 'limite_excedido' : 'error_http';
-      throw new ErrorProveedorClima(tipo, `HTTP ${respuesta.status}${motivo ? `: ${motivo}` : ''}`, respuesta.status);
+      const reintentarEn = leerRetryAfter(respuesta.headers?.get('retry-after'));
+      throw new ErrorProveedorClima(tipo, `HTTP ${respuesta.status}${motivo ? `: ${motivo}` : ''}`, respuesta.status, reintentarEn);
     }
 
     let cuerpo: unknown;
