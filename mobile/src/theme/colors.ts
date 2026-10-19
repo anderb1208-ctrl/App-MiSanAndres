@@ -92,6 +92,9 @@ export const colors = {
   glassBar: 'rgba(255,255,255,0.9)',
   glassBarBorder: 'rgba(255,255,255,0.7)',
   glassHeader: 'rgba(243,246,248,0.85)',
+  /** Respaldo de los controles glass con "Reducir transparencia" activo. */
+  glassOpaque: 'rgba(255,255,255,0.97)',
+  glassDarkOpaque: 'rgba(0,27,61,0.94)',
 
   /** Tintes ambientales del fondo (turquesa arriba, arena a la derecha). */
   ambientTurquoise: 'rgba(179,235,255,0.75)',
