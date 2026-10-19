@@ -41,7 +41,8 @@ def test_puentes(fecha, esperado):
     "fecha,temporada",
     [("2026-12-14", "normal"), ("2026-12-15", "alta"), ("2027-01-15", "alta"), ("2027-01-16", "normal"),
      ("2026-06-15", "alta"), ("2026-07-16", "normal"), ("2026-03-28", "normal"), ("2026-03-29", "alta"),
-     ("2026-04-05", "alta"), ("2026-04-06", "normal")],
+     ("2026-04-05", "alta"), ("2026-04-06", "normal"), ("2026-10-02", "normal"), ("2026-10-03", "alta"),
+     ("2026-10-12", "alta"), ("2026-10-13", "normal"), ("2025-10-04", "alta"), ("2025-10-13", "alta")],
 )
 def test_temporadas(fecha, temporada):
     assert calendario.temporada(d(fecha)) == temporada

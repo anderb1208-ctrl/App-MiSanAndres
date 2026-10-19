@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { PrediccionOcupacion } from '../services/tipos';
 import { colors, spacing, typography } from '../theme';
 import { iconoFactor, textoSinClima } from '../utils/clima';
-import { formatearPorcentaje } from '../utils/ocupacion';
+import { formatearPorcentaje, textoOrigenEstimacion } from '../utils/ocupacion';
 import { Icon } from './Icon';
 
 interface Props {
@@ -31,6 +31,7 @@ export function FactoresPrediccion({ prediccion, cargando, error }: Props) {
   if (prediccion.estado === 'Cerrado') return null;
 
   const base = textoBase(prediccion);
+  const origen = textoOrigenEstimacion(prediccion);
   const conModelo = prediccion.proveedor === 'ml';
   return (
     <View style={styles.contenedor} accessibilityLabel="Factores de la predicción">
@@ -55,10 +56,10 @@ export function FactoresPrediccion({ prediccion, cargando, error }: Props) {
       {prediccion.motivoSinClima && (
         <Text style={styles.nota}>Sin clima: {textoSinClima(prediccion.motivoSinClima)}</Text>
       )}
-      {prediccion.mensajeOrigen && (
+      {origen && (
         <View style={styles.factor} accessibilityRole="text">
           <Icon name="science" size={16} color={colors.textMuted} />
-          <Text style={[styles.nota, styles.factorTextos]}>{prediccion.mensajeOrigen}.</Text>
+          <Text style={[styles.nota, styles.factorTextos]}>{origen}</Text>
         </View>
       )}
     </View>

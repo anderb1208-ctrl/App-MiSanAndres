@@ -118,6 +118,12 @@ describe('temporadas', () => {
     ['2026-04-05', 'alta', 'Semana Santa'],
     ['2026-04-06', 'normal', null],
     ['2026-09-30', 'normal', null],
+    ['2026-10-02', 'normal', null],
+    ['2026-10-03', 'alta', 'Receso escolar de octubre'],
+    ['2026-10-12', 'alta', 'Receso escolar de octubre'],
+    ['2026-10-13', 'normal', null],
+    ['2025-10-04', 'alta', 'Receso escolar de octubre'],
+    ['2025-10-13', 'alta', 'Receso escolar de octubre'],
   ])('%s → %s', (fecha, temporada, motivo) => {
     expect(temporadaDe(fecha)).toEqual({ temporada, motivo });
   });

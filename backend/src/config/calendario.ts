@@ -22,5 +22,12 @@ export const TEMPORADAS_ALTAS: readonly RangoTemporada[] = [
 /** Semana Santa (de Domingo de Ramos a Domingo de Resurrección) también es temporada alta. */
 export const SEMANA_SANTA_ES_TEMPORADA_ALTA = true;
 
+/**
+ * Receso escolar de octubre (también temporada alta): del sábado anterior a la semana de
+ * receso hasta el lunes festivo del 12 de octubre, es decir, del festivo trasladado − 9 días
+ * hasta ese lunes. Igual en ml/calendario.py.
+ */
+export const RECESO_OCTUBRE_ES_TEMPORADA_ALTA = true;
+
 /** Días seguidos sin trabajo (fin de semana + festivos) a partir de los cuales hay "puente". */
 export const DIAS_MINIMOS_PUENTE = 3;

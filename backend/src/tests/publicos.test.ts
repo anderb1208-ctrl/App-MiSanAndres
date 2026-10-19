@@ -232,7 +232,7 @@ describe('GET /v1/ocupacion/:destinoId', () => {
 });
 
 describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
-  it('predice con el promedio de esa hora en ese día de la semana, sin factores con buen clima', async () => {
+  it('predice con el promedio de esa hora en ese día de la semana, con buen clima solo aplica la temporada (receso de octubre)', async () => {
     const res = await request(app).get('/v1/ocupacion/3/prediccion?fecha=2026-10-03&hora=12:30');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -241,12 +241,13 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       hora: '12:30',
       tipoDia: 'fin_de_semana',
       estado: 'Abierto',
-      porcentaje: 25.1,
+      porcentaje: 30.1,
       nivel: 'Bajo',
-      personasEstimadas: 75,
+      personasEstimadas: 90,
       muestras: 16,
       fuente: 'promedio_historico',
       proveedor: 'heuristico',
+      modelo: 'promedio histórico',
       proveedorRespaldo: false,
       origenDatos: 'sintetico',
       datosSimulados: true,
@@ -258,7 +259,7 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
         esFinDeSemana: true,
         esFestivo: false,
         esPuente: false,
-        temporada: 'normal',
+        temporada: 'alta',
         clima: { temperatura: 29, probLluvia: 10, precipitacion: 0, codigoClima: 1, viento: 15 },
       },
       clima: {
@@ -270,7 +271,15 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
         viento: 15,
       },
       motivoSinClima: null,
-      factores: [],
+      factores: [
+        {
+          codigo: 'temporada_alta',
+          multiplicador: 1.2,
+          efecto: 20,
+          texto: 'Temporada alta: +20 %',
+          detalle: 'Receso escolar de octubre',
+        },
+      ],
     });
     expect(ocupacionM.promedioPorHora).toHaveBeenCalledWith(expect.anything(), {
       diaSemana: 6,
@@ -307,6 +316,7 @@ describe('GET /v1/ocupacion/:destinoId/prediccion', () => {
       muestras: 0,
       fuente: 'horario',
       proveedor: 'horario',
+      modelo: null,
       proveedorRespaldo: false,
       origenDatos: null,
       datosSimulados: false,

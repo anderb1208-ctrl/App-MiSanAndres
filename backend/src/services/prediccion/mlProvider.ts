@@ -27,8 +27,13 @@ export class ErrorServicioMl extends Error {
   }
 }
 
+/** Los servicios anteriores a la comparación de modelos no enviaban el nombre: eran Random Forest. */
+export const MODELO_ML_POR_DEFECTO = 'Random Forest';
+
 const esquemaRespuesta = z.object({
-  origen_modelo: z.enum(['mock', 'real']),
+  // "mock" es el nombre anterior de "simulado".
+  origen_modelo: z.enum(['simulado', 'mock', 'real']),
+  modelo: z.string().min(1).optional(),
   datos_sinteticos: z.boolean(),
   resultados: z.array(
     z.object({
@@ -67,6 +72,7 @@ export class ProveedorMl implements ProveedorPrediccion {
           factores: [],
           fuente: 'modelo_ml',
           proveedor: 'ml',
+          modelo: datos.modelo ?? MODELO_ML_POR_DEFECTO,
           origenDatos: sintetico ? 'sintetico' : 'real',
           respaldo: false,
         });

@@ -1,8 +1,8 @@
 # Servicio de predicción de ocupación (ML)
 
-Predice el **porcentaje de ocupación** de un destino de San Andrés para una fecha y hora, con un `RandomForestRegressor` de scikit-learn, y lo expone como servicio HTTP (FastAPI) que consume el backend.
+Predice el **porcentaje de ocupación** de un destino de San Andrés para una fecha y hora y lo expone como servicio HTTP (FastAPI) que consume el backend. Se **compararon tres modelos** (Ridge, Random Forest y HistGradientBoosting, más un baseline de referencia) con validación temporal, y el servicio usa **el ganador**: hoy, **HistGradientBoosting** (ver [`reportes/comparacion_modelos.md`](reportes/comparacion_modelos.md) y [`docs/seleccion-de-modelo.md`](../docs/seleccion-de-modelo.md)).
 
-> ⚠ **Hoy el modelo se entrena con datos SINTÉTICOS** (simulados): no existen todavía mediciones reales de ocupación. Las predicciones son una demostración del sistema, no reflejan la afluencia real. El servicio lo indica en cada respuesta (`origen_modelo: "mock"`, `mensaje_origen: "Estimación basada en datos simulados"`). Cuando lleguen datos reales, el cambio es poner un archivo y correr dos comandos: ver [Cómo pasar a datos reales](#cómo-pasar-a-datos-reales).
+> ⚠ **Los datos de ocupación son SIMULADOS** (`origen_dato = simulado_calibrado`): no existen mediciones públicas de cuántas personas hay por hora en cada lugar. El simulador se **calibra con datos reales** (clima observado hora por hora de Open-Meteo, festivos y puentes de Colombia, temporadas, llegadas oficiales de turistas por mes, capacidad de Johnny Cay y el cierre judicial de El Acuario), y lo que no se encontró se simula con supuestos explícitos ([`datos/FUENTES.md`](datos/FUENTES.md)). El servicio lo dice en cada respuesta (`origen_modelo: "simulado"`, `mensaje_origen`) y la app muestra "Estimado con HistGradientBoosting · datos simulados". Cuando lleguen datos reales, el cambio es poner un archivo y correr dos comandos: ver [Cómo pasar a datos reales](#cómo-pasar-a-datos-reales).
 
 ## Instalación
 
@@ -12,45 +12,53 @@ Requiere Python 3.11 o superior.
 cd ml
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1        # en macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt # requirements.txt + matplotlib para los gráficos de los reportes
 Copy-Item .env.example .env         # opcional: DATASET, ML_API_KEY y Supabase
 ```
+
+`requirements.txt` es lo que necesita el servicio (y lo que instala Render); `requirements-dev.txt` agrega matplotlib, que solo se usa para los gráficos de los reportes.
 
 ## Orden de ejecución
 
 ```powershell
-python exportar_destinos.py      # 1. destinos de Supabase → datos/destinos.csv (o el respaldo)
-python generar_mock_dataset.py   # 2. dataset SINTÉTICO → datos/mock/dataset_ocupacion_san_andres.csv
-python validar_dataset.py        # 3. revisa el dataset (código 1 si hay errores)
-python entrenar_modelo.py        # 4. entrena, compara con el baseline y guarda modelo + reporte
-uvicorn app:app --port 8000      # 5. servicio HTTP (necesita ML_API_KEY)
-pytest                           # pruebas
+python exportar_destinos.py          # 1. destinos de Supabase → datos/destinos.csv (o el respaldo)
+python generar_dataset_simulado.py   # 2. dataset SIMULADO → datos/dataset_ocupacion_san_andres.csv (~5 s)
+python validar_dataset.py            # 3. revisa el dataset (código 1 si hay errores)
+python calidad_dataset.py            # 4. chequeos de coherencia → reportes/calidad_dataset.md (+ gráficos)
+python entrenar_modelo.py --comparar # 5. compara los 3 modelos, guarda al ganador y los reportes (~5 min)
+uvicorn app:app --port 8000          # 6. servicio HTTP (necesita ML_API_KEY)
+pytest                               # pruebas (~15 s)
 ```
 
-`preparar_dataset.py` lo usan el entrenamiento y la API; también se puede correr para ver las features construidas.
-
-Todos los scripts aceptan `--dataset mock|real`; si no se indica, usan la variable `DATASET` (de `ml/.env` o del entorno) y, si tampoco está, `mock`.
+- `python entrenar_modelo.py` (sin `--comparar`) es el **entrenamiento rápido**: reentrena solo al ganador de la última comparación (`reportes/ganador.json`) con sus hiperparámetros fijos, sin búsqueda (~30 s).
+- `generar_mock_dataset.py` sigue funcionando como alias de `generar_dataset_simulado.py`.
+- `descargar_clima_historico.py` vuelve a descargar el clima real de Open-Meteo (solo si se quiere actualizar; el CSV está versionado y el generador funciona sin internet).
+- Todos los scripts aceptan `--dataset simulado|real` (`mock` es alias de `simulado`); si no se indica, usan la variable `DATASET` y, si tampoco está, `simulado`.
 
 ## Estructura
 
 | Archivo | Qué hace |
 | --- | --- |
-| `config.py` | Rutas, columnas, `DATASET` (mock/real), hiperparámetros y umbrales de nivel |
-| `calendario.py` | Festivos de Colombia (Ley Emiliani), puentes y temporada: copia fiel de `calendarioService` del backend |
+| `config.py` | Rutas, columnas, `DATASET` (simulado/real), modelos, criterio de selección y restricciones de despliegue |
+| `calendario.py` | Festivos de Colombia (Ley Emiliani), puentes y temporadas (incluido el receso de octubre): copia fiel de `calendarioService` del backend |
 | `comun.py` | Lectura de destinos y del dataset, horario de atención |
 | `exportar_destinos.py` | Destinos de Supabase a CSV, con respaldo versionado `datos/destinos_respaldo.csv` |
-| `generar_mock_dataset.py` | Ocupación horaria **sintética** y reproducible (semilla 42) para todos los destinos |
+| `descargar_clima_historico.py` | Clima real por hora de Open-Meteo → `datos/clima_historico_san_andres.csv` (versionado) |
+| `generar_dataset_simulado.py` | Ocupación horaria **simulada y calibrada**, reproducible (semilla 42), para todos los destinos |
 | `validar_dataset.py` | Columnas, vacíos, rangos, capacidad, duplicados, horario, calendario y cobertura |
-| `preparar_dataset.py` | Limpieza, features y pipeline (codificación + modelo) |
-| `entrenar_modelo.py` | Validación temporal, baseline, métricas, modelo y reporte |
+| `calidad_dataset.py` | Chequeos de coherencia (capacidad, estacionalidad, lluvia, curva oficial, huecos) y reporte |
+| `preparar_dataset.py` | Limpieza, features, imputación por climatología mensual y pipelines de los 3 modelos |
+| `entrenar_modelo.py` | Comparación (`--comparar`) o entrenamiento rápido del ganador; métricas, reportes y modelo |
+| `graficos.py` | Estilo común de los gráficos PNG |
 | `cargar_datos_reales.py` | Valida y normaliza el archivo real; opcionalmente lo sube a Supabase |
-| `app.py` | API FastAPI: `/health`, `/predict`, `/predict/lote` |
-| `datos/` | Plantilla y guía de datos reales; los CSV generados no se suben a git |
-| `modelos/`, `reportes/` | Modelo entrenado (joblib + JSON de metadatos) y reportes en Markdown (no se suben) |
+| `app.py` | API FastAPI: `/health`, `/modelo`, `/predict`, `/predict/lote` |
+| `datos/` | Clima real, llegadas oficiales, `FUENTES.md`, plantilla y guía de datos reales. El dataset simulado (~24 MB) no se sube: se regenera igual |
+| `modelos/` | Modelo ganador (`modelo_ocupacion.joblib`, < 1 MB) y sus metadatos (`.json`): **versionados** |
+| `reportes/` | `calidad_dataset.md`, `comparacion_modelos.md` y `.csv`, `ganador.json` y gráficos (versionados) |
 
 ## Dataset
 
-`dataset_ocupacion_san_andres.csv`, una fila por destino y hora de atención:
+`datos/dataset_ocupacion_san_andres.csv`: una fila por destino y hora de atención, del 1 oct 2024 al último día del clima descargado (hoy, 18 oct 2026: **209.440 filas**, 30 destinos, 24,5 meses). La primera línea es un comentario que avisa que los datos son simulados.
 
 | Columna | Tipo | Equivale en el backend (`FeaturesPrediccion`) |
 | --- | --- | --- |
@@ -61,89 +69,92 @@ Todos los scripts aceptan `--dataset mock|real`; si no se indica, usan la variab
 | `es_fin_de_semana`, `es_festivo`, `es_puente` | true/false | `esFinDeSemana`, `esFestivo`, `esPuente` |
 | `temporada` | `alta` / `normal` | `temporada` |
 | `temperatura` (°C), `precipitacion` (mm), `viento` (km/h) | Número (puede faltar) | `clima.temperatura`, `clima.precipitacion`, `clima.viento` |
-| `cantidad_personas` | Entero ≥ 0, ≤ capacidad | — (objetivo alternativo) |
+| `cantidad_personas` | Entero ≥ 0, ≤ capacidad | — |
 | `porcentaje_ocupacion` | 0–100 | **objetivo** |
+| `categoria`, `capacidad` | Del destino | — |
+| `origen_dato` | `simulado_calibrado` | — |
+| `evento` | vacío, `cierre_mal_tiempo`, `cierre_judicial` o `cierre_descanso` (ocupación 0) | — |
 
-El modelo usa además la **categoría** y la **capacidad** del destino (de `datos/destinos.csv`) y la hora en forma cíclica. La API recalcula el calendario a partir de la fecha, con las mismas reglas del backend, así que el cliente solo envía destino, fecha, hora y (opcional) clima. `probLluvia` y `codigoClima` del backend no se usan: el modelo se entrena con lo que se puede medir en todos los datasets.
+Los cierres administrativos (judicial y descanso) no se usan para entrenar: el backend ya los maneja como "cerrado temporalmente". Los cierres por mal tiempo sí, porque se explican con el clima.
 
-### Supuestos del dataset sintético
+### Cómo se simula
 
-Los mismos de `supabase/seed.sql` (ver `docs/datos-sinteticos.md`): curva por categoría (playas al mediodía, cayos de 9 a 16, restaurantes al almuerzo y la cena…), fines de semana (+10 % a +30 %), festivos (+25 %), puentes (+10 %), temporada alta (+20 %), lluvia (−20 % a −75 % al aire libre, +10 % a +15 % en restaurantes y cultura), popularidad por destino y ruido ±10 %. El clima también es simulado (temporada seca de enero a abril, lluviosa de junio a noviembre). Rango por defecto: 1 oct 2025 – 30 sep 2026 (un año, para cubrir todas las temporadas).
+`ocupación = nivel del destino × perfil horario × llegadas oficiales del mes × calendario × lluvia × viento × ruido`, con saturación suave cerca del 100 %. El calendario (día de la semana, festivo, puente, temporada) se normaliza dentro de cada mes para que el volumen mensual siga la curva oficial de llegadas. Detalle de cada parámetro, su tipo (real, estimado o inventado coherente) y su fuente: [`datos/FUENTES.md`](datos/FUENTES.md). Resultado de los chequeos: [`reportes/calidad_dataset.md`](reportes/calidad_dataset.md).
 
-## Modelo y métricas
+## Modelos y comparación
 
-- `RandomForestRegressor(n_estimators=100, random_state=42)`, con `min_samples_leaf=20` para que el archivo pese ~11 MB (cabe en un Web Service pequeño) sin perder precisión apreciable.
-- **Validación temporal**: entrena con el 80 % más antiguo de las fechas y prueba con el 20 % más reciente; nunca mezcla fechas al azar.
-- **Baseline**: promedio histórico del entrenamiento por destino y hora (el enfoque del predictor heurístico del backend, sin factores).
-- Se guardan `modelos/modelo_ocupacion.joblib` (pipeline + destinos + metadatos) y `modelos/modelo_ocupacion.json` con: fecha, origen de los datos (`mock`/`real`), `datos_sinteticos`, métricas, columnas, semanas por destino, advertencias y `listo_para_produccion`.
-- `listo_para_produccion` solo es `true` con datos **reales**, al menos **4 semanas por destino** y si el modelo supera al baseline.
+| Modelo | Pipeline |
+| --- | --- |
+| Ridge | One-hot de destino, mes y categoría × hora; interacciones de la categoría con la hora cíclica (seno/coseno de 24 y 12 h), el calendario y el clima; `StandardScaler` |
+| Random Forest | One-hot de destino y categoría; profundidad ≤ 18 y hojas ≥ 10 para limitar el tamaño |
+| HistGradientBoosting | Destino y categoría como categóricas nativas |
+| Baseline (referencia) | Promedio del entrenamiento por destino y hora |
 
-Última corrida con el dataset **sintético** (prueba: 20 jul – 30 sep 2026, 20.440 filas):
+Todos comparten un `ImputadorClimatologia`: si el backend manda clima nulo (fechas sin pronóstico), se rellena con el promedio de ese mes, y el entrenamiento incluye una copia del 20 % de las filas sin clima para que el modelo aprenda ese caso.
 
-| | MAE (puntos %) | RMSE | R² |
-| --- | --- | --- | --- |
-| Random Forest | 2,78 | 4,11 | 0,971 |
-| Baseline (promedio por destino y hora) | 6,53 | 9,24 | 0,856 |
+- **Validación temporal**: entrenamiento con los meses antiguos y prueba con los **últimos 3 meses** (19 jul – 18 oct 2026).
+- **Hiperparámetros**: `RandomizedSearchCV` pequeña (semilla 42) con `TimeSeriesSplit` de 3 pliegues sobre una muestra ordenada de 60.000 filas.
+- **Selección**: menor RMSE en la prueba entre los que cumplen las restricciones de despliegue (archivo ≤ 50 MB, predicción < 100 ms); si otro está a menos del 2 %, el más liviano.
+- **Salidas**: `reportes/comparacion_modelos.md` y `.csv`, gráficos (`comparacion_metricas.png`, `comparacion_real_vs_predicho.png`, `comparacion_importancia_variables.png`), `reportes/ganador.json` y los metadatos en `modelos/modelo_ocupacion.json` (ganador, hiperparámetros, métricas de todos, origen del dato, fecha).
 
-Con datos sintéticos el modelo solo aprende los supuestos con los que se generaron: estas cifras muestran que el sistema funciona, no la precisión que tendrá con datos reales.
+Resultados de la última comparación (datos **simulados**; prueba de 25.739 filas). Las cifras exactas están en el reporte; se regeneran con `python entrenar_modelo.py --comparar`:
+
+| Modelo | MAE | RMSE | R² | RMSE con clima nulo | Archivo |
+| --- | --- | --- | --- | --- | --- |
+| Ridge | 6,39 | 8,94 | 0,808 | 10,48 | 0,01 MB |
+| Random Forest | 4,60 | 6,65 | 0,894 | 9,88 | 27,9 MB |
+| **HistGradientBoosting** 🏆 | **4,49** | **6,48** | **0,899** | 9,61 | 0,64 MB |
+| Baseline | 5,97 | 9,50 | 0,784 | 9,50 | — |
+
+Con datos simulados los modelos aprenden los supuestos del simulador: estas cifras comparan los modelos entre sí y muestran que el sistema funciona, no la precisión que tendrán con datos reales. `listo_para_produccion` solo es `true` con datos **reales**, al menos **4 semanas por destino** y si el modelo supera al baseline.
 
 ## API
 
-Todas las rutas de predicción exigen la cabecera `X-API-Key` con el valor de `ML_API_KEY`. Los niveles usan los mismos cortes del backend: **Bajo < 40 %**, **Medio 40–70 %**, **Alto > 70 %**. Fuera del horario del destino la respuesta es `estado: "Cerrado"` con 0 %.
+`/predict` y `/predict/lote` exigen la cabecera `X-API-Key` con el valor de `ML_API_KEY`; `/health` y `/modelo` son públicos. Niveles: **Bajo < 40 %**, **Medio 40–70 %**, **Alto > 70 %** (los del backend). Fuera del horario del destino la respuesta es `estado: "Cerrado"` con 0 %.
 
 ```powershell
 curl http://localhost:8000/health
+curl http://localhost:8000/modelo
 
 curl -X POST http://localhost:8000/predict -H "X-API-Key: <clave>" -H "Content-Type: application/json" `
   -d '{"id_destino": 5, "fecha": "2026-12-26", "hora": "12:00", "clima": {"temperatura": 29, "precipitacion": 0, "viento": 20}}'
 ```
 
-Respuesta:
+Respuesta de `/predict`:
 
 ```json
 {
   "id_destino": 5, "fecha": "2026-12-26", "hora": "12:00", "estado": "Abierto",
-  "porcentaje": 100.0, "nivel": "Alto", "personas_estimadas": 800,
-  "origen_modelo": "mock", "datos_sinteticos": true,
-  "mensaje_origen": "Estimación basada en datos simulados",
-  "version_modelo": "2026-10-15T19:36:15+00:00", "listo_para_produccion": false
+  "porcentaje": 78.4, "nivel": "Alto", "personas_estimadas": 627,
+  "origen_modelo": "simulado", "modelo": "HistGradientBoosting", "modelo_clave": "hist_gradient_boosting",
+  "datos_sinteticos": true, "mensaje_origen": "Estimación basada en datos simulados",
+  "version_modelo": "2026-10-19T22:00:00+00:00", "listo_para_produccion": false
 }
 ```
 
-`POST /predict/lote` recibe `{"consultas": [ ... ]}` (hasta 500) y devuelve `resultados` con el mismo origen. Errores: `401` sin clave o clave incorrecta, `404` destino desconocido, `422` datos inválidos, `503` sin modelo entrenado (`MODELO_NO_ENTRENADO`) o sin `ML_API_KEY` configurada. Si el archivo del modelo cambia, se recarga en la siguiente petición.
-
-## Cómo reemplazar el dataset mock por uno real
-
-No hay que cambiar código: el dataset real va en otra ruta (`datos/procesado_real/`) y se elige con `--dataset real` o `DATASET=real`. El mock se puede seguir regenerando para pruebas. Los pasos están abajo.
+`GET /modelo` devuelve `ganador` (clave, nombre, hiperparámetros), `seleccion` (criterio y motivo), `comparacion` (métricas de los tres modelos y el baseline), `metricas`, `origen_datos`, `origen_dato`, `datos_sinteticos`, fechas y advertencias. `POST /predict/lote` recibe `{"consultas": [ ... ]}` (hasta 500) y devuelve `resultados` con el mismo origen y modelo. Errores: `401` sin clave o clave incorrecta, `404` destino desconocido, `422` datos inválidos, `503` sin modelo entrenado (`MODELO_NO_ENTRENADO`) o sin `ML_API_KEY`. Si el archivo del modelo cambia, se recarga en la siguiente petición.
 
 ## Cómo pasar a datos reales
 
-1. Consigue el archivo con la entidad que mide la ocupación. Entrégale `datos/plantilla_ocupacion_real.csv` y `datos/LEEME_DATOS.md` (explica columnas, unidades, frecuencia y cantidad mínima de datos). Lo mínimo: `fecha_hora`, `id_destino` y `cantidad_personas`.
+No hay que cambiar código: el dataset real va en otra ruta (`datos/procesado_real/`) y se elige con `--dataset real` o `DATASET=real`. El simulado se puede seguir regenerando para pruebas.
+
+1. Consigue el archivo con la entidad que mide la ocupación. Entrégale `datos/plantilla_ocupacion_real.csv` y `datos/LEEME_DATOS.md` (columnas, unidades, frecuencia y cantidad mínima de datos). Lo mínimo: `fecha_hora`, `id_destino` y `cantidad_personas`.
 2. Borra las 2 filas de `EJEMPLO` si el archivo se armó sobre la plantilla (si no, se rechaza).
 3. Copia el CSV en **`ml/datos/real/`** (esa carpeta no se sube a git).
-4. Revísalo y normalízalo:
-   ```powershell
-   python cargar_datos_reales.py
-   ```
-   Valida, calcula lo que falte (calendario, porcentaje), muestra filas, rango de fechas, cobertura por destino y vacíos, y guarda `datos/procesado_real/dataset_ocupacion_san_andres.csv`. Si hay errores, dice en qué filas.
-5. (Opcional) Guárdalo también en la base, marcado como real: aplica antes la migración `supabase/migrations/20261015120000_ocupacion_origen.sql`, pon `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en `ml/.env` y corre `python cargar_datos_reales.py --subir-a-supabase` (pide confirmación; reemplaza la fila sintética de la misma hora por la real).
-6. Entrena con los datos reales:
-   ```powershell
-   python entrenar_modelo.py --dataset real
-   ```
-   Si algún destino tiene menos de 4 semanas de datos, lo advierte y el modelo **no** queda `listo_para_produccion`.
-7. Para que todo use los datos reales por defecto, pon `DATASET=real` en `ml/.env` (y en Render).
-8. Publica el modelo (ver despliegue) y comprueba en `GET /health` que `origen_modelo` sea `"real"`. Desde ese momento el backend deja de mostrar "estimación basada en datos simulados".
+4. Revísalo y normalízalo: `python cargar_datos_reales.py`. Valida, calcula lo que falte (calendario, porcentaje), muestra el resumen y guarda `datos/procesado_real/dataset_ocupacion_san_andres.csv`. Si hay errores, dice en qué filas.
+5. (Opcional) Guárdalo también en la base, marcado como real: aplica antes la migración `supabase/migrations/20261015120000_ocupacion_origen.sql`, pon `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en `ml/.env` y corre `python cargar_datos_reales.py --subir-a-supabase` (pide confirmación).
+6. Compara y entrena con los datos reales: `python entrenar_modelo.py --comparar --dataset real`. Si algún destino tiene menos de 4 semanas de datos, lo advierte y el modelo **no** queda `listo_para_produccion`.
+7. Pon `DATASET=real` en `ml/.env` (y en Render), sube a git el nuevo `modelos/modelo_ocupacion.joblib` y comprueba en `GET /modelo` que `origen_datos` sea `"real"`. Desde ese momento la app deja de decir "datos simulados".
 
 ## Despliegue en Render
 
-Un **Web Service separado** del backend:
+Un **Web Service separado** del backend. El modelo ganador pesa menos de 1 MB y **está versionado** en `ml/modelos/`, así que el build solo instala dependencias (sin generar datos ni entrenar):
 
 | Campo | Valor |
 | --- | --- |
 | Root Directory | `ml` |
-| Runtime | Python 3 (fija la versión con la variable `PYTHON_VERSION=3.11.9`) |
-| Build Command | `pip install -r requirements.txt && python exportar_destinos.py && python generar_mock_dataset.py && python entrenar_modelo.py` |
+| Runtime | Python 3 |
+| Build Command | `pip install -r requirements.txt` |
 | Start Command | `uvicorn app:app --host 0.0.0.0 --port $PORT` |
 | Health Check Path | `/health` |
 
@@ -152,11 +163,12 @@ Variables de entorno:
 | Variable | Valor |
 | --- | --- |
 | `ML_API_KEY` | Clave larga y aleatoria (la misma que `ML_API_KEY` del backend) |
-| `DATASET` | `mock` (hasta tener datos reales) |
+| `DATASET` | `simulado` (hasta tener datos reales; `mock` también vale) |
 | `PYTHON_VERSION` | `3.11.9` |
-| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Opcionales: para exportar los destinos actuales en el build (sin ellas usa el respaldo) |
 
-El build genera el dataset sintético y entrena el modelo (~1–2 minutos), porque los datos y modelos no están en git. **Con datos reales**: entrena en tu PC (`python entrenar_modelo.py --dataset real`), copia `modelos/modelo_ocupacion.joblib` a una carpeta versionada (por ejemplo `ml/modelo_publicado/`), define `ML_MODELO_PATH=modelo_publicado/modelo_ocupacion.joblib` y quita del Build Command los pasos de generar y entrenar. El modelo no contiene los datos crudos, solo los árboles entrenados.
+Ya no hacen falta `SUPABASE_URL` ni `SUPABASE_PUBLISHABLE_KEY` en Render (los destinos van dentro del modelo). Memoria: el modelo ocupa ~4 MB al cargarse y una predicción tarda ~10–20 ms, muy por debajo de los 512 MB del plan gratuito.
+
+Si se agregan destinos o se prefiere entrenar en el build, alternativa (≈ 1 minuto, sin búsqueda): `pip install -r requirements.txt && python exportar_destinos.py && python generar_dataset_simulado.py && python entrenar_modelo.py` (agrega `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` para exportar los destinos actuales).
 
 Después, en el backend: `ML_SERVICE_URL=https://<servicio-ml>.onrender.com`, `ML_API_KEY` y `PREDICCION_PROVEEDOR=auto` (ver README principal).
 

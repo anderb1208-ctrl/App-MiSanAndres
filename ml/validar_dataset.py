@@ -86,7 +86,7 @@ def validar(datos: pd.DataFrame, destinos: pd.DataFrame) -> Reporte:
         )
 
     faltan = [c for c in config.COLUMNAS_DATASET if c not in datos.columns]
-    sobran = [c for c in datos.columns if c not in config.COLUMNAS_DATASET]
+    sobran = [c for c in datos.columns if c not in config.COLUMNAS_DATASET + config.COLUMNAS_EXTRA]
     if faltan:
         r.errores.append(f"Faltan columnas: {', '.join(faltan)}.")
         return r
@@ -122,6 +122,15 @@ def validar(datos: pd.DataFrame, destinos: pd.DataFrame) -> Reporte:
     if desconocidos.any():
         ids = sorted(id_destino[desconocidos].astype(int).unique().tolist())[:10]
         r.errores.append(f"id_destino que no existe en destinos.csv: {ids} (filas {_filas(desconocidos)}).")
+
+    # Columnas opcionales del dataset simulado: deben coincidir con destinos.csv.
+    info = destinos.set_index("id_destino")
+    for col in ("categoria", "capacidad"):
+        if col in datos.columns:
+            esperado_col = id_destino.map(info[col])
+            distinto = esperado_col.notna() & (datos[col].astype(str) != esperado_col.astype(str))
+            if distinto.any():
+                r.errores.append(f"{col} no coincide con destinos.csv (filas {_filas(distinto)}).")
 
     # Rangos
     pct, personas = numericas["porcentaje_ocupacion"], numericas["cantidad_personas"]

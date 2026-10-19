@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Solo para generar los reportes con gráficos (calidad_dataset.py, entrenar_modelo.py --comparar)
+matplotlib==3.11.2

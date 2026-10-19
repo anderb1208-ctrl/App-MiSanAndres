@@ -298,6 +298,8 @@ export interface PrediccionOcupacion {
   personasEstimadas: number;
   /** Quién la generó: cálculo heurístico, modelo de ML u "horario" (cerrado). */
   proveedor: 'heuristico' | 'ml' | 'horario';
+  /** Modelo que calculó el porcentaje ("HistGradientBoosting", "promedio histórico"); null si está cerrado. */
+  modelo?: string | null;
   /** true si se pidió el modelo de ML y respondió el heurístico porque el servicio falló. */
   proveedorRespaldo: boolean;
   /** Datos en que se basa la estimación; null si está cerrado. */

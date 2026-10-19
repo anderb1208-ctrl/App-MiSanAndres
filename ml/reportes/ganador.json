@@ -1,0 +1,141 @@
+{
+  "modelo": "hist_gradient_boosting",
+  "hiperparametros": {
+    "min_samples_leaf": 50,
+    "max_leaf_nodes": 31,
+    "max_iter": 400,
+    "learning_rate": 0.1,
+    "l2_regularization": 1.0
+  },
+  "fecha_comparacion": "2026-10-19T22:01:57+00:00",
+  "origen_datos": "simulado",
+  "seleccion": {
+    "ganador": "hist_gradient_boosting",
+    "nombre": "HistGradientBoosting",
+    "motivo": "Menor RMSE en la prueba (6.48 puntos). Ningún otro modelo quedó a menos del 2%.",
+    "criterio": "Menor RMSE en la prueba (últimos 3 meses); si la diferencia es menor al 2%, el más liviano. Restricciones: ≤ 50 MB y < 100 ms por predicción."
+  },
+  "comparacion": [
+    {
+      "clave": "ridge",
+      "nombre": "Ridge (regresión lineal regularizada)",
+      "mae": 6.389,
+      "rmse": 8.936,
+      "r2": 0.8085,
+      "rmse_sin_clima": 10.477,
+      "mae_por_categoria": {
+        "actividad": 8.76,
+        "cayo": 7.718,
+        "cultura": 3.954,
+        "gastronomia": 7.694,
+        "naturaleza": 4.178,
+        "playa": 5.012
+      },
+      "mae_por_temporada": {
+        "alta": 6.728,
+        "normal": 6.347
+      },
+      "tiempo_entrenamiento_s": 9.9,
+      "tamano_mb": 0.01,
+      "memoria_mb": 1.1,
+      "ms_prediccion": 20.74,
+      "hiperparametros": {
+        "alpha": 1.0
+      },
+      "cumple_restricciones": true,
+      "ganador": false
+    },
+    {
+      "clave": "random_forest",
+      "nombre": "Random Forest",
+      "mae": 4.601,
+      "rmse": 6.652,
+      "r2": 0.8939,
+      "rmse_sin_clima": 9.885,
+      "mae_por_categoria": {
+        "actividad": 5.501,
+        "cayo": 6.639,
+        "cultura": 3.284,
+        "gastronomia": 5.12,
+        "naturaleza": 3.409,
+        "playa": 3.807
+      },
+      "mae_por_temporada": {
+        "alta": 4.82,
+        "normal": 4.575
+      },
+      "tiempo_entrenamiento_s": 103.2,
+      "tamano_mb": 27.94,
+      "memoria_mb": 89.4,
+      "ms_prediccion": 17.57,
+      "hiperparametros": {
+        "n_estimators": 100,
+        "min_samples_leaf": 10,
+        "max_features": 1.0,
+        "max_depth": 18
+      },
+      "cumple_restricciones": true,
+      "ganador": false
+    },
+    {
+      "clave": "hist_gradient_boosting",
+      "nombre": "HistGradientBoosting",
+      "mae": 4.493,
+      "rmse": 6.476,
+      "r2": 0.8994,
+      "rmse_sin_clima": 9.614,
+      "mae_por_categoria": {
+        "actividad": 5.521,
+        "cayo": 6.687,
+        "cultura": 2.979,
+        "gastronomia": 4.892,
+        "naturaleza": 3.464,
+        "playa": 3.635
+      },
+      "mae_por_temporada": {
+        "alta": 5.886,
+        "normal": 4.323
+      },
+      "tiempo_entrenamiento_s": 11.1,
+      "tamano_mb": 0.64,
+      "memoria_mb": 4.3,
+      "ms_prediccion": 17.53,
+      "hiperparametros": {
+        "min_samples_leaf": 50,
+        "max_leaf_nodes": 31,
+        "max_iter": 400,
+        "learning_rate": 0.1,
+        "l2_regularization": 1.0
+      },
+      "cumple_restricciones": true,
+      "ganador": true
+    },
+    {
+      "clave": "baseline",
+      "nombre": "Baseline (promedio por destino y hora)",
+      "mae": 5.97,
+      "rmse": 9.498,
+      "r2": 0.7836,
+      "rmse_sin_clima": 9.498,
+      "mae_por_categoria": {
+        "actividad": 7.107,
+        "cayo": 9.915,
+        "cultura": 2.848,
+        "gastronomia": 5.287,
+        "naturaleza": 4.201,
+        "playa": 5.835
+      },
+      "mae_por_temporada": {
+        "alta": 6.498,
+        "normal": 5.906
+      },
+      "tiempo_entrenamiento_s": null,
+      "tamano_mb": null,
+      "ms_prediccion": null,
+      "memoria_mb": null,
+      "cumple_restricciones": null,
+      "hiperparametros": {},
+      "ganador": false
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-"""Apartado de datos reales: archivo válido, con errores, plantilla sin editar y cambio de mock a real."""
+"""Apartado de datos reales: archivo válido, con errores, plantilla sin editar y cambio de simulado a real."""
 from datetime import date
 
 import pandas as pd
@@ -8,7 +8,8 @@ import config
 from cargar_datos_reales import ErrorCarga, elegir_archivo, procesar
 from comun import leer_destinos
 from entrenar_modelo import entrenar
-from generar_mock_dataset import generar
+from generar_mock_dataset import generar  # el alias anterior sigue funcionando
+from tests.conftest import HIPER_RAPIDOS
 
 
 def archivo_real_minimo(destinos, desde: date, hasta: date, ruta):
@@ -74,12 +75,13 @@ def test_elegir_archivo_de_la_carpeta_real(tmp_path):
         elegir_archivo(None, tmp_path)
 
 
-def test_cambio_de_mock_a_real(monkeypatch, destinos, tmp_path):
+def test_cambio_de_simulado_a_real(monkeypatch, destinos, tmp_path):
     assert config.dataset_activo(None) in config.DATASETS_VALIDOS
     monkeypatch.setenv("DATASET", "real")
     assert config.dataset_activo(None) == "real"
     assert config.ruta_dataset("real") == config.RUTAS_DATASET["real"]
-    assert config.dataset_activo("mock") == "mock"  # el argumento --dataset gana
+    assert config.dataset_activo("simulado") == "simulado"  # el argumento --dataset gana
+    assert config.dataset_activo("mock") == "simulado"  # alias anterior
     with pytest.raises(ValueError):
         config.dataset_activo("otro")
 
@@ -87,7 +89,8 @@ def test_cambio_de_mock_a_real(monkeypatch, destinos, tmp_path):
     corto = archivo_real_minimo(destinos, date(2026, 3, 2), date(2026, 3, 15), tmp_path / "corto.csv")
     procesado = tmp_path / "corto_procesado.csv"
     procesar(corto, destinos, procesado)
-    m = entrenar("real", procesado, destinos, tmp_path / "m1", tmp_path / "r1", n_estimadores=10)
+    m = entrenar("real", procesado, destinos, tmp_path / "m1", tmp_path / "r1", modelo="random_forest",
+                 hiperparametros=HIPER_RAPIDOS["random_forest"])
     assert m["origen_datos"] == "real" and m["datos_sinteticos"] is False
     assert m["listo_para_produccion"] is False
     assert any("Pocos datos" in a for a in m["advertencias"])
@@ -96,6 +99,7 @@ def test_cambio_de_mock_a_real(monkeypatch, destinos, tmp_path):
     largo = archivo_real_minimo(destinos, date(2026, 1, 5), date(2026, 3, 29), tmp_path / "largo.csv")
     procesado = tmp_path / "largo_procesado.csv"
     procesar(largo, destinos, procesado)
-    m = entrenar("real", procesado, destinos, tmp_path / "m2", tmp_path / "r2", n_estimadores=10)
+    m = entrenar("real", procesado, destinos, tmp_path / "m2", tmp_path / "r2", modelo="random_forest",
+                 hiperparametros=HIPER_RAPIDOS["random_forest"])
     assert not any("Pocos datos" in a for a in m["advertencias"])
     assert m["listo_para_produccion"] is (m["metricas"]["modelo"]["mae"] < m["metricas"]["baseline"]["mae"])

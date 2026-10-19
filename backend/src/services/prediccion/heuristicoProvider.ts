@@ -43,6 +43,9 @@ async function basesPorHora(db: Db, fecha: string, hora: string, ids: number[]):
   return bases;
 }
 
+/** Nombre que muestra la app: "Estimado con promedio histórico". */
+export const MODELO_HEURISTICO = 'promedio histórico';
+
 export const proveedorHeuristico: ProveedorPrediccion = {
   nombre: 'heuristico',
   async predecirVarios(db: Db, entradas: EntradaPrediccion[], fecha: string, hora: string) {
@@ -65,6 +68,7 @@ export const proveedorHeuristico: ProveedorPrediccion = {
         factores,
         fuente: 'promedio_historico',
         proveedor: 'heuristico',
+        modelo: MODELO_HEURISTICO,
         origenDatos: env.ORIGEN_DATOS_HISTORICOS,
         respaldo: false,
       });

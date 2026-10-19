@@ -4,7 +4,7 @@
  * prediccionService decide horario, clima y calendario, y le pide a un ProveedorPrediccion
  * el porcentaje de los destinos ABIERTOS. Hoy hay dos implementaciones:
  *   - heurístico: promedio histórico de la tabla ocupacion + factores de clima y calendario.
- *   - ml: servicio HTTP de ml/ (Random Forest, POST /predict/lote).
+ *   - ml: servicio HTTP de ml/ (el ganador de la comparación de tres modelos, POST /predict/lote).
  * y un orquestador "auto" (ML con respaldo heurístico). Controllers, rutas y app no cambian.
  */
 import type { Db } from '../../config/supabase';
@@ -60,6 +60,8 @@ export interface ResultadoProveedor {
   factores: Factor[];
   fuente: 'promedio_historico' | 'modelo_ml';
   proveedor: ProveedorUsado;
+  /** Nombre del modelo que calculó el porcentaje ("HistGradientBoosting", "Promedio histórico"). */
+  modelo: string;
   origenDatos: OrigenDatos;
   /** true si se pidió ML (modo auto) y respondió el heurístico porque el servicio falló. */
   respaldo: boolean;

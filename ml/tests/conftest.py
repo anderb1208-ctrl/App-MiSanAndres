@@ -1,4 +1,4 @@
-"""Datos pequeños y rápidos para las pruebas (3 destinos, pocas semanas, modelo de 10 árboles)."""
+"""Datos pequeños y rápidos para las pruebas (3 destinos, pocas semanas, modelos chicos)."""
 from __future__ import annotations
 
 import sys
@@ -10,10 +10,16 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from entrenar_modelo import entrenar  # noqa: E402
-from generar_mock_dataset import generar, guardar  # noqa: E402
+from entrenar_modelo import comparar  # noqa: E402
+from generar_dataset_simulado import generar, guardar  # noqa: E402
 
 API_KEY = "clave-de-prueba"
+# Hiperparámetros chicos para que las pruebas sean rápidas.
+HIPER_RAPIDOS = {
+    "ridge": {"alpha": 1.0},
+    "random_forest": {"n_estimators": 10, "max_depth": 8, "min_samples_leaf": 20, "max_features": 0.8},
+    "hist_gradient_boosting": {"max_iter": 30},
+}
 
 
 @pytest.fixture(scope="session")
@@ -46,5 +52,5 @@ def archivo_dataset(dataset, tmp_path_factory) -> Path:
 @pytest.fixture(scope="session")
 def dir_modelo(archivo_dataset, destinos, tmp_path_factory) -> Path:
     directorio = tmp_path_factory.mktemp("modelos")
-    entrenar("mock", archivo_dataset, destinos, directorio, directorio, n_estimadores=10)
+    comparar("mock", archivo_dataset, destinos, directorio, directorio, hiperparametros=HIPER_RAPIDOS, graficos=False)
     return directorio

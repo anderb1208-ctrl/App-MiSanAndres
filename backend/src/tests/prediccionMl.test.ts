@@ -27,7 +27,9 @@ function respuestaMl(porcentajes: Record<number, number>, sintetico = true) {
     const { consultas } = JSON.parse(String(init.body)) as { consultas: { id_destino: number }[] };
     return new Response(
       JSON.stringify({
-        origen_modelo: sintetico ? 'mock' : 'real',
+        origen_modelo: sintetico ? 'simulado' : 'real',
+        modelo: 'HistGradientBoosting',
+        modelo_clave: 'hist_gradient_boosting',
         datos_sinteticos: sintetico,
         mensaje_origen: sintetico ? 'Estimación basada en datos simulados' : null,
         version_modelo: '2026-10-15T19:36:15+00:00',
@@ -84,6 +86,7 @@ describe('proveedor de ML', () => {
       nivel: 'Medio',
       fuente: 'modelo_ml',
       proveedor: 'ml',
+      modelo: 'HistGradientBoosting',
       proveedorRespaldo: false,
       origenDatos: 'sintetico',
       datosSimulados: true,
@@ -109,6 +112,24 @@ describe('proveedor de ML', () => {
     fetchFalso.mockImplementation(respuestaMl({ 1: 30 }, false));
     const res = await predecir(1);
     expect(res.body).toMatchObject({ proveedor: 'ml', origenDatos: 'real', datosSimulados: false, mensajeOrigen: null });
+  });
+
+  it('acepta un servicio anterior a la comparación de modelos ("mock" y sin nombre de modelo)', async () => {
+    usarProveedor('ml');
+    fetchFalso.mockImplementation(async (url: string, init: RequestInit) => {
+      const r = (await respuestaMl({ 1: 40 })(url, init)) as Response;
+      const { modelo: _modelo, modelo_clave: _clave, ...anterior } = await r.json();
+      return new Response(JSON.stringify({ ...anterior, origen_modelo: 'mock' }), { status: 200 });
+    });
+    const res = await predecir(1);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ proveedor: 'ml', modelo: 'Random Forest', datosSimulados: true });
+  });
+
+  it('el heurístico se identifica como promedio histórico', async () => {
+    usarProveedor('heuristico');
+    const res = await predecir(1);
+    expect(res.body).toMatchObject({ proveedor: 'heuristico', modelo: 'promedio histórico' });
   });
 
   it('fuera del horario responde Cerrado sin llamar al servicio', async () => {

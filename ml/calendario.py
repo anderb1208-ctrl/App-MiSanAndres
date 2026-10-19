@@ -9,7 +9,8 @@ Festivos según la Ley 51 de 1983 ("Ley Emiliani"):
 - Según la Pascua: Jueves y Viernes Santo; Ascensión, Corpus Christi y Sagrado Corazón
   (Pascua + 43, + 64 y + 71 días, ya en lunes).
 Puente: bloque de 3 o más días no laborales seguidos (fin de semana + festivos).
-Temporada alta (supuestos): 15 dic – 15 ene, 15 jun – 15 jul y Semana Santa.
+Temporada alta: 15 dic – 15 ene, 15 jun – 15 jul, Semana Santa y receso escolar de
+octubre (del sábado anterior a la semana de receso hasta el lunes festivo del 12 de octubre).
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ from functools import lru_cache
 
 TEMPORADAS_ALTAS = (("12-15", "01-15"), ("06-15", "07-15"))
 SEMANA_SANTA_ES_TEMPORADA_ALTA = True
+RECESO_OCTUBRE_ES_TEMPORADA_ALTA = True
 DIAS_MINIMOS_PUENTE = 3
 
 _FIJOS = ((1, 1), (5, 1), (7, 20), (8, 7), (12, 8), (12, 25))
@@ -99,7 +101,18 @@ def temporada(fecha: date) -> str:
         pascua = domingo_de_pascua(fecha.year)
         if pascua - timedelta(days=7) <= fecha <= pascua:
             return "alta"
+    if RECESO_OCTUBRE_ES_TEMPORADA_ALTA:
+        desde, hasta = receso_de_octubre(fecha.year)
+        if desde <= fecha <= hasta:
+            return "alta"
     return "normal"
+
+
+def receso_de_octubre(anio: int) -> tuple[date, date]:
+    """Semana de receso escolar de octubre con sus dos fines de semana: del sábado 9 días antes
+    del festivo del 12 de octubre (trasladado al lunes) hasta ese lunes festivo."""
+    festivo = trasladar_a_lunes(date(anio, 10, 12))
+    return festivo - timedelta(days=9), festivo
 
 
 def info_del_dia(fecha: date) -> dict:

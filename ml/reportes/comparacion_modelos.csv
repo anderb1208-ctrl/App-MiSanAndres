@@ -1,0 +1,5 @@
+clave,nombre,mae,rmse,r2,rmse_sin_clima,tiempo_entrenamiento_s,tamano_mb,ms_prediccion,memoria_mb,cumple_restricciones,ganador,hiperparametros
+ridge,Ridge (regresión lineal regularizada),6.389,8.936,0.8085,10.477,9.9,0.01,20.74,1.1,True,False,"{""alpha"": 1.0}"
+random_forest,Random Forest,4.601,6.652,0.8939,9.885,103.2,27.94,17.57,89.4,True,False,"{""n_estimators"": 100, ""min_samples_leaf"": 10, ""max_features"": 1.0, ""max_depth"": 18}"
+hist_gradient_boosting,HistGradientBoosting,4.493,6.476,0.8994,9.614,11.1,0.64,17.53,4.3,True,True,"{""min_samples_leaf"": 50, ""max_leaf_nodes"": 31, ""max_iter"": 400, ""learning_rate"": 0.1, ""l2_regularization"": 1.0}"
+baseline,Baseline (promedio por destino y hora),5.97,9.498,0.7836,9.498,,,,,,False,{}

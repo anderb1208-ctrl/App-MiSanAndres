@@ -67,6 +67,8 @@ export interface Prediccion {
   fuente: typeof FUENTE_PREDICCION | typeof FUENTE_MODELO_ML | typeof FUENTE_HORARIO;
   /** Quién generó la predicción: heurístico, modelo de ML u "horario" (cerrado, sin cálculo). */
   proveedor: ProveedorUsado | 'horario';
+  /** Modelo que calculó el porcentaje, para "Estimado con [modelo] · datos simulados"; null si está cerrado. */
+  modelo: string | null;
   /** true si se pidió ML (PREDICCION_PROVEEDOR=auto) y respondió el heurístico porque el servicio falló. */
   proveedorRespaldo: boolean;
   /** Datos en que se basa la estimación; null si está cerrado. */
@@ -126,6 +128,7 @@ function construirPrediccion(
     muestras: r.muestras,
     fuente: r.fuente,
     proveedor: r.proveedor,
+    modelo: r.modelo,
     proveedorRespaldo: r.respaldo,
     origenDatos: r.origenDatos,
     datosSimulados: simulados,
@@ -151,6 +154,7 @@ function prediccionCerrado(destino: DestinoAPredecir, fecha: string, hora: strin
     muestras: 0,
     fuente: FUENTE_HORARIO,
     proveedor: 'horario',
+    modelo: null,
     proveedorRespaldo: false,
     origenDatos: null,
     datosSimulados: false,

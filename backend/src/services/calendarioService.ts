@@ -13,6 +13,7 @@
  */
 import {
   DIAS_MINIMOS_PUENTE,
+  RECESO_OCTUBRE_ES_TEMPORADA_ALTA,
   SEMANA_SANTA_ES_TEMPORADA_ALTA,
   TEMPORADAS_ALTAS,
 } from '../config/calendario';
@@ -143,6 +144,12 @@ export function esPuente(fecha: string): boolean {
   return dias >= DIAS_MINIMOS_PUENTE;
 }
 
+/** Receso escolar de octubre con sus fines de semana: del sábado 9 días antes del festivo del 12 de octubre hasta ese lunes. */
+export function recesoDeOctubre(anio: number): { desde: string; hasta: string } {
+  const festivo = trasladarALunes(deFecha(anio, 10, 12));
+  return { desde: sumarDias(festivo, -9), hasta: festivo };
+}
+
 const enRango = (mesDia: string, desde: string, hasta: string) =>
   desde <= hasta ? mesDia >= desde && mesDia <= hasta : mesDia >= desde || mesDia <= hasta;
 
@@ -155,6 +162,10 @@ export function temporadaDe(fecha: string): { temporada: Temporada; motivo: stri
   if (SEMANA_SANTA_ES_TEMPORADA_ALTA) {
     const pascua = domingoDePascua(Number(fecha.slice(0, 4)));
     if (fecha >= sumarDias(pascua, -7) && fecha <= pascua) return { temporada: 'alta', motivo: 'Semana Santa' };
+  }
+  if (RECESO_OCTUBRE_ES_TEMPORADA_ALTA) {
+    const { desde, hasta } = recesoDeOctubre(Number(fecha.slice(0, 4)));
+    if (fecha >= desde && fecha <= hasta) return { temporada: 'alta', motivo: 'Receso escolar de octubre' };
   }
   return { temporada: 'normal', motivo: null };
 }

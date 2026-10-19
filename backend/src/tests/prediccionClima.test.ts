@@ -108,20 +108,21 @@ describe('predicción con clima', () => {
 
 describe('predicción con calendario', () => {
   it('en un festivo sube la ocupación y nombra el festivo', async () => {
-    // Lunes 12 de octubre de 2026: Día de la Raza (y puente).
+    // Lunes 12 de octubre de 2026: Día de la Raza (y puente), último día del receso escolar.
     const res = await predecir(3, '2026-10-12');
-    expect(res.body.features).toMatchObject({ diaSemana: 1, esFestivo: true, esPuente: true, temporada: 'normal' });
-    expect(res.body.factores).toEqual([
-      { codigo: 'festivo', multiplicador: 1.25, efecto: 25, texto: 'Festivo: +25 %', detalle: 'Día de la Raza' },
-    ]);
-    expect(res.body).toMatchObject({ porcentaje: 31.4, nivel: 'Bajo' });
+    expect(res.body.features).toMatchObject({ diaSemana: 1, esFestivo: true, esPuente: true, temporada: 'alta' });
+    expect(res.body.factores[0]).toEqual({
+      codigo: 'festivo', multiplicador: 1.25, efecto: 25, texto: 'Festivo: +25 %', detalle: 'Día de la Raza',
+    });
+    expect(res.body.factores.map((f: { codigo: string }) => f.codigo)).toEqual(['festivo', 'temporada_alta']);
+    expect(res.body).toMatchObject({ porcentaje: 37.7, nivel: 'Bajo' }); // 25,1 × 1,25 × 1,2
   });
 
   it('el sábado de un puente lleva el factor de puente', async () => {
     const res = await predecir(3, '2026-10-10');
     expect(res.body.features).toMatchObject({ esFestivo: false, esPuente: true });
-    expect(res.body.factores.map((f: { texto: string }) => f.texto)).toEqual(['Puente festivo: +10 %']);
-    expect(res.body.porcentaje).toBe(27.6);
+    expect(res.body.factores.map((f: { texto: string }) => f.texto)).toEqual(['Puente festivo: +10 %', 'Temporada alta: +20 %']);
+    expect(res.body.porcentaje).toBe(33.1); // 25,1 × 1,1 × 1,2
   });
 
   it('nunca pasa de 100 %', async () => {
@@ -132,8 +133,8 @@ describe('predicción con calendario', () => {
   it('festivo con lluvia combina los dos factores', async () => {
     proveedorFalso.clima = { probLluvia: 80 };
     const res = await predecir(3, '2026-10-12');
-    expect(res.body.factores.map((f: { codigo: string }) => f.codigo)).toEqual(['lluvia', 'festivo']);
-    expect(res.body.porcentaje).toBe(28.2); // 25,1 × 0,9 × 1,25
+    expect(res.body.factores.map((f: { codigo: string }) => f.codigo)).toEqual(['lluvia', 'festivo', 'temporada_alta']);
+    expect(res.body.porcentaje).toBe(33.9); // 25,1 × 0,9 × 1,25 × 1,2
   });
 });
 

@@ -5,12 +5,14 @@ Servicio HTTP de predicción de ocupación (FastAPI).
 
 Endpoints:
   GET  /health          estado del servicio y del modelo (público)
+  GET  /modelo          modelo ganador y comparativa de los tres modelos (público)
   POST /predict         una predicción (destino, fecha, hora y clima opcional)
   POST /predict/lote    varias predicciones en una llamada (máx. 500)
 
 /predict y /predict/lote exigen la cabecera X-API-Key igual a la variable ML_API_KEY.
-Cada respuesta indica el origen del modelo ("mock" = datos simulados, "real") para que
-el backend y la app muestren "Estimación basada en datos simulados" mientras sea mock.
+Cada respuesta indica qué modelo respondió (modelo, modelo_clave) y el origen de los datos
+("simulado" = simulados calibrados con datos reales, "real") para que el backend y la app
+muestren "Estimado con [modelo] · datos simulados" mientras los datos sean simulados.
 Si el archivo del modelo cambia (reentrenamiento), se recarga en la siguiente petición.
 """
 from __future__ import annotations
@@ -69,7 +71,7 @@ class GestorModelo:
                 status_code=503,
                 detail={
                     "codigo": "MODELO_NO_ENTRENADO",
-                    "mensaje": "No hay un modelo entrenado. Ejecuta: python generar_mock_dataset.py y python entrenar_modelo.py.",
+                    "mensaje": "No hay un modelo entrenado. Ejecuta: python generar_dataset_simulado.py y python entrenar_modelo.py --comparar.",
                 },
             )
         return paquete
@@ -84,7 +86,7 @@ async def ciclo_de_vida(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="MiSanAndrés · Predicción de ocupación", version="1.0.0", lifespan=ciclo_de_vida)
+app = FastAPI(title="MiSanAndrés · Predicción de ocupación", version="2.0.0", lifespan=ciclo_de_vida)
 
 # ---------------------------------------------------------------------------
 # Autenticación por API key
@@ -124,7 +126,9 @@ class Lote(BaseModel):
 
 
 class OrigenModelo(BaseModel):
-    origen_modelo: Literal["mock", "real"]
+    origen_modelo: Literal["simulado", "real"]
+    modelo: str = Field(description="Nombre del modelo que respondió, p. ej. HistGradientBoosting")
+    modelo_clave: str
     datos_sinteticos: bool
     mensaje_origen: str | None
     version_modelo: str
@@ -152,11 +156,19 @@ class RespuestaLote(OrigenModelo):
 # ---------------------------------------------------------------------------
 # Predicción
 # ---------------------------------------------------------------------------
+def modelo_de(m: dict) -> dict:
+    """Modelo guardado; los modelos de antes de la comparación eran siempre Random Forest."""
+    return m.get("modelo") or {"clave": "random_forest", "nombre": config.NOMBRES_MODELO["random_forest"], "hiperparametros": {}}
+
+
 def origen_de(paquete: dict) -> dict:
     m = paquete["metadatos"]
     sintetico = bool(m["datos_sinteticos"])
+    modelo = modelo_de(m)
     return {
-        "origen_modelo": m["origen_datos"],
+        "origen_modelo": config.ALIAS_DATASET.get(m["origen_datos"], m["origen_datos"]),
+        "modelo": modelo["nombre"],
+        "modelo_clave": modelo["clave"],
         "datos_sinteticos": sintetico,
         "mensaje_origen": MENSAJE_SINTETICO if sintetico else None,
         "version_modelo": m["fecha_entrenamiento"],
@@ -205,6 +217,27 @@ def health() -> dict:
                 "mensaje": "No hay modelo entrenado: ejecuta python entrenar_modelo.py."}
     return {"estado": "ok", "modelo_cargado": True, **origen_de(paquete),
             "metricas": paquete["metadatos"]["metricas"], "destinos": len(paquete["destinos"])}
+
+
+@app.get("/modelo")
+def modelo() -> dict:
+    """Ganador, criterio de selección y comparativa (métricas de los tres modelos y el baseline)."""
+    m = gestor.requerir()["metadatos"]
+    return {
+        "ganador": modelo_de(m),
+        "seleccion": m.get("seleccion"),
+        "comparacion": m.get("comparacion", []),
+        "metricas": m["metricas"],
+        "origen_datos": config.ALIAS_DATASET.get(m["origen_datos"], m["origen_datos"]),
+        "origen_dato": m.get("origen_dato"),
+        "datos_sinteticos": bool(m["datos_sinteticos"]),
+        "mensaje_origen": MENSAJE_SINTETICO if m["datos_sinteticos"] else None,
+        "fecha_entrenamiento": m["fecha_entrenamiento"],
+        "fecha_comparacion": m.get("fecha_comparacion"),
+        "corte_validacion": m.get("corte_validacion"),
+        "listo_para_produccion": bool(m["listo_para_produccion"]),
+        "advertencias": m.get("advertencias", []),
+    }
 
 
 @app.post("/predict", response_model=RespuestaPrediccion, dependencies=[Depends(verificar_api_key)])

@@ -132,10 +132,22 @@ ml/.pytest_cache/
 ml/**/__pycache__/
 ml/datos/destinos.csv
 ml/datos/mock/
+# Dataset simulado (~24 MB): se regenera igual con python generar_dataset_simulado.py (semilla 42)
+ml/datos/dataset_ocupacion_san_andres.csv
 ml/datos/procesado_real/
 ml/datos/real/*
 !ml/datos/real/.gitkeep
 ml/modelos/*
 !ml/modelos/.gitkeep
+# El modelo ganador es liviano (< 1 MB): se versiona para que el build de Render no entrene.
+!ml/modelos/modelo_ocupacion.joblib
+!ml/modelos/modelo_ocupacion.json
 ml/reportes/*
 !ml/reportes/.gitkeep
+# Reportes del entregable (los de cada entrenamiento rápido no se suben)
+!ml/reportes/calidad_dataset.md
+!ml/reportes/calidad_*.png
+!ml/reportes/comparacion_modelos.md
+!ml/reportes/comparacion_modelos.csv
+!ml/reportes/comparacion_*.png
+!ml/reportes/ganador.json
