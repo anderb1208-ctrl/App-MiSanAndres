@@ -1,10 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClimaIsla } from '../components/ClimaIsla';
 import { DestinoCard } from '../components/DestinoCard';
 import { FilterChip } from '../components/FilterChip';
+import { GlassControl } from '../components/GlassControl';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { PressableScale } from '../components/PressableScale';
@@ -20,7 +21,7 @@ import { listarDestinos } from '../services/destinos';
 import { obtenerPerfil } from '../services/perfil';
 import { obtenerRecomendaciones } from '../services/recomendaciones';
 import type { Destino, NivelOcupacion, Presupuesto } from '../services/tipos';
-import { colors, motion, occupancyColors, radius, spacing, typography } from '../theme';
+import { colors, motion, occupancyColors, radius, sizes, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
 import { IMAGENES } from '../utils/imagenes';
 import { ADJETIVO_NIVEL, NIVELES } from '../utils/ocupacion';
@@ -167,18 +168,21 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
           <LinearGradient colors={colors.scrimBottom} locations={[0, 0.5, 1]} style={[StyleSheet.absoluteFill, styles.scrim]} />
           <View style={[styles.heroArriba, { top: insets.top + spacing.sm }]}>
             <Text style={styles.marca}>MiSanAndrés</Text>
-            <Pressable
+            <PressableScale
               onPress={() => navigation.navigate('Perfil')}
+              escala={motion.pressScale.icon}
               accessibilityRole="button"
               accessibilityLabel="Mi perfil"
-              style={styles.avatar}
+              hitSlop={4}
             >
-              {nombre ? (
-                <Text style={styles.avatarTexto}>{nombre.charAt(0).toUpperCase()}</Text>
-              ) : (
-                <Icon name="person" size={22} color={colors.white} />
-              )}
-            </Pressable>
+              <GlassControl tono="oscuro" conSombra={false} style={styles.avatar}>
+                {nombre ? (
+                  <Text style={styles.avatarTexto}>{nombre.charAt(0).toUpperCase()}</Text>
+                ) : (
+                  <Icon name="person" size={22} color={colors.white} />
+                )}
+              </GlassControl>
+            </PressableScale>
           </View>
           <View style={styles.saludo}>
             <ClimaIsla style={styles.clima} />
@@ -289,12 +293,9 @@ const styles = StyleSheet.create({
   },
   marca: { ...typography.headlineMd, fontFamily: typography.display.fontFamily, color: colors.white },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: colors.glassBarBorder,
-    backgroundColor: colors.glassDark,
+    width: sizes.touch,
+    height: sizes.touch,
+    borderRadius: sizes.touch / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

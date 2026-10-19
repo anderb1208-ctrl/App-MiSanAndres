@@ -1,9 +1,9 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { BlurView } from 'expo-blur';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassControl } from '../components/GlassControl';
 import { Icon } from '../components/Icon';
-import { blur, colors, radius, shadows, sizes, spacing, typography } from '../theme';
+import { colors, radius, sizes, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
 import type { TabsParamList } from './types';
 
@@ -27,15 +27,12 @@ export function useEspacioTabBar() {
   return sizes.tabBar + Math.max(bottom, MARGEN_INFERIOR) + spacing.lg;
 }
 
-/** Barra de navegación flotante tipo píldora de vidrio. */
+/** Barra de navegación flotante tipo píldora de vidrio (Liquid Glass en iOS 26+, con respaldo). */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { bottom } = useSafeAreaInsets();
 
   return (
-    <View style={[styles.contenedor, { bottom: Math.max(bottom, MARGEN_INFERIOR) }]} accessibilityRole="tablist">
-      {Platform.OS === 'ios' && (
-        <BlurView intensity={blur.bar} tint="light" style={[StyleSheet.absoluteFill, styles.blur]} />
-      )}
+    <GlassControl style={[styles.contenedor, { bottom: Math.max(bottom, MARGEN_INFERIOR) }]} accessibilityRole="tablist">
       {state.routes.map((ruta, indice) => {
         const activa = state.index === indice;
         const tab = TABS[ruta.name as keyof TabsParamList];
@@ -62,7 +59,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           </Pressable>
         );
       })}
-    </View>
+    </GlassControl>
   );
 }
 
@@ -76,12 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.sm,
     borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    backgroundColor: Platform.OS === 'ios' ? colors.glass : colors.glassStrong,
-    ...shadows.lg,
   },
-  blur: { borderRadius: radius.full, overflow: 'hidden' },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
   indicador: { width: 52, height: 30, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
   indicadorActivo: { backgroundColor: colors.secondarySoft },

@@ -1,5 +1,6 @@
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, motion, radius, sizes } from '../theme';
+import { GlassControl } from './GlassControl';
 import type { NombreIcono } from '../utils/categorias';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -11,6 +12,8 @@ interface Props {
   etiqueta: string;
   onPress?: () => void;
   tono?: Tono;
+  /** Control flotante sobre el contenido (p. ej. el mapa): Liquid Glass con respaldo. */
+  flotante?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -21,8 +24,25 @@ const TONOS: Record<Tono, { fondo: string; borde: string; icono: string }> = {
 };
 
 /** Botón circular de icono (volver, editar, preferencias…). */
-export function IconButton({ icono, etiqueta, onPress, tono = 'glass', style }: Props) {
+export function IconButton({ icono, etiqueta, onPress, tono = 'glass', flotante = false, style }: Props) {
   const t = TONOS[tono];
+  if (flotante) {
+    const oscuro = tono === 'glass-dark';
+    return (
+      <PressableScale
+        onPress={onPress}
+        escala={motion.pressScale.icon}
+        accessibilityRole="button"
+        accessibilityLabel={etiqueta}
+        hitSlop={6}
+        style={style}
+      >
+        <GlassControl tono={oscuro ? 'oscuro' : 'claro'} style={styles.flotante}>
+          <Icon name={icono} size={sizes.iconSm + 2} color={oscuro ? colors.white : colors.textStrong} />
+        </GlassControl>
+      </PressableScale>
+    );
+  }
   return (
     <PressableScale
       onPress={onPress}
@@ -38,6 +58,13 @@ export function IconButton({ icono, etiqueta, onPress, tono = 'glass', style }: 
 }
 
 const styles = StyleSheet.create({
+  flotante: {
+    width: sizes.touch,
+    height: sizes.touch,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   base: {
     width: sizes.iconButton,
     height: sizes.iconButton,

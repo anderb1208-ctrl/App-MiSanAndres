@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BlurView } from 'expo-blur';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AppStackParamList } from '../navigation/types';
 import { useAuth } from '../store/AuthContext';
 import { colors, motion, spacing } from '../theme';
 import { pestanaDeInicio } from '../utils/navegacion';
+import { GlassControl } from './GlassControl';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
@@ -25,8 +25,8 @@ interface Props {
 }
 
 const VARIANTES = {
-  imagen: { velo: colors.glassDark, icono: colors.white, tinte: 'dark' as const },
-  claro: { velo: colors.glass, icono: colors.textStrong, tinte: 'light' as const },
+  imagen: { tono: 'oscuro' as const, icono: colors.white },
+  claro: { tono: 'claro' as const, icono: colors.textStrong },
 };
 
 /**
@@ -53,12 +53,11 @@ export function BotonVolver({ variante = 'claro', style }: Props) {
         accessibilityRole="button"
         accessibilityLabel="Volver"
         hitSlop={8}
-        style={styles.boton}
       >
-        {/* El desenfoque real va en iOS; en Android basta el velo translúcido (sin BlurTargetView). */}
-        {Platform.OS === 'ios' && <BlurView intensity={30} tint={v.tinte} style={StyleSheet.absoluteFill} />}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: v.velo }]} />
-        <Icon name="arrow-back" size={22} color={v.icono} />
+        {/* Liquid Glass en iOS 26+; desenfoque en iOS anterior; velo translúcido en Android. */}
+        <GlassControl tono={v.tono} conSombra={false} style={styles.boton}>
+          <Icon name="arrow-back" size={22} color={v.icono} />
+        </GlassControl>
       </PressableScale>
     </View>
   );
@@ -70,10 +69,7 @@ const styles = StyleSheet.create({
     width: TAMANO_BOTON_VOLVER,
     height: TAMANO_BOTON_VOLVER,
     borderRadius: TAMANO_BOTON_VOLVER / 2,
-    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
   },
 });

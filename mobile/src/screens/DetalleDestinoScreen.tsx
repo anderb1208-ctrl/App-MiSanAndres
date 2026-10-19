@@ -4,6 +4,7 @@ import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotonFavorito } from '../components/BotonFavorito';
 import { Button } from '../components/Button';
+import { GlassControl } from '../components/GlassControl';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { ImagenDestino } from '../components/ImagenDestino';
@@ -29,7 +30,7 @@ import { obtenerClimaDestino } from '../services/clima';
 import { obtenerOcupacionDelDia, obtenerOcupacionTipica, obtenerPrediccion } from '../services/ocupacion';
 import { obtenerRecomendaciones } from '../services/recomendaciones';
 import type { OcupacionTipicaDelDia } from '../services/tipos';
-import { colors, radius, shadows, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 import { CATEGORIAS, ICONOS_PREFERENCIA, type NombreIcono } from '../utils/categorias';
 import { creditoFoto, ETIQUETA_PRECIO, formatearHorario } from '../utils/contenido';
 import { horaEnColombia, horaMinutoEnColombia, hoyEnColombia } from '../utils/fecha';
@@ -328,7 +329,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
       <BotonVolver variante="imagen" />
       <BotonFavorito destino={d} tono="glass" tamano={24} style={[styles.favorito, { top: insets.top + spacing.sm }]} />
 
-      <View style={[styles.barraAcciones, shadows.lg, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
+      {/* Acciones flotantes relacionadas: un solo grupo de vidrio. */}
+      <GlassControl style={[styles.barraAcciones, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
         <Button
           tamano="lg"
           icono="directions"
@@ -340,7 +342,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
         <Button tamano="lg" variante="glass" icono="map" style={styles.accion} onPress={verEnMapa}>
           Ver en el mapa
         </Button>
-      </View>
+      </GlassControl>
     </View>
   );
 }
@@ -419,9 +421,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: 10,
     borderRadius: radius.sheet,
-    backgroundColor: colors.glassBar,
-    borderWidth: 1,
-    borderColor: colors.glassBarBorder,
   },
   accion: { flex: 1, borderRadius: radius.panel },
 });

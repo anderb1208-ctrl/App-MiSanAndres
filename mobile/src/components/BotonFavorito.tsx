@@ -3,8 +3,10 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View, type StyleProp, 
 import type { Destino } from '../services/tipos';
 import { useAuth } from '../store/AuthContext';
 import { useFavoritos } from '../store/FavoritosContext';
-import { colors } from '../theme';
+import { colors, motion, sizes } from '../theme';
+import { GlassControl } from './GlassControl';
 import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 
 interface Props {
   destino: Pick<Destino, 'id' | 'nombre'>;
@@ -33,34 +35,54 @@ export function BotonFavorito({ destino, tono = 'claro', tamano = 22, style }: P
     }
   };
 
+  const accesibilidad = {
+    accessibilityRole: 'button' as const,
+    accessibilityState: { selected: marcado, busy: ocupado },
+    accessibilityLabel: marcado ? `Quitar ${destino.nombre} de favoritos` : `Agregar ${destino.nombre} a favoritos`,
+  };
+  const icono = (
+    <View style={{ width: tamano, height: tamano, alignItems: 'center', justifyContent: 'center' }}>
+      {ocupado ? (
+        <ActivityIndicator size="small" color={tono === 'glass' ? colors.white : colors.secondary} />
+      ) : (
+        <Icon
+          name={marcado ? 'favorite' : 'favorite-border'}
+          size={tamano}
+          color={marcado ? colors.error : tono === 'glass' ? colors.white : colors.textMuted}
+        />
+      )}
+    </View>
+  );
+
+  // Botón flotante sobre una foto: vidrio oscuro. Al presionar escala (la opacidad rompe Liquid Glass).
+  if (tono === 'glass') {
+    const lado = Math.max(sizes.touch, tamano + 16);
+    return (
+      <View pointerEvents="box-none" style={style}>
+        <PressableScale onPress={() => void alPresionar()} disabled={ocupado} hitSlop={8} escala={motion.pressScale.icon} {...accesibilidad}>
+          <GlassControl tono="oscuro" conSombra={false} style={[styles.glass, { width: lado, height: lado }]}>
+            {icono}
+          </GlassControl>
+        </PressableScale>
+      </View>
+    );
+  }
+
   return (
     <Pressable
       onPress={() => void alPresionar()}
       disabled={ocupado}
       hitSlop={10}
-      accessibilityRole="button"
-      accessibilityState={{ selected: marcado, busy: ocupado }}
-      accessibilityLabel={marcado ? `Quitar ${destino.nombre} de favoritos` : `Agregar ${destino.nombre} a favoritos`}
-      style={({ pressed }) => [styles.boton, tono === 'glass' ? styles.glass : styles.claro, pressed && styles.presionado, style]}
+      {...accesibilidad}
+      style={({ pressed }) => [styles.boton, pressed && styles.presionado, style]}
     >
-      <View style={{ width: tamano, height: tamano, alignItems: 'center', justifyContent: 'center' }}>
-        {ocupado ? (
-          <ActivityIndicator size="small" color={tono === 'glass' ? colors.white : colors.secondary} />
-        ) : (
-          <Icon
-            name={marcado ? 'favorite' : 'favorite-border'}
-            size={tamano}
-            color={marcado ? colors.error : tono === 'glass' ? colors.white : colors.textMuted}
-          />
-        )}
-      </View>
+      {icono}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  boton: { padding: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  glass: { backgroundColor: colors.glassDark, borderWidth: 1, borderColor: colors.glassBorderDark },
-  claro: { backgroundColor: 'transparent' },
+  boton: { padding: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
+  glass: { borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   presionado: { opacity: 0.7 },
 });

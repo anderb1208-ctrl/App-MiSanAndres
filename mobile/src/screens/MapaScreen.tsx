@@ -196,6 +196,7 @@ export function MapaScreen({ navigation, route }: TabScreenProps<'Mapa'>) {
         icono={ubicacion.coords ? 'my-location' : 'location-searching'}
         etiqueta="Centrar el mapa en mi ubicación"
         tono="glass"
+        flotante
         onPress={centrarEnMi}
         style={styles.centrar}
       />
