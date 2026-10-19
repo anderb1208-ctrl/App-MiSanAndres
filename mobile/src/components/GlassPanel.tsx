@@ -1,6 +1,14 @@
 import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  View,
+  type AccessibilityActionEvent,
+  type AccessibilityActionInfo,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { blur, colors, radius as radios, shadows } from '../theme';
 import { PressableScale } from './PressableScale';
 
@@ -13,6 +21,9 @@ interface Props {
   radius?: number;
   onPress?: () => void;
   accessibilityLabel?: string;
+  /** Acciones extra para lectores de pantalla (p. ej. "Alertas" en una tarjeta tocable). */
+  accessibilityActions?: AccessibilityActionInfo[];
+  onAccessibilityAction?: (e: AccessibilityActionEvent) => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -34,6 +45,8 @@ export function GlassPanel({
   radius = radios.panel,
   onPress,
   accessibilityLabel,
+  accessibilityActions,
+  onAccessibilityAction,
   style,
 }: Props) {
   const estilo: StyleProp<ViewStyle> = [
@@ -59,7 +72,14 @@ export function GlassPanel({
 
   if (onPress) {
     return (
-      <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} style={estilo}>
+      <PressableScale
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityActions={accessibilityActions}
+        onAccessibilityAction={onAccessibilityAction}
+        style={estilo}
+      >
         {fondo}
         {children}
       </PressableScale>

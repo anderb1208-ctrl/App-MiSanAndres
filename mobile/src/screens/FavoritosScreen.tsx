@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import { BotonAlertas } from '../components/BotonAlertas';
 import { Button } from '../components/Button';
 import { DestinoCard } from '../components/DestinoCard';
 import { GlassPanel } from '../components/GlassPanel';
@@ -36,9 +37,14 @@ export function FavoritosScreen({ navigation }: TabScreenProps<'Favoritos'>) {
       onRefrescar={() => void recargar().catch(() => undefined)}
     >
       {avisoPermiso && (
-        <View style={styles.aviso}>
-          <Icon name="notifications-off" size={18} color={colors.error} />
-          <Text style={styles.avisoTexto}>{avisoPermiso}</Text>
+        <View style={styles.aviso} accessibilityRole="alert">
+          <View style={styles.avisoFila}>
+            <Icon name="notifications-off" size={20} color={colors.error} />
+            <Text style={styles.avisoTexto}>{avisoPermiso}</Text>
+          </View>
+          <Button variante="light" icono="settings" style={styles.avisoBoton} onPress={() => void Linking.openSettings().catch(() => undefined)}>
+            Abrir ajustes
+          </Button>
         </View>
       )}
       {cargando && favoritos.length === 0 ? (
@@ -53,18 +59,23 @@ export function FavoritosScreen({ navigation }: TabScreenProps<'Favoritos'>) {
           />
         </GlassPanel>
       ) : (
-        visibles.map((f) => (
-          <View key={f.idDestino} style={styles.item}>
+        visibles.map((f) => {
+          const resumen = resumenAvisos(f.avisarApertura, f.avisarCierre);
+          const abrirAlertas = () => setAlertas(f.destino);
+          return (
             <DestinoCard
+              key={f.idDestino}
               destino={f.destino!}
-              nota={resumenAvisos(f.avisarApertura, f.avisarCierre)}
+              nota={resumen}
               onPress={() => navigation.navigate('DetalleDestino', { id: f.idDestino })}
+              accion={{
+                etiqueta: 'Alertas',
+                onPress: abrirAlertas,
+                elemento: <BotonAlertas activo={f.avisarApertura || f.avisarCierre} resumen={resumen} onPress={abrirAlertas} />,
+              }}
             />
-            <Button variante="glass" icono="notifications-active" onPress={() => setAlertas(f.destino)}>
-              Alertas
-            </Button>
-          </View>
-        ))
+          );
+        })
       )}
       <HojaAlertas destino={alertas} onCerrar={() => setAlertas(null)} />
     </PantallaApilada>
@@ -72,7 +83,8 @@ export function FavoritosScreen({ navigation }: TabScreenProps<'Favoritos'>) {
 }
 
 const styles = StyleSheet.create({
-  item: { gap: spacing.sm },
-  aviso: { flexDirection: 'row', gap: spacing.sm, padding: spacing.gutter, borderRadius: radius.lg, backgroundColor: colors.errorContainer },
-  avisoTexto: { ...typography.labelMd, color: colors.textStrong, flex: 1 },
+  aviso: { gap: spacing.gutter, padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.errorContainer, borderWidth: 1, borderColor: colors.errorBorder },
+  avisoFila: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  avisoTexto: { ...typography.bodyMd, color: colors.textStrong, flex: 1 },
+  avisoBoton: { alignSelf: 'flex-start' },
 });

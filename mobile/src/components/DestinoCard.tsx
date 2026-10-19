@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
+import { StyleSheet, Text, View, type AccessibilityActionEvent, type StyleProp, type ViewStyle } from 'react-native';
 import type { Destino } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
@@ -28,13 +29,18 @@ interface Props {
   onPress: () => void;
   /** Oculta el corazón de favorito. */
   sinFavorito?: boolean;
+  /**
+   * Control extra junto al corazón (solo layout list). También se ofrece como acción del
+   * lector de pantalla, porque VoiceOver lee la tarjeta como un único botón.
+   */
+  accion?: { elemento: ReactNode; etiqueta: string; onPress: () => void };
   style?: StyleProp<ViewStyle>;
 }
 
 const cerrado = (d: Destino) => d.estado === 'cerrado_temporal';
 
 /** DestinoCard: tarjeta de destino con la ocupación compartida (OcupacionCompacta). */
-export function DestinoCard({ destino, layout = 'list', nota, destacado, conDescripcion, porQueCorto, onPress, sinFavorito, style }: Props) {
+export function DestinoCard({ destino, layout = 'list', nota, destacado, conDescripcion, porQueCorto, onPress, sinFavorito, accion, style }: Props) {
   const categoria = CATEGORIAS[destino.categoria];
   const precio = destino.precio ? `${formatearPrecio(destino.precio)}${destino.precio.estimado ? ' · Estimado' : ''}` : null;
   const descripcion = conDescripcion ? descripcionBreve(destino.descripcion) : null;
@@ -114,8 +120,22 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, conDesc
     );
   }
 
+  const alAccionAccesible = (e: AccessibilityActionEvent) => {
+    if (e.nativeEvent.actionName === 'activate') onPress();
+    else if (e.nativeEvent.actionName === 'accion') accion?.onPress();
+  };
+
   return (
-    <GlassPanel tono="strong" padding={12} radius={radius.xl} onPress={onPress} accessibilityLabel={accesible} style={style}>
+    <GlassPanel
+      tono="strong"
+      padding={12}
+      radius={radius.xl}
+      onPress={onPress}
+      accessibilityLabel={accesible}
+      accessibilityActions={accion ? [{ name: 'activate' }, { name: 'accion', label: accion.etiqueta }] : undefined}
+      onAccessibilityAction={accion ? alAccionAccesible : undefined}
+      style={style}
+    >
       <View style={styles.fila}>
         <ImagenDestino destino={destino} style={styles.miniatura} tamanoIcono={26} />
         <View style={styles.info}>
@@ -124,7 +144,12 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, conDesc
               {destino.nombre}
             </Text>
             {destacado && <Text style={styles.destacado}>{destacado}</Text>}
-            {!sinFavorito && <BotonFavorito destino={destino} tamano={20} style={styles.corazon} />}
+            {accion || !sinFavorito ? (
+              <View style={styles.controles}>
+                {accion?.elemento}
+                {!sinFavorito && <BotonFavorito destino={destino} tamano={20} style={accion ? undefined : styles.corazon} />}
+              </View>
+            ) : null}
           </View>
           {/* Metadatos: categoría y ocupación como chip; pasan a otra línea en pantallas angostas. */}
           <View style={styles.metadatos}>
@@ -191,6 +216,7 @@ const styles = StyleSheet.create({
   },
   compatibilidadTexto: { ...typography.labelBold, color: colors.secondary, flexShrink: 1 },
   corazon: { marginTop: -8, marginRight: -8 },
+  controles: { flexDirection: 'row', alignItems: 'center', marginTop: -10, marginRight: -8, marginBottom: -10 },
   featuredLeyenda: { gap: 3 },
   featuredMeta: { ...typography.labelMd, color: colors.textOnDarkMuted },
   featuredNombre: { ...typography.headlineSm, color: colors.white },
