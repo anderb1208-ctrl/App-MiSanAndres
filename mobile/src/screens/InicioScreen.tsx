@@ -127,8 +127,8 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
               layout="featured"
               destino={r}
               destacado={`${r.puntaje}% compatible`}
-              nota={r.porQue || r.razon}
-              razones={r.razones}
+              conDescripcion
+              porQueCorto={r.porQueCorto || undefined}
               onPress={() => abrir(r.id)}
               style={styles.tarjetaDestacada}
             />
@@ -144,8 +144,8 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
                   key={r.id}
                   destino={r}
                   destacado={`${r.puntaje}%`}
-                  nota={r.porQue || r.razon}
-                  razones={r.razones}
+                  conDescripcion
+                  porQueCorto={r.porQueCorto || undefined}
                   onPress={() => abrir(r.id)}
                 />
               ))}

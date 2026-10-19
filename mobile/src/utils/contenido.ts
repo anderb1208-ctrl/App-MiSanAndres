@@ -24,3 +24,13 @@ export function creditoFoto(imagen: ImagenDestino | null): string | null {
   const partes = [imagen.autor, imagen.licencia].filter(Boolean);
   return partes.length > 0 ? `Foto: ${partes.join(' · ')}` : null;
 }
+
+/** Descripción breve para las tarjetas: la primera oración, como máximo `max` caracteres. */
+export function descripcionBreve(texto: string | null | undefined, max = 110): string | null {
+  const limpio = texto?.trim().replace(/\s+/g, ' ');
+  if (!limpio) return null;
+  const oracion = /^(.+?[.!?])(\s|$)/.exec(limpio)?.[1] ?? limpio;
+  if (oracion.length <= max) return oracion;
+  const corte = oracion.slice(0, max - 1);
+  return `${corte.slice(0, Math.max(corte.lastIndexOf(' '), max / 2)).replace(/[,;:]$/, '')}…`;
+}

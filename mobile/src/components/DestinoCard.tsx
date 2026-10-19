@@ -1,28 +1,31 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import type { Destino, Razon } from '../services/tipos';
+import type { Destino } from '../services/tipos';
 import { colors, radius, shadows, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
+import { descripcionBreve } from '../utils/contenido';
 import { formatearPrecio } from '../utils/presupuesto';
+import { textoOcupacion } from '../utils/ocupacion';
 import { BotonFavorito } from './BotonFavorito';
 import { GlassPanel } from './GlassPanel';
 import { Icon } from './Icon';
 import { ImagenDestino } from './ImagenDestino';
-import { IndicadorOcupacion } from './IndicadorOcupacion';
+import { OcupacionCompacta } from './OcupacionCompacta';
 import { PressableScale } from './PressableScale';
-import { ChipsRazones } from './Razones';
 
 interface Props {
   destino: Destino;
-  /** featured: foto completa con leyenda; horizontal/list: miniatura y datos. */
+  /** featured: foto completa con leyenda (carrusel); list: miniatura y datos. */
   layout?: 'featured' | 'list';
-  /** Línea extra (razón de la recomendación, ubicación…). */
+  /** Línea extra (ubicación en Explorar, avisos en Favoritos…). */
   nota?: string;
-  /** Texto destacado a la derecha del nombre (p. ej. "92%" de compatibilidad). */
+  /** Compatibilidad ("92% compatible"): arriba a la izquierda en el carrusel, junto al nombre en la lista. */
   destacado?: string;
+  /** Muestra la descripción breve del lugar (tarjetas de Inicio). */
+  conDescripcion?: boolean;
+  /** UNA frase corta de por qué se recomienda (una línea; el detalle completo va en la pantalla del lugar). */
+  porQueCorto?: string;
   onPress: () => void;
-  /** Razones de la recomendación (se muestran 2–3 como chips). */
-  razones?: Razon[];
   /** Oculta el corazón de favorito. */
   sinFavorito?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -30,11 +33,23 @@ interface Props {
 
 const cerrado = (d: Destino) => d.estado === 'cerrado_temporal';
 
-/** DestinoCard: tarjeta de destino con su IndicadorOcupacion. */
-export function DestinoCard({ destino, layout = 'list', nota, destacado, razones, onPress, sinFavorito, style }: Props) {
+/** DestinoCard: tarjeta de destino con la ocupación compartida (OcupacionCompacta). */
+export function DestinoCard({ destino, layout = 'list', nota, destacado, conDescripcion, porQueCorto, onPress, sinFavorito, style }: Props) {
   const categoria = CATEGORIAS[destino.categoria];
   const precio = destino.precio ? `${formatearPrecio(destino.precio)}${destino.precio.estimado ? ' · Estimado' : ''}` : null;
-  const accesible = `${destino.nombre}, ${categoria.singular}${precio ? `. Precio por persona: ${precio}` : ''}${nota ? `. ${nota}` : ''}`;
+  const descripcion = conDescripcion ? descripcionBreve(destino.descripcion) : null;
+  const accesible = [
+    destino.nombre,
+    categoria.singular,
+    destacado,
+    textoOcupacion(destino.ocupacionActual).accesible,
+    precio ? `Precio por persona: ${precio}` : null,
+    descripcion,
+    porQueCorto ? `Por qué: ${porQueCorto}` : null,
+    nota,
+  ]
+    .filter(Boolean)
+    .join('. ');
 
   if (layout === 'featured') {
     return (
@@ -45,33 +60,55 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, razones
         style={[styles.featured, shadows.md, style]}
       >
         <ImagenDestino destino={destino} style={StyleSheet.absoluteFill} tamanoIcono={56} />
-        <LinearGradient colors={colors.scrimBottom} locations={[0.35, 0.7, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={colors.scrimBottom} locations={[0.3, 0.62, 1]} style={StyleSheet.absoluteFill} />
         <View style={styles.featuredArriba}>
-          <IndicadorOcupacion ocupacion={destino.ocupacionActual} mostrarPorcentaje />
-          <View style={styles.featuredAcciones}>
-            {destacado && (
-              <View style={styles.featuredDestacado}>
-                <Text style={styles.featuredDestacadoTexto}>{destacado}</Text>
-              </View>
-            )}
-            {!sinFavorito && <BotonFavorito destino={destino} tono="glass" tamano={20} />}
-          </View>
+          {destacado ? (
+            <View style={styles.compatibilidad}>
+              <Icon name="auto-awesome" size={14} color={colors.secondary} />
+              <Text style={styles.compatibilidadTexto} numberOfLines={1}>
+                {destacado}
+              </Text>
+            </View>
+          ) : (
+            <View />
+          )}
+          {!sinFavorito && <BotonFavorito destino={destino} tono="glass" tamano={20} />}
         </View>
         <GlassPanel tono="dark" padding={14} radius={18} style={styles.featuredLeyenda}>
-          <Text style={styles.featuredMeta}>
+          <Text style={styles.featuredMeta} numberOfLines={1}>
             {categoria.singular}
             {cerrado(destino) ? ' • Cerrado temporalmente' : ''}
           </Text>
           <Text style={styles.featuredNombre} numberOfLines={1}>
             {destino.nombre}
           </Text>
+          {descripcion ? (
+            <Text style={styles.featuredDescripcion} numberOfLines={2}>
+              {descripcion}
+            </Text>
+          ) : null}
+          {porQueCorto ? (
+            <View style={styles.porQue}>
+              <Icon name="thumb-up-off-alt" size={13} color={colors.secondaryContainer} />
+              <Text style={styles.featuredPorQue} numberOfLines={1}>
+                {porQueCorto}
+              </Text>
+            </View>
+          ) : null}
           {nota ? (
-            <Text style={styles.featuredNota} numberOfLines={2}>
+            <Text style={styles.featuredDescripcion} numberOfLines={2}>
               {nota}
             </Text>
           ) : null}
-          {razones ? <ChipsRazones razones={razones} max={2} style={styles.chips} /> : null}
-          {precio ? <Text style={styles.featuredMeta}>{precio}</Text> : null}
+          {/* Fila de información: precio y ocupación. Si no caben, la ocupación baja de línea. */}
+          <View style={styles.featuredInfo}>
+            {precio ? (
+              <Text style={styles.featuredPrecio} numberOfLines={1}>
+                {precio}
+              </Text>
+            ) : null}
+            <OcupacionCompacta ocupacion={destino.ocupacionActual} sobreOscuro />
+          </View>
         </GlassPanel>
       </PressableScale>
     );
@@ -89,12 +126,16 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, razones
             {destacado && <Text style={styles.destacado}>{destacado}</Text>}
             {!sinFavorito && <BotonFavorito destino={destino} tamano={20} style={styles.corazon} />}
           </View>
-          <View style={styles.meta}>
-            <Icon name={categoria.icono} size={14} color={colors.secondary} />
-            <Text style={styles.metaTexto} numberOfLines={1}>
-              {categoria.singular}
-              {cerrado(destino) ? ' • Cerrado temporalmente' : ''}
-            </Text>
+          {/* Metadatos: categoría y ocupación como chip; pasan a otra línea en pantallas angostas. */}
+          <View style={styles.metadatos}>
+            <View style={styles.meta}>
+              <Icon name={categoria.icono} size={14} color={colors.secondary} />
+              <Text style={styles.metaTexto} numberOfLines={1}>
+                {categoria.singular}
+                {cerrado(destino) ? ' • Cerrado temporalmente' : ''}
+              </Text>
+            </View>
+            <OcupacionCompacta ocupacion={destino.ocupacionActual} variante="chip" />
           </View>
           {precio ? (
             <View style={styles.meta}>
@@ -104,13 +145,24 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, razones
               </Text>
             </View>
           ) : null}
+          {descripcion ? (
+            <Text style={styles.descripcion} numberOfLines={2}>
+              {descripcion}
+            </Text>
+          ) : null}
+          {porQueCorto ? (
+            <View style={styles.porQue}>
+              <Icon name="thumb-up-off-alt" size={13} color={colors.secondary} />
+              <Text style={styles.porQueTexto} numberOfLines={1}>
+                {porQueCorto}
+              </Text>
+            </View>
+          ) : null}
           {nota ? (
             <Text style={styles.nota} numberOfLines={2}>
               {nota}
             </Text>
           ) : null}
-          {razones ? <ChipsRazones razones={razones} max={3} /> : null}
-          <IndicadorOcupacion ocupacion={destino.ocupacionActual} mostrarPorcentaje />
         </View>
       </View>
     </GlassPanel>
@@ -119,28 +171,42 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, razones
 
 const styles = StyleSheet.create({
   featured: {
-    height: 300,
+    height: 320,
     borderRadius: radius.xxl,
     overflow: 'hidden',
     backgroundColor: colors.navy950,
     justifyContent: 'space-between',
     padding: spacing.gutter,
   },
-  featuredArriba: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  featuredAcciones: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  corazon: { marginTop: -8, marginRight: -8 },
-  featuredDestacado: {
+  featuredArriba: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
+  compatibilidad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: radius.full,
     backgroundColor: colors.glassStrong,
   },
-  featuredDestacadoTexto: { ...typography.labelBold, color: colors.secondary },
-  featuredLeyenda: { gap: 2 },
-  chips: { marginTop: 4 },
+  compatibilidadTexto: { ...typography.labelBold, color: colors.secondary, flexShrink: 1 },
+  corazon: { marginTop: -8, marginRight: -8 },
+  featuredLeyenda: { gap: 3 },
   featuredMeta: { ...typography.labelMd, color: colors.textOnDarkMuted },
   featuredNombre: { ...typography.headlineSm, color: colors.white },
-  featuredNota: { ...typography.bodyMd, color: colors.textOnDarkMuted },
+  featuredDescripcion: { ...typography.bodyMd, color: colors.textOnDarkMuted },
+  porQue: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  featuredPorQue: { ...typography.labelBold, color: colors.secondaryContainer, flex: 1 },
+  featuredInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: spacing.sm,
+    rowGap: 4,
+    marginTop: 4,
+  },
+  featuredPrecio: { ...typography.labelBold, color: colors.white, flexShrink: 1 },
 
   fila: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   miniatura: { width: 84, height: 84, borderRadius: radius.lg, backgroundColor: colors.surfaceLow },
@@ -148,7 +214,10 @@ const styles = StyleSheet.create({
   filaNombre: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
   nombre: { ...typography.titleMd, color: colors.textStrong, flexShrink: 1 },
   destacado: { ...typography.labelBold, color: colors.secondary },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metadatos: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.sm, rowGap: 4 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
   metaTexto: { ...typography.labelMd, color: colors.textSubtle, flexShrink: 1 },
+  descripcion: { ...typography.bodyMd, color: colors.textMuted },
+  porQueTexto: { ...typography.labelBold, color: colors.secondary, flex: 1 },
   nota: { ...typography.bodyMd, color: colors.textMuted },
 });

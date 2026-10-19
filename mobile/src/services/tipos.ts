@@ -215,6 +215,8 @@ export interface Recomendacion extends Destino {
   razon: string;
   /** Frase corta con lo más importante. */
   porQue: string;
+  /** UNA razón de una línea para las tarjetas de Inicio ("Dentro de tu presupuesto"). */
+  porQueCorto?: string;
   /** Positivas primero y advertencias después. */
   razones: Razon[];
   calificacion: Calificacion | null;

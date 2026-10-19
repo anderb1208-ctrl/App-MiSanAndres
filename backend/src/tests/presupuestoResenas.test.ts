@@ -7,7 +7,7 @@ import * as ocupacionModel from '../models/ocupacionModel';
 import * as preferenciaModel from '../models/preferenciaModel';
 import * as resenaModel from '../models/resenaModel';
 import * as usuarioModel from '../models/usuarioModel';
-import { explicar, type DatosRazones } from '../services/razonesRecomendacion';
+import { explicar, type DatosRazones, MAX_POR_QUE_CORTO } from '../services/razonesRecomendacion';
 import * as fecha from '../utils/fecha';
 import { catalogo, etiquetas, hoyoSoplador, johnnyCay, promediosHora, sprattBight } from './fixtures';
 
@@ -205,7 +205,27 @@ describe('explicar (funciones puras)', () => {
   };
 
   it('sin datos no inventa razones', () => {
-    expect(explicar(base)).toEqual({ razones: [], porQue: '' });
+    expect(explicar(base)).toEqual({ razones: [], porQue: '', porQueCorto: '' });
+  });
+
+  it('porQueCorto: una sola razón breve, la primera positiva', () => {
+    const r = explicar({
+      ...base,
+      gustos: ['Playas', 'Relax'],
+      precio: { minCop: 0, maxCop: 0, estimado: false },
+      presupuesto: { minCop: 0, maxCop: 50000 },
+      calificacion: { promedio: 4.5, cantidad: 10 },
+    });
+    expect(r.porQueCorto).toBe('Coincide con Playas');
+    expect(r.porQue).toBe('Coincide con Playas y Relax y está dentro de tu presupuesto.');
+  });
+
+  it('porQueCorto: sin positivas usa la advertencia y nunca pasa de una línea', () => {
+    const prediccion = { estado: 'Cerrado', nivel: null, porcentaje: 0, clima: null } as unknown as DatosRazones['prediccion'];
+    expect(explicar({ ...base, prediccion, motivoCierre: 'Mantenimiento' }).porQueCorto).toBe('Cerrado temporalmente');
+    const largo = explicar({ ...base, gustos: ['Experiencias de naturaleza y avistamiento de aves'] }).porQueCorto;
+    expect(largo.length).toBeLessThanOrEqual(MAX_POR_QUE_CORTO);
+    expect(largo.endsWith('…')).toBe(true);
   });
 
   it('cierre temporal con su motivo', () => {

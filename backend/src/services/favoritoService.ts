@@ -1,6 +1,10 @@
 /**
  * Favoritos del usuario con sus dos avisos ("cuando abra" y "cuando cierre") y registro de
  * dispositivos para las notificaciones push. Todo con el JWT del usuario (RLS: lo propio).
+ *
+ * Cada favorito trae la ocupación de ahora (hora de Colombia) calculada con el mismo
+ * prediccionService que Inicio, en lote: una sola consulta de clima y de histórico para
+ * todos los favoritos.
  */
 import type { Db } from '../config/supabase';
 import type { UsuarioAuth } from '../models/authModel';
@@ -10,6 +14,8 @@ import * as favoritoModel from '../models/favoritoModel';
 import type { FavoritoRow } from '../models/database.types';
 import type { CuerpoAvisosFavorito, CuerpoDispositivo, CuerpoFavorito } from '../middleware/esquemas';
 import { noEncontrado } from '../utils/errores';
+import { ahoraEnColombia } from '../utils/fecha';
+import * as prediccionService from './prediccionService';
 import { aDestino, type Destino } from './destinoService';
 
 export interface Avisos {
@@ -28,11 +34,14 @@ const aAvisos = (f: FavoritoRow): Avisos => ({ avisarApertura: f.avisar_apertura
 
 export async function listar(db: Db, usuario: UsuarioAuth): Promise<Favorito[]> {
   const filas = await favoritoModel.listar(db, usuario.id);
+  const visibles = filas.flatMap((f) => (f.destino && f.destino.estado !== 'inactivo' ? [f.destino] : []));
+  const { fecha, hora } = ahoraEnColombia();
+  const predicciones = visibles.length > 0 ? await prediccionService.predecirVarios(db, visibles, fecha, hora) : new Map();
   return filas.map((f) => ({
     idDestino: f.id_destino,
     fechaCreacion: f.fecha_creacion,
     ...aAvisos(f),
-    destino: f.destino && f.destino.estado !== 'inactivo' ? aDestino(f.destino) : null,
+    destino: f.destino && f.destino.estado !== 'inactivo' ? aDestino(f.destino, predicciones.get(f.id_destino)) : null,
   }));
 }
 
@@ -46,7 +55,9 @@ export async function agregar(db: Db, usuario: UsuarioAuth, cuerpo: CuerpoFavori
     avisar_apertura: cuerpo.avisarApertura,
     avisar_cierre: cuerpo.avisarCierre,
   });
-  return { idDestino: fila.id_destino, fechaCreacion: fila.fecha_creacion, ...aAvisos(fila), destino: aDestino(destino) };
+  const { fecha, hora } = ahoraEnColombia();
+  const prediccion = await prediccionService.predecir(db, destino, fecha, hora);
+  return { idDestino: fila.id_destino, fechaCreacion: fila.fecha_creacion, ...aAvisos(fila), destino: aDestino(destino, prediccion) };
 }
 
 export async function actualizarAvisos(db: Db, usuario: UsuarioAuth, idDestino: number, cuerpo: CuerpoAvisosFavorito): Promise<Avisos & { idDestino: number }> {

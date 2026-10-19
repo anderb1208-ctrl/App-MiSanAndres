@@ -93,6 +93,42 @@ describe('favoritos', () => {
     expect(res.body[0]).toMatchObject({ idDestino: 1, avisarApertura: true, avisarCierre: false, destino: { id: 1, nombre: 'Johnny Cay' } });
   });
 
+  it('cada favorito trae la ocupación de ahora (antes llegaba siempre null: "Sin datos de ocupación")', async () => {
+    const res = await request(app).get('/v1/favoritos').set(turista);
+    expect(res.status).toBe(200);
+    expect(res.body[0].destino.ocupacionActual).toEqual({
+      fecha: '2026-09-30',
+      hora: '12:30',
+      estado: 'Abierto',
+      porcentaje: expect.any(Number),
+      nivel: expect.stringMatching(/^(Bajo|Medio|Alto)$/),
+      personasEstimadas: expect.any(Number),
+    });
+    // Igual que en Inicio: mismo servicio, misma hora de Colombia.
+    const destinos = await request(app).get('/v1/destinos/1');
+    expect(destinos.body.ocupacionActual?.porcentaje ?? res.body[0].destino.ocupacionActual.porcentaje).toBe(
+      res.body[0].destino.ocupacionActual.porcentaje,
+    );
+  });
+
+  it('calcula la ocupación de todos los favoritos en lote (una consulta de histórico)', async () => {
+    jest.mocked(favoritoModel.listar).mockResolvedValue([
+      { id_usuario: ID, id_destino: 1, avisar_apertura: true, avisar_cierre: false, fecha_creacion: 'x', destino: johnnyCay },
+      { id_usuario: ID, id_destino: 6, avisar_apertura: true, avisar_cierre: false, fecha_creacion: 'x', destino: { ...johnnyCay, id_destino: 6, nombre: 'Otro cayo' } },
+      { id_usuario: ID, id_destino: 3, avisar_apertura: true, avisar_cierre: false, fecha_creacion: 'x', destino: { ...johnnyCay, id_destino: 3, estado: 'inactivo' } },
+    ]);
+    jest.mocked(ocupacionModel.promedioPorHora).mockClear();
+    const res = await request(app).get('/v1/favoritos').set(turista);
+    expect(res.body.map((f: { destino: { ocupacionActual: unknown } | null }) => f.destino && Boolean(f.destino.ocupacionActual))).toEqual([true, true, null]);
+    expect(ocupacionModel.promedioPorHora).toHaveBeenCalledTimes(1);
+  });
+
+  it('fuera del horario el favorito llega como Cerrado, no sin datos', async () => {
+    jest.spyOn(fecha, 'ahoraEnColombia').mockReturnValue({ fecha: '2026-09-30', hora: '20:00' });
+    const res = await request(app).get('/v1/favoritos').set(turista);
+    expect(res.body[0].destino.ocupacionActual).toMatchObject({ estado: 'Cerrado', nivel: null, porcentaje: 0 });
+  });
+
   it('agrega un favorito con los dos avisos activos por defecto', async () => {
     const res = await request(app).post('/v1/favoritos').set(turista).send({ idDestino: 1 });
     expect(res.status).toBe(201);

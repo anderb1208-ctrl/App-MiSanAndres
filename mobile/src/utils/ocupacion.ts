@@ -44,3 +44,29 @@ export function textoOrigenEstimacion(
   if (p.modelo) return `Estimado con ${p.modelo} · ${datos}`;
   return p.mensajeOrigen;
 }
+
+export interface TextoOcupacion {
+  /** "Ocupación baja · 31 %" */
+  largo: string;
+  /** "Baja · 31 %" */
+  corto: string;
+  accesible: string;
+  icono: 'schedule' | 'help-outline' | 'groups';
+}
+
+/** Textos de la ocupación compacta (Inicio, Explorar y Favoritos). */
+export function textoOcupacion(o: Pick<PrediccionOcupacion, 'estado' | 'porcentaje' | 'nivel'> | null | undefined): TextoOcupacion {
+  if (!o) {
+    return { largo: 'Sin datos de ocupación', corto: 'Sin datos', accesible: 'Sin datos de ocupación', icono: 'help-outline' };
+  }
+  if (o.estado === 'Cerrado' || !o.nivel) {
+    return { largo: 'Cerrado ahora', corto: 'Cerrado', accesible: 'Cerrado ahora', icono: 'schedule' };
+  }
+  const pct = `${Math.round(o.porcentaje)} %`;
+  return {
+    largo: `Ocupación ${ADJETIVO_NIVEL[o.nivel]} · ${pct}`,
+    corto: `${ETIQUETA_NIVEL[o.nivel]} · ${pct}`,
+    accesible: `Ocupación ${ADJETIVO_NIVEL[o.nivel]}, ${pct}`,
+    icono: 'groups',
+  };
+}

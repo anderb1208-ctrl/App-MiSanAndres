@@ -51,6 +51,8 @@ export interface Recomendacion extends Destino {
   razon: string;
   /** Frase corta: "Coincide con Cayos y está dentro de tu presupuesto, aunque…". */
   porQue: string;
+  /** UNA razón de una línea para las tarjetas de Inicio: "Dentro de tu presupuesto". */
+  porQueCorto: string;
   /** Razones positivas primero y advertencias después, con valores reales. */
   razones: Razon[];
   calificacion: resenaModel.Calificacion | null;
@@ -184,7 +186,7 @@ export async function recomendar(
     const puntaje = Math.round(Math.min(100, Math.max(0, PUNTOS_AFINIDAD * afinidad + ajuste)));
 
     const destinoApi = aDestino(destino, prediccion);
-    const { razones, porQue } = explicar({
+    const { razones, porQue, porQueCorto } = explicar({
       categoria: destino.categoria,
       horario: destinoApi.horario,
       hora,
@@ -204,6 +206,7 @@ export async function recomendar(
       coincidencias,
       razon: construirRazon(coincidencias, prediccion?.nivel, nivelOcupacion, cerrado),
       porQue,
+      porQueCorto,
       razones,
       calificacion,
     });
