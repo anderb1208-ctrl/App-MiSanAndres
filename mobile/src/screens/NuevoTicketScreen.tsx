@@ -61,7 +61,7 @@ export function NuevoTicketScreen({ navigation, route }: AppScreenProps<'NuevoTi
     <PantallaApilada
       titulo="Reportar un problema"
       subtitulo={pestana === 'nuevo' ? 'Cuéntanos qué pasó' : 'Lo que reportaste y su estado'}
-      onVolver={navigation.goBack}
+      conVolver
     >
       <ControlSegmentado opciones={PESTANAS} valor={pestana} onCambiar={setPestana} etiquetaAccesible="Reportar un problema" />
       {pestana === 'mios' ? (

@@ -69,7 +69,7 @@ export function TicketDetalleScreen({ navigation, route }: AppScreenProps<'Ticke
   };
 
   return (
-    <PantallaApilada titulo={`Ticket #${id}`} onVolver={navigation.goBack} refrescando={refrescando} onRefrescar={recargar}>
+    <PantallaApilada titulo={`Ticket #${id}`} conVolver refrescando={refrescando} onRefrescar={recargar}>
       {cargando ? (
         <EstadoCargando mensaje="Cargando ticket…" />
       ) : !t ? (

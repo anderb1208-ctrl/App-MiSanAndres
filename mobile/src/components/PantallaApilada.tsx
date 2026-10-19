@@ -4,14 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBarraEstado } from '../hooks/useBarraEstado';
 import { colors, spacing } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
+import { BotonVolver } from './BotonVolver';
 import { ScreenBackground } from './ScreenBackground';
 import { ScreenHeader } from './ScreenHeader';
 
 interface Props {
   titulo: string;
   subtitulo?: string;
-  /** Sin onVolver, la pantalla no muestra la flecha (p. ej. cuando es una pestaña). */
-  onVolver?: () => void;
+  /** Pantalla secundaria: muestra el BotonVolver flotante (no en las pestañas raíz). */
+  conVolver?: boolean;
   acciones?: { icono: NombreIcono; etiqueta: string; onPress: () => void }[];
   refrescando?: boolean;
   onRefrescar?: () => void;
@@ -21,7 +22,7 @@ interface Props {
 }
 
 /** Estructura común de las pantallas de formulario y detalle: fondo, encabezado y scroll. */
-export function PantallaApilada({ titulo, subtitulo, onVolver, acciones, refrescando, onRefrescar, espacioInferior = spacing.xl, children }: Props) {
+export function PantallaApilada({ titulo, subtitulo, conVolver = false, acciones, refrescando, onRefrescar, espacioInferior = spacing.xl, children }: Props) {
   useBarraEstado('dark');
   return (
     <ScreenBackground>
@@ -36,11 +37,12 @@ export function PantallaApilada({ titulo, subtitulo, onVolver, acciones, refresc
               ) : undefined
             }
           >
-            <ScreenHeader titulo={titulo} subtitulo={subtitulo} onVolver={onVolver} acciones={acciones} />
+            <ScreenHeader titulo={titulo} subtitulo={subtitulo} conBotonVolver={conVolver} acciones={acciones} />
             <View style={styles.cuerpo}>{children}</View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      {conVolver && <BotonVolver />}
     </ScreenBackground>
   );
 }

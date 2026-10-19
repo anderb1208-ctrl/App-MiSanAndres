@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
+import { SANGRIA_BOTON_VOLVER } from './BotonVolver';
 import { IconButton } from './IconButton';
 
 interface Accion {
@@ -12,15 +13,15 @@ interface Accion {
 interface Props {
   titulo: string;
   subtitulo?: string;
-  onVolver?: () => void;
+  /** Deja libre la esquina izquierda para el BotonVolver flotante. */
+  conBotonVolver?: boolean;
   acciones?: Accion[];
 }
 
 /** Encabezado grande de pantalla ("Mi perfil", "Explorar destinos"…). */
-export function ScreenHeader({ titulo, subtitulo, onVolver, acciones = [] }: Props) {
+export function ScreenHeader({ titulo, subtitulo, conBotonVolver = false, acciones = [] }: Props) {
   return (
-    <View style={styles.contenedor}>
-      {onVolver && <IconButton icono="arrow-back" etiqueta="Volver" onPress={onVolver} />}
+    <View style={[styles.contenedor, conBotonVolver && styles.conBotonVolver]}>
       <View style={styles.textos}>
         <Text style={styles.titulo} accessibilityRole="header">
           {titulo}
@@ -75,6 +76,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
+  // El título empieza después del botón flotante (16 + 44 + 12) y queda centrado con él.
+  conBotonVolver: { paddingLeft: spacing.screen + SANGRIA_BOTON_VOLVER, minHeight: 44 + spacing.sm + spacing.md },
   textos: { flex: 1, gap: 2 },
   titulo: { ...typography.headlineMd, fontFamily: typography.display.fontFamily, color: colors.textStrong },
   subtitulo: { ...typography.bodyMd, color: colors.textMuted },

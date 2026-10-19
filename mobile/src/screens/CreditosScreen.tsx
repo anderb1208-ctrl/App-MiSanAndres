@@ -2,6 +2,7 @@ import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassPanel } from '../components/GlassPanel';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { BotonVolver } from '../components/BotonVolver';
 import { ScreenHeader, SectionHeader } from '../components/ScreenHeader';
 import { SelectRow } from '../components/SelectRow';
 import { useBarraEstado } from '../hooks/useBarraEstado';
@@ -44,14 +45,14 @@ const CREDITOS: Credito[] = [
 ];
 
 /** Atribuciones que exigen las licencias de los datos usados por la app. */
-export function CreditosScreen({ navigation }: AppScreenProps<'Creditos'>) {
+export function CreditosScreen(_props: AppScreenProps<'Creditos'>) {
   useBarraEstado('dark');
 
   return (
     <ScreenBackground>
       <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.contenido}>
-          <ScreenHeader titulo="Créditos y licencias" onVolver={navigation.goBack} />
+          <ScreenHeader titulo="Créditos y licencias" conBotonVolver />
           <View style={styles.cuerpo}>
             <SectionHeader titulo="Datos y servicios" subtitulo="Toca un elemento para abrir su sitio" />
             <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
@@ -72,6 +73,7 @@ export function CreditosScreen({ navigation }: AppScreenProps<'Creditos'>) {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <BotonVolver />
     </ScreenBackground>
   );
 }

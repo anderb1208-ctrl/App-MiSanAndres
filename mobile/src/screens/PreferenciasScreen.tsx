@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { RangoPresupuesto } from '../components/RangoPresupuesto';
+import { BotonVolver } from '../components/BotonVolver';
 import { Overline, ScreenHeader } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SelectRow } from '../components/SelectRow';
@@ -231,11 +232,12 @@ export function PreferenciasScreen({ onboarding = false }: Props) {
                 ? 'Cuéntanos qué te gusta para recomendarte destinos.'
                 : 'Cuéntanos qué te gusta para mejorar tus recomendaciones.'
             }
-            onVolver={onboarding ? undefined : navigation.goBack}
+            conBotonVolver={!onboarding}
           />
           {cuerpo()}
         </ScrollView>
       </SafeAreaView>
+      {!onboarding && <BotonVolver />}
 
       {datos && (
         <View style={[styles.barra, shadows.lg, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>

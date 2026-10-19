@@ -6,7 +6,6 @@ import { BotonFavorito } from '../components/BotonFavorito';
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
-import { IconButton } from '../components/IconButton';
 import { ImagenDestino } from '../components/ImagenDestino';
 import { MiniMapa } from '../components/MiniMapa';
 import { IndicadorOcupacion } from '../components/IndicadorOcupacion';
@@ -38,6 +37,7 @@ import { abrirUbicacion } from '../utils/mapa';
 import { NOTA_NIVEL } from '../utils/ocupacion';
 import { formatearPrecio } from '../utils/presupuesto';
 import { useAuth } from '../store/AuthContext';
+import { BotonVolver } from '../components/BotonVolver';
 
 /** Ocupación típica de hoy (según el día de la semana) y registros reales de hoy, que son opcionales. */
 async function cargarCurva(id: number) {
@@ -99,23 +99,11 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
     registrarInteraccion(id, 'vista').catch(() => undefined);
   }, [id]);
 
-  const volver = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Tabs', { screen: 'Inicio' }));
-
-  const botonVolver = (
-    <IconButton
-      icono="arrow-back"
-      etiqueta="Volver"
-      tono="glass-dark"
-      onPress={volver}
-      style={[styles.volver, { top: insets.top + spacing.sm }]}
-    />
-  );
-
   if (destino.cargando) {
     return (
       <ScreenBackground>
         <EstadoCargando style={styles.centro} mensaje="Cargando destino…" />
-        {botonVolver}
+        <BotonVolver />
       </ScreenBackground>
     );
   }
@@ -130,7 +118,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
           error={destino.error}
           onReintentar={noEncontrado ? undefined : destino.recargar}
         />
-        {botonVolver}
+        <BotonVolver />
       </ScreenBackground>
     );
   }
@@ -336,7 +324,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
         </View>
       </ScrollView>
 
-      {botonVolver}
+      {/* Sobre la foto: variante oscura para que siempre se vea. */}
+      <BotonVolver variante="imagen" />
       <BotonFavorito destino={d} tono="glass" tamano={24} style={[styles.favorito, { top: insets.top + spacing.sm }]} />
 
       <View style={[styles.barraAcciones, shadows.lg, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
@@ -361,7 +350,6 @@ const styles = StyleSheet.create({
   reportarTexto: { ...typography.labelBold, color: colors.textLink, flex: 1 },
   fondo: { flex: 1, backgroundColor: colors.white },
   centro: { flex: 1, justifyContent: 'center' },
-  volver: { position: 'absolute', left: spacing.screen, zIndex: 5 },
   favorito: { position: 'absolute', right: spacing.screen, zIndex: 5 },
   cierre: { flexDirection: 'row', gap: spacing.sm, padding: spacing.gutter, borderRadius: radius.lg, backgroundColor: colors.errorContainer, borderWidth: 1, borderColor: colors.errorBorder },
   cierreTextos: { flex: 1, gap: 2 },

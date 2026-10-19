@@ -62,6 +62,7 @@ export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) 
 
   return (
     <PantallaApilada
+      conVolver
       titulo="Destinos"
       subtitulo={`${datos?.length ?? 0} en total`}
       espacioInferior={espacio}

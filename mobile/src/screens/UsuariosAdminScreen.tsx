@@ -52,7 +52,7 @@ export function UsuariosAdminScreen(_props: TabScreenProps<'Usuarios'>) {
   };
 
   return (
-    <PantallaApilada titulo="Usuarios" subtitulo={`${datos?.length ?? 0} registrados`} espacioInferior={espacio} refrescando={refrescando} onRefrescar={recargar}>
+    <PantallaApilada conVolver titulo="Usuarios" subtitulo={`${datos?.length ?? 0} registrados`} espacioInferior={espacio} refrescando={refrescando} onRefrescar={recargar}>
       <View style={styles.buscador}>
         <Icon name="search" size={20} color={colors.textSubtle} />
         <TextInput

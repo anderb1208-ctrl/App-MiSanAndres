@@ -20,7 +20,7 @@ import { listarDestinos } from '../services/destinos';
 import { obtenerPerfil } from '../services/perfil';
 import { obtenerRecomendaciones } from '../services/recomendaciones';
 import type { Destino, NivelOcupacion, Presupuesto } from '../services/tipos';
-import { colors, occupancyColors, radius, spacing, typography } from '../theme';
+import { colors, motion, occupancyColors, radius, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
 import { IMAGENES } from '../utils/imagenes';
 import { ADJETIVO_NIVEL, NIVELES } from '../utils/ocupacion';
@@ -214,13 +214,24 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
           </GlassPanel>
         </View>
 
+        {/* Accesos rápidos: solo el ícono circular y su texto, sin tarjeta. */}
         <View style={styles.accesos}>
           {accesos.map((a) => (
-            <PressableScale key={a.etiqueta} onPress={a.onPress} accessibilityRole="button" accessibilityLabel={a.etiqueta} style={styles.acceso}>
+            <PressableScale
+              key={a.etiqueta}
+              onPress={a.onPress}
+              escala={motion.pressScale.icon}
+              accessibilityRole="button"
+              accessibilityLabel={a.etiqueta}
+              hitSlop={4}
+              style={styles.acceso}
+            >
               <View style={styles.accesoIcono}>
-                <Icon name={a.icono} size={20} />
+                <Icon name={a.icono} size={24} color={colors.secondary} />
               </View>
-              <Text style={styles.accesoTexto}>{a.etiqueta}</Text>
+              <Text style={styles.accesoTexto} numberOfLines={1}>
+                {a.etiqueta}
+              </Text>
             </PressableScale>
           ))}
         </View>
@@ -301,22 +312,13 @@ const styles = StyleSheet.create({
   nivel: { flex: 1, paddingVertical: 10, paddingHorizontal: spacing.gutter, borderRadius: radius.lg, borderWidth: 1 },
   nivelNumero: { ...typography.headlineMd, fontFamily: typography.display.fontFamily },
   nivelEtiqueta: typography.labelMd,
-  accesos: { flexDirection: 'row', gap: 10, paddingHorizontal: spacing.screen, paddingTop: spacing.md },
-  acceso: {
-    flex: 1,
-    height: 76,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: colors.glassStrong,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-  },
+  accesos: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: spacing.screen, paddingTop: spacing.lg },
+  // Área táctil de al menos 44 × 44 (todo el bloque ícono + texto es tocable).
+  acceso: { minWidth: 76, minHeight: 76, alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 },
   accesoIcono: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: colors.secondarySoft,
     alignItems: 'center',
     justifyContent: 'center',

@@ -147,7 +147,7 @@ export function HistorialScreen({ navigation }: AppScreenProps<'Historial'>) {
     <PantallaApilada
       titulo="Historial"
       subtitulo="Destinos que has consultado"
-      onVolver={navigation.goBack}
+      conVolver
       refrescando={cargando && Boolean(estado)}
       onRefrescar={() => void cargar(filtro, 1)}
     >

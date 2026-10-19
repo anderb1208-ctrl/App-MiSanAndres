@@ -22,7 +22,7 @@ import { probarNotificacion } from '../services/notificaciones';
 import type { Insignia, Rol } from '../services/tipos';
 import { API_BASE_URL } from '../config/env';
 import { useAuth } from '../store/AuthContext';
-import { colors, radius, shadows, spacing, typography } from '../theme';
+import { colors, shadows, spacing, typography } from '../theme';
 import { ETIQUETA_ROL, ICONO_ROL } from '../utils/tickets';
 import { formatearMesAnio } from '../utils/fecha';
 import { motivoPendientes } from '../utils/pasaporte';

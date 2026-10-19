@@ -108,7 +108,7 @@ export function EditarDestinoScreen({ navigation, route }: AppScreenProps<'Edita
   };
 
   return (
-    <PantallaApilada titulo={id ? 'Editar destino' : 'Nuevo destino'} onVolver={navigation.goBack}>
+    <PantallaApilada titulo={id ? 'Editar destino' : 'Nuevo destino'} conVolver>
       {cargando ? (
         <EstadoCargando />
       ) : (

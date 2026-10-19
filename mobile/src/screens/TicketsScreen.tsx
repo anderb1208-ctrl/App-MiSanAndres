@@ -27,7 +27,6 @@ interface Props {
   titulo: string;
   subtitulo: string;
   onAbrir: (id: number) => void;
-  onVolver?: () => void;
   onNuevo?: () => void;
   espacioInferior?: number;
 }
@@ -122,13 +121,12 @@ function ContenidoTickets({ lista, onAbrir, onNuevo }: { lista: ListaTicketsEsta
 }
 
 /** Lista de tickets con filtros por estado y prioridad, en su propia pantalla. */
-function ListaTickets({ titulo, subtitulo, onAbrir, onVolver, onNuevo, espacioInferior }: Props) {
+function ListaTickets({ titulo, subtitulo, onAbrir, onNuevo, espacioInferior }: Props) {
   const lista = useListaTickets();
   return (
     <PantallaApilada
       titulo={titulo}
       subtitulo={subtitulo}
-      onVolver={onVolver}
       acciones={onNuevo ? [{ icono: 'add', etiqueta: 'Nuevo reporte', onPress: onNuevo }] : undefined}
       refrescando={lista.refrescando}
       onRefrescar={lista.recargar}
