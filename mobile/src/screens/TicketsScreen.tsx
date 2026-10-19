@@ -8,7 +8,7 @@ import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateV
 import { Tag } from '../components/Tag';
 import { useAsync } from '../hooks/useAsync';
 import { useEspacioTabBar } from '../navigation/TabBar';
-import type { AppScreenProps, TabScreenProps } from '../navigation/types';
+import type { TabScreenProps } from '../navigation/types';
 import { listarTickets } from '../services/tickets';
 import type { EstadoTicket, PrioridadTicket, Ticket } from '../services/tipos';
 import { useAuth } from '../store/AuthContext';
@@ -59,29 +59,28 @@ function TarjetaTicket({ ticket, onPress, mostrarCreador }: { ticket: Ticket; on
   );
 }
 
-/** Lista de tickets con filtros por estado y prioridad. */
-function ListaTickets({ titulo, subtitulo, onAbrir, onVolver, onNuevo, espacioInferior }: Props) {
+/** Filtros y resultado de la lista de tickets. */
+function useListaTickets() {
   const { rol, sesion } = useAuth();
   const esPersonal = rol === 'tecnico' || rol === 'administrador';
   const [estado, setEstado] = useState<EstadoTicket>();
   const [prioridad, setPrioridad] = useState<PrioridadTicket>();
   const [mios, setMios] = useState(false);
-  const { datos, error, cargando, refrescando, recargar } = useAsync(
+  const consulta = useAsync(
     () => listarTickets({ estado, prioridad, asignadosAMi: mios }),
     [estado, prioridad, mios],
     { recargarAlEnfocar: true },
   );
+  return { esPersonal, puedeFiltrarMios: esPersonal && Boolean(sesion), estado, setEstado, prioridad, setPrioridad, mios, setMios, ...consulta };
+}
 
+type ListaTicketsEstado = ReturnType<typeof useListaTickets>;
+
+/** Chips de filtros y tarjetas (sin la pantalla alrededor, para poder incrustarlo). */
+function ContenidoTickets({ lista, onAbrir, onNuevo }: { lista: ListaTicketsEstado; onAbrir: (id: number) => void; onNuevo?: () => void }) {
+  const { esPersonal, estado, setEstado, prioridad, setPrioridad, mios, setMios, datos, error, cargando, recargar } = lista;
   return (
-    <PantallaApilada
-      titulo={titulo}
-      subtitulo={subtitulo}
-      onVolver={onVolver}
-      acciones={onNuevo ? [{ icono: 'add', etiqueta: 'Nuevo reporte', onPress: onNuevo }] : undefined}
-      refrescando={refrescando}
-      onRefrescar={recargar}
-      espacioInferior={espacioInferior}
-    >
+    <>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtros}>
         {ESTADOS_TICKET.map((e) => (
           <FilterChip key={e} compacto activo={estado === e} onPress={() => setEstado(estado === e ? undefined : e)}>
@@ -95,7 +94,7 @@ function ListaTickets({ titulo, subtitulo, onAbrir, onVolver, onNuevo, espacioIn
             {`Prioridad ${ETIQUETA_PRIORIDAD[p].toLowerCase()}`}
           </FilterChip>
         ))}
-        {esPersonal && sesion && (
+        {lista.puedeFiltrarMios && (
           <FilterChip compacto acento="turquoise" icono="person-pin" activo={mios} onPress={() => setMios(!mios)}>
             Asignados a mí
           </FilterChip>
@@ -110,14 +109,32 @@ function ListaTickets({ titulo, subtitulo, onAbrir, onVolver, onNuevo, espacioIn
         <GlassPanel tono="strong" radius={20}>
           <EstadoMensaje
             icono="inbox"
-            titulo={estado || prioridad || mios ? 'Sin tickets con esos filtros' : 'No hay tickets'}
-            mensaje={esPersonal ? 'Cuando alguien reporte un problema aparecerá aquí.' : 'Tus reportes aparecerán aquí.'}
+            titulo={estado || prioridad || mios ? 'Sin tickets con esos filtros' : esPersonal ? 'No hay tickets' : 'Aún no has reportado nada'}
+            mensaje={esPersonal ? 'Cuando alguien reporte un problema aparecerá aquí.' : 'Tus reportes y su estado aparecerán aquí.'}
             accion={onNuevo ? { texto: 'Reportar un problema', onPress: onNuevo } : undefined}
           />
         </GlassPanel>
       ) : (
         datos.map((t) => <TarjetaTicket key={t.id} ticket={t} mostrarCreador={esPersonal} onPress={() => onAbrir(t.id)} />)
       )}
+    </>
+  );
+}
+
+/** Lista de tickets con filtros por estado y prioridad, en su propia pantalla. */
+function ListaTickets({ titulo, subtitulo, onAbrir, onVolver, onNuevo, espacioInferior }: Props) {
+  const lista = useListaTickets();
+  return (
+    <PantallaApilada
+      titulo={titulo}
+      subtitulo={subtitulo}
+      onVolver={onVolver}
+      acciones={onNuevo ? [{ icono: 'add', etiqueta: 'Nuevo reporte', onPress: onNuevo }] : undefined}
+      refrescando={lista.refrescando}
+      onRefrescar={lista.recargar}
+      espacioInferior={espacioInferior}
+    >
+      <ContenidoTickets lista={lista} onAbrir={onAbrir} onNuevo={onNuevo} />
     </PantallaApilada>
   );
 }
@@ -135,17 +152,10 @@ export function TicketsScreen({ navigation }: TabScreenProps<'Tickets'>) {
   );
 }
 
-/** "Mis reportes" del turista (desde Perfil). */
-export function MisReportesScreen({ navigation }: AppScreenProps<'MisReportes'>) {
-  return (
-    <ListaTickets
-      titulo="Mis reportes"
-      subtitulo="Problemas que reportaste y su estado"
-      onVolver={navigation.goBack}
-      onNuevo={() => navigation.navigate('NuevoTicket')}
-      onAbrir={(id) => navigation.navigate('TicketDetalle', { id })}
-    />
-  );
+/** "Mis reportes" del turista: pestaña dentro de "Reportar un problema". */
+export function MisReportes({ onAbrir, onNuevo }: { onAbrir: (id: number) => void; onNuevo?: () => void }) {
+  const lista = useListaTickets();
+  return <ContenidoTickets lista={lista} onAbrir={onAbrir} onNuevo={onNuevo} />;
 }
 
 const styles = StyleSheet.create({

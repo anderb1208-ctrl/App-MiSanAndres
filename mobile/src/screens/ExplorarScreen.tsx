@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DestinoCard } from '../components/DestinoCard';
 import { FilterChip } from '../components/FilterChip';
@@ -23,12 +23,25 @@ const claveOrden = (d: Destino) => {
   return o ? o.porcentaje : 200;
 };
 
-export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
+export function ExplorarScreen({ navigation, route }: TabScreenProps<'Explorar'>) {
   useBarraEstado('dark');
   const espacioInferior = useEspacioTabBar();
   const [categoria, setCategoria] = useState<CategoriaDestino>();
   const [soloBaja, setSoloBaja] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  // Desde una insignia del pasaporte: solo los destinos que faltan por explorar.
+  const [pendientes, setPendientes] = useState<{ ids: number[]; motivo: string } | null>(null);
+  const params = route.params;
+
+  useEffect(() => {
+    if (!params?.pendientes) return;
+    setCategoria(params.categoria);
+    setSoloBaja(false);
+    setBusqueda('');
+    setPendientes({ ids: params.pendientes, motivo: params.motivo ?? 'Lo que te falta por explorar' });
+    // Se consumen para que volver a tocar la misma insignia los aplique de nuevo.
+    navigation.setParams({ categoria: undefined, pendientes: undefined, motivo: undefined });
+  }, [params, navigation]);
   // La API busca por nombre (q) y aplica los filtros; se espera a que el usuario deje de escribir.
   const q = useValorDiferido(busqueda.trim()).slice(0, 100);
 
@@ -38,9 +51,12 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
     { recargarAlEnfocar: true },
   );
 
-  const destinos = useMemo(() => [...(datos ?? [])].sort((a, b) => claveOrden(a) - claveOrden(b)), [datos]);
+  const destinos = useMemo(() => {
+    const lista = pendientes ? (datos ?? []).filter((d) => pendientes.ids.includes(d.id)) : (datos ?? []);
+    return [...lista].sort((a, b) => claveOrden(a) - claveOrden(b));
+  }, [datos, pendientes]);
 
-  const hayFiltros = Boolean(categoria || soloBaja || busqueda.trim());
+  const hayFiltros = Boolean(categoria || soloBaja || busqueda.trim() || pendientes);
 
   const vacio = () => {
     if (cargando) return <EstadoCargando mensaje="Cargando destinos…" />;
@@ -64,6 +80,7 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
                   setCategoria(undefined);
                   setSoloBaja(false);
                   setBusqueda('');
+                  setPendientes(null);
                 },
               }
             : undefined
@@ -92,11 +109,25 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
           />
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          <FilterChip activo={!categoria} onPress={() => setCategoria(undefined)}>
+          <FilterChip
+            activo={!categoria}
+            onPress={() => {
+              setCategoria(undefined);
+              setPendientes(null);
+            }}
+          >
             Todos
           </FilterChip>
           {LISTA_CATEGORIAS.map((c) => (
-            <FilterChip key={c} icono={CATEGORIAS[c].icono} activo={categoria === c} onPress={() => setCategoria(c)}>
+            <FilterChip
+              key={c}
+              icono={CATEGORIAS[c].icono}
+              activo={categoria === c}
+              onPress={() => {
+                setCategoria(c);
+                setPendientes(null);
+              }}
+            >
               {CATEGORIAS[c].plural}
             </FilterChip>
           ))}
@@ -106,6 +137,15 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
             Solo ocupación baja
           </FilterChip>
         </View>
+        {pendientes && (
+          <View style={styles.pendientes} accessibilityLiveRegion="polite">
+            <Icon name="emoji-events" size={18} color={colors.secondary} />
+            <Text style={styles.pendientesTexto}>{pendientes.motivo}</Text>
+            <Pressable onPress={() => setPendientes(null)} accessibilityRole="button" accessibilityLabel="Ver todos los destinos" hitSlop={10} style={styles.pendientesBoton}>
+              <Text style={styles.pendientesAccion}>Ver todos</Text>
+            </Pressable>
+          </View>
+        )}
       </SafeAreaView>
 
       <FlatList
@@ -118,6 +158,7 @@ export function ExplorarScreen({ navigation }: TabScreenProps<'Explorar'>) {
             <View style={styles.resumen}>
               <Text style={styles.resumenTexto}>
                 {destinos.length} {destinos.length === 1 ? 'destino' : 'destinos'}
+                {pendientes ? ' por explorar' : ''}
                 {categoria ? ` en ${CATEGORIAS[categoria].plural}` : ''}
               </Text>
               <View style={styles.orden}>
@@ -180,6 +221,18 @@ const styles = StyleSheet.create({
   },
   chips: { gap: spacing.sm, paddingTop: spacing.gutter, paddingRight: spacing.screen },
   filtroSecundario: { flexDirection: 'row', marginTop: 10 },
+  pendientes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 10,
+    paddingLeft: spacing.gutter,
+    borderRadius: radius.lg,
+    backgroundColor: colors.turquoiseTint,
+  },
+  pendientesTexto: { ...typography.labelBold, color: colors.turq700, flex: 1, paddingVertical: spacing.sm },
+  pendientesBoton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.gutter },
+  pendientesAccion: { ...typography.labelBold, color: colors.textLink },
   lista: { paddingHorizontal: spacing.screen, paddingTop: spacing.md, flexGrow: 1 },
   separador: { height: spacing.gutter },
   resumen: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.gutter },

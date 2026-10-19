@@ -7,7 +7,7 @@ import { obtenerPreferencias } from '../services/preferencias';
 import {
   ejecutarAlCerrarSesion,
   escucharSesionVencida,
-  leerPedirLoginAlAbrir,
+  limpiarAjustesObsoletos,
   MENSAJE_SESION_VENCIDA,
 } from '../services/sesion';
 import type { Rol } from '../services/tipos';
@@ -32,7 +32,7 @@ interface ValorAuth {
    */
   rol: Rol | null;
   mensajeError: string | null;
-  /** Mensaje para mostrar en el login (sesión vencida, modo demostración). */
+  /** Mensaje para mostrar en el login (sesión vencida). */
   aviso: string | null;
   limpiarAviso: () => void;
   reintentar: () => void;
@@ -55,11 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let activo = true;
     (async () => {
-      // Modo demostración: al abrir la app se cierra la sesión local y se pide iniciar sesión.
-      if (leerPedirLoginAlAbrir() && (await authService.obtenerSesion())) {
-        await authService.cerrarSesion();
-        if (activo) setAviso('Modo demostración: inicia sesión para continuar.');
-      }
+      limpiarAjustesObsoletos();
       const s = await authService.obtenerSesion();
       if (!activo) return;
       setSesion(s);

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Constants } from '../models/database.types';
+import { FILTROS_HISTORIAL } from '../services/historialService';
 
 const Enums = Constants.public.Enums;
 
@@ -130,6 +131,18 @@ export const consultaInteracciones = z.object({
     .default(50),
 });
 export type ConsultaInteracciones = z.infer<typeof consultaInteracciones>;
+
+// ---- Historial (filtros en chips de la app) ----
+const MENSAJE_PAGINA = 'Debe ser un número entero mayor o igual a 1.';
+const MENSAJE_TAMANO = 'Debe ser un número entero entre 1 y 50.';
+export const consultaHistorial = z.object({
+  filtro: z
+    .enum(FILTROS_HISTORIAL, { error: `Debe ser uno de: ${FILTROS_HISTORIAL.join(', ')}.` })
+    .default('recientes'),
+  pagina: z.coerce.number({ error: MENSAJE_PAGINA }).int(MENSAJE_PAGINA).min(1, MENSAJE_PAGINA).max(1000, MENSAJE_PAGINA).default(1),
+  tamano: z.coerce.number({ error: MENSAJE_TAMANO }).int(MENSAJE_TAMANO).min(1, MENSAJE_TAMANO).max(50, MENSAJE_TAMANO).default(20),
+});
+export type ConsultaHistorial = z.infer<typeof consultaHistorial>;
 
 // ---- Roles y usuarios ----
 const MENSAJE_UUID = 'Debe ser un identificador (UUID) válido.';

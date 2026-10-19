@@ -46,3 +46,10 @@ export async function quitar(db: Db, idUsuario: string, idDestino: number): Prom
   const { error } = await db.from('favorito').delete().eq('id_usuario', idUsuario).eq('id_destino', idDestino);
   verificarOperacion(error, 'Quitar favorito');
 }
+
+/** Cuántos favoritos tiene el usuario. */
+export async function contar(db: Db, idUsuario: string): Promise<number> {
+  const resultado = await db.from('favorito').select('id_destino', { count: 'exact', head: true }).eq('id_usuario', idUsuario);
+  verificarOperacion(resultado.error, 'Contar favoritos');
+  return resultado.count ?? 0;
+}

@@ -1,30 +1,20 @@
 /**
  * Ciclo de vida de la sesión en el dispositivo:
- * - Modo demostración: "pedir inicio de sesión al abrir la app" (guardado localmente).
  * - Acciones al cerrar sesión (p. ej. desasociar el token de notificaciones).
  * - Aviso de sesión vencida cuando el backend responde 401.
  *
- * Supabase guarda la sesión y la renueva sola: por defecto la app no vuelve a pedir
- * credenciales. El modo demostración es solo para presentar la app.
+ * Supabase guarda la sesión y la renueva sola: la app no vuelve a pedir credenciales.
  */
-const CLAVE_PEDIR_LOGIN = 'misanandres.pedirLoginAlAbrir';
 
-/** localStorage puede fallar (almacenamiento no disponible): nunca debe romper la app. */
-export function leerPedirLoginAlAbrir(): boolean {
-  try {
-    return globalThis.localStorage?.getItem(CLAVE_PEDIR_LOGIN) === '1';
-  } catch {
-    return false;
-  }
-}
+/** Ajuste local del antiguo modo demostración ("pedir inicio de sesión al abrir la app"). */
+const CLAVE_OBSOLETA_PEDIR_LOGIN = 'misanandres.pedirLoginAlAbrir';
 
-export function guardarPedirLoginAlAbrir(activo: boolean): boolean {
+/** Borra los ajustes locales que la app ya no usa. localStorage puede fallar: nunca rompe la app. */
+export function limpiarAjustesObsoletos(): void {
   try {
-    if (activo) globalThis.localStorage?.setItem(CLAVE_PEDIR_LOGIN, '1');
-    else globalThis.localStorage?.removeItem(CLAVE_PEDIR_LOGIN);
-    return true;
+    globalThis.localStorage?.removeItem(CLAVE_OBSOLETA_PEDIR_LOGIN);
   } catch {
-    return false;
+    // Sin almacenamiento disponible no hay nada que borrar.
   }
 }
 

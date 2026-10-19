@@ -12,7 +12,8 @@ import { EditarDestinoScreen } from '../screens/EditarDestinoScreen';
 import { NuevoTicketScreen } from '../screens/NuevoTicketScreen';
 import { PanelScreen } from '../screens/PanelScreen';
 import { TicketDetalleScreen } from '../screens/TicketDetalleScreen';
-import { MisReportesScreen, TicketsScreen } from '../screens/TicketsScreen';
+import { TicketsScreen } from '../screens/TicketsScreen';
+import { HistorialScreen } from '../screens/HistorialScreen';
 import { UsuariosAdminScreen } from '../screens/UsuariosAdminScreen';
 import { DetalleDestinoScreen } from '../screens/DetalleDestinoScreen';
 import { ExplorarScreen } from '../screens/ExplorarScreen';
@@ -110,7 +111,7 @@ export function RootNavigator() {
 
   if (estado === 'sin_sesion') {
     return (
-      // Con un aviso (sesión vencida, modo demostración) se abre directamente el login.
+      // Con un aviso (sesión vencida) se abre directamente el login.
       <AuthStack.Navigator screenOptions={sinEncabezado} initialRouteName={aviso ? 'Login' : 'Bienvenida'}>
         <AuthStack.Screen name="Bienvenida" component={BienvenidaScreen} />
         <AuthStack.Screen name="Login" component={LoginScreen} />
@@ -135,7 +136,7 @@ export function RootNavigator() {
       <AppStack.Screen name="Creditos" component={CreditosScreen} />
       <AppStack.Screen name="TicketDetalle" component={TicketDetalleScreen} />
       <AppStack.Screen name="NuevoTicket" component={NuevoTicketScreen} />
-      <AppStack.Screen name="MisReportes" component={MisReportesScreen} />
+      <AppStack.Screen name="Historial" component={HistorialScreen} />
       <AppStack.Screen name="EditarDestino" component={EditarDestinoScreen} />
     </AppStack.Navigator>
   );

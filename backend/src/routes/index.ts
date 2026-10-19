@@ -3,6 +3,7 @@ import * as adminController from '../controllers/adminController';
 import * as climaController from '../controllers/climaController';
 import * as destinoController from '../controllers/destinoController';
 import * as favoritoController from '../controllers/favoritoController';
+import * as historialController from '../controllers/historialController';
 import * as interaccionController from '../controllers/interaccionController';
 import * as ocupacionController from '../controllers/ocupacionController';
 import * as perfilController from '../controllers/perfilController';
@@ -92,6 +93,11 @@ privadas.get(
   validar({ query: e.consultaInteracciones }),
   interaccionController.historial,
 );
+
+// Historial con filtros y paginación, borrar historial y pasaporte del viajero.
+privadas.get('/historial', requerirAuth, validar({ query: e.consultaHistorial }), historialController.listar);
+privadas.delete('/historial', requerirAuth, historialController.borrar);
+privadas.get('/me/pasaporte', requerirAuth, historialController.pasaporte);
 
 privadas.get(
   '/recomendaciones',

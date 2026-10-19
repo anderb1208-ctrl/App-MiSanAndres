@@ -527,6 +527,10 @@ export type Database = {
         }[];
       };
       metricas_admin: { Args: never; Returns: Json };
+      destinos_populares: {
+        Args: { p_desde: string; p_limite?: number };
+        Returns: { id_destino: number; vistas: number; usuarios: number }[];
+      };
       rol_actual: { Args: never; Returns: Database['public']['Enums']['rol_usuario'] };
       es_categoria_destino: { Args: { valor: string }; Returns: boolean };
       ocupacion_promedio_hora: {

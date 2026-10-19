@@ -153,12 +153,54 @@ export interface Perfil {
   rol: Rol;
 }
 
-export interface InteraccionHistorial {
-  id: number;
+/** Filtros del historial (chips). */
+export type FiltroHistorial = 'recientes' | 'semana' | 'mes' | 'mas_vistos' | 'populares';
+
+export interface ItemHistorial {
   idDestino: number;
-  tipo: TipoInteraccion;
-  fechaHora: string;
-  destino: { id: number; nombre: string; categoria: CategoriaDestino } | null;
+  destino: { id: number; nombre: string; categoria: CategoriaDestino; imagenUrl: string | null } | null;
+  /** Interacciones juntadas ("Visto 3 veces"). */
+  veces: number;
+  tipos: TipoInteraccion[];
+  /** null en populares. */
+  ultimaVez: string | null;
+  /** Día en Colombia (YYYY-MM-DD) para los encabezados; null en más vistos y populares. */
+  dia: string | null;
+  /** Solo en populares: personas distintas que lo consultaron. */
+  personas?: number;
+}
+
+export interface PaginaHistorial {
+  filtro: FiltroHistorial;
+  pagina: number;
+  tamano: number;
+  total: number;
+  hayMas: boolean;
+  items: ItemHistorial[];
+}
+
+export interface Insignia {
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  /** null en las de avance general (Primeros pasos, Medio camino, Isleño). */
+  categoria: CategoriaDestino | null;
+  meta: number;
+  progreso: number;
+  desbloqueada: boolean;
+  /** Destinos que faltan por explorar. */
+  pendientes: number[];
+}
+
+export interface Pasaporte {
+  explorados: number;
+  total: number;
+  porcentaje: number;
+  favoritos: number;
+  diasActivos: number;
+  porCategoria: { categoria: CategoriaDestino; explorados: number; total: number }[];
+  insignias: Insignia[];
 }
 
 export interface Razon {

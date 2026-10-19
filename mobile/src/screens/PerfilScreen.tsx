@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
+import { PasaporteViajero } from '../components/PasaporteViajero';
 import { IconButton } from '../components/IconButton';
-import { ScreenHeader, SectionHeader } from '../components/ScreenHeader';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SelectRow } from '../components/SelectRow';
-import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateView';
+import { EstadoCargando, EstadoError } from '../components/StateView';
 import { Tag } from '../components/Tag';
 import { TextField } from '../components/TextField';
 import { useAsync } from '../hooks/useAsync';
@@ -15,35 +16,22 @@ import { useBarraEstado } from '../hooks/useBarraEstado';
 import { useEspacioTabBar } from '../navigation/TabBar';
 import type { TabScreenProps } from '../navigation/types';
 import { mensajeDeError } from '../services/api';
-import { obtenerHistorial } from '../services/interacciones';
+import { obtenerPasaporte } from '../services/historial';
 import { actualizarNombre, obtenerPerfil } from '../services/perfil';
-import { obtenerPreferencias } from '../services/preferencias';
 import { probarNotificacion } from '../services/notificaciones';
-import { guardarPedirLoginAlAbrir, leerPedirLoginAlAbrir } from '../services/sesion';
-import type { InteraccionHistorial, TipoInteraccion } from '../services/tipos';
+import type { Insignia, Rol } from '../services/tipos';
 import { API_BASE_URL } from '../config/env';
 import { useAuth } from '../store/AuthContext';
 import { colors, radius, shadows, spacing, typography } from '../theme';
-import { CATEGORIAS, type NombreIcono } from '../utils/categorias';
 import { ETIQUETA_ROL, ICONO_ROL } from '../utils/tickets';
-import { formatearFechaHora, formatearMesAnio } from '../utils/fecha';
-import { ETIQUETA_NIVEL } from '../utils/ocupacion';
+import { formatearMesAnio } from '../utils/fecha';
+import { motivoPendientes } from '../utils/pasaporte';
 import { validarNombre } from '../utils/validacion';
 
-const INTERACCION: Record<TipoInteraccion, { icono: NombreIcono; texto: string }> = {
-  vista: { icono: 'visibility', texto: 'Viste' },
-  favorito: { icono: 'favorite', texto: 'Guardaste' },
-  visita: { icono: 'where-to-vote', texto: 'Visitaste' },
-  compartir: { icono: 'share', texto: 'Compartiste' },
-};
-
-async function cargarPerfil() {
-  const [perfil, preferencias, historial] = await Promise.all([
-    obtenerPerfil(),
-    obtenerPreferencias(),
-    obtenerHistorial(30),
-  ]);
-  return { perfil, preferencias, historial };
+/** El pasaporte es del turista: técnicos y administradores no exploran destinos. */
+async function cargarPerfil(rol: Rol | null) {
+  const [perfil, pasaporte] = await Promise.all([obtenerPerfil(), rol === 'turista' ? obtenerPasaporte() : Promise.resolve(null)]);
+  return { perfil, pasaporte };
 }
 
 export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
@@ -51,14 +39,13 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
   const espacioInferior = useEspacioTabBar();
   const { correo, rol, cerrarSesion } = useAuth();
   const esTurista = rol === 'turista';
-  const { datos, error, cargando, refrescando, recargar } = useAsync(cargarPerfil, [], { recargarAlEnfocar: true });
+  const { datos, error, cargando, refrescando, recargar } = useAsync(() => cargarPerfil(rol), [rol], { recargarAlEnfocar: true });
 
   const [editando, setEditando] = useState(false);
   const [nombre, setNombre] = useState('');
   const [errorNombre, setErrorNombre] = useState<string>();
   const [guardando, setGuardando] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
-  const [pedirLogin, setPedirLogin] = useState(leerPedirLoginAlAbrir);
 
   const probar = async () => {
     try {
@@ -72,12 +59,6 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
     } catch (e) {
       Alert.alert('No se pudo programar', (e as Error).message);
     }
-  };
-
-  const alternarPedirLogin = () => {
-    const nuevo = !pedirLogin;
-    if (guardarPedirLoginAlAbrir(nuevo)) setPedirLogin(nuevo);
-    else Alert.alert('No se pudo guardar', 'El almacenamiento del dispositivo no está disponible.');
   };
 
   const empezarEdicion = () => {
@@ -117,14 +98,13 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
       },
     ]);
 
-  const abrir = (i: InteraccionHistorial) => navigation.navigate('DetalleDestino', { id: i.idDestino });
+  const explorarPendientes = (i: Insignia) =>
+    navigation.navigate('Explorar', { categoria: i.categoria ?? undefined, pendientes: i.pendientes, motivo: motivoPendientes(i) });
 
   const cuerpo = () => {
     if (cargando) return <EstadoCargando mensaje="Cargando tu perfil…" />;
     if (!datos) return <EstadoError error={error} onReintentar={recargar} />;
-    const { perfil, preferencias, historial } = datos;
-    const intereses =
-      preferencias.categorias.length + preferencias.tiposExperiencia.length + preferencias.tiposGrupo.length;
+    const { perfil, pasaporte } = datos;
 
     return (
       <View style={styles.cuerpo}>
@@ -174,18 +154,7 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
           )}
         </GlassPanel>
 
-        <View style={styles.estadisticas}>
-          {[
-            [String(historial.length), 'Consultas recientes'],
-            [String(intereses), 'Intereses'],
-            [perfil.nivelOcupacionPreferido ? ETIQUETA_NIVEL[perfil.nivelOcupacionPreferido] : '—', 'Ocupación pref.'],
-          ].map(([valor, etiqueta]) => (
-            <GlassPanel key={etiqueta} padding={12} radius={radius.xl} style={styles.estadistica}>
-              <Text style={styles.estadisticaValor}>{valor}</Text>
-              <Text style={styles.estadisticaEtiqueta}>{etiqueta}</Text>
-            </GlassPanel>
-          ))}
-        </View>
+        {pasaporte && <PasaporteViajero pasaporte={pasaporte} onExplorarPendientes={explorarPendientes} />}
 
         <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
           {esTurista && (
@@ -198,88 +167,47 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
                 onPress={() => navigation.navigate('Preferencias')}
               />
               <SelectRow
+                icono="history"
+                etiqueta="Historial"
+                descripcion="Lo que has consultado, lo más visto y lo popular"
+                control="chevron"
+                onPress={() => navigation.navigate('Historial')}
+              />
+              <SelectRow
                 icono="report-problem"
                 tonoIcono="neutral"
                 etiqueta="Reportar un problema"
-                descripcion="Información incorrecta, fallas o sugerencias"
+                descripcion="Nuevo reporte o estado de tus reportes"
                 control="chevron"
                 onPress={() => navigation.navigate('NuevoTicket')}
               />
-              <SelectRow
-                icono="assignment"
-                tonoIcono="neutral"
-                etiqueta="Mis reportes"
-                descripcion="Estado de lo que reportaste"
-                control="chevron"
-                onPress={() => navigation.navigate('MisReportes')}
-              />
             </>
           )}
-          <SelectRow
-            icono="info-outline"
-            tonoIcono="neutral"
-            etiqueta="Créditos y licencias"
-            descripcion="OpenStreetMap, Open-Meteo y fotos"
-            control="chevron"
-            onPress={() => navigation.navigate('Creditos')}
-          />
           <SelectRow
             icono="notifications-active"
             tonoIcono="neutral"
             etiqueta="Probar notificación"
             descripcion="Aviso local de prueba a los 5 segundos"
             control="none"
+            divisor={false}
             onPress={() => void probar()}
           />
-          <SelectRow
-            icono="lock-clock"
-            tonoIcono="neutral"
-            etiqueta="Pedir inicio de sesión al abrir la app"
-            descripcion="Modo demostración: al abrir la app se cierra la sesión y se pide el login"
-            control="checkbox"
-            marcado={pedirLogin}
-            divisor={false}
-            onPress={alternarPedirLogin}
-          />
         </GlassPanel>
-
-        <View>
-          <SectionHeader titulo="Historial" subtitulo="Destinos que has consultado recientemente" />
-          {historial.length === 0 ? (
-            <GlassPanel tono="strong" radius={20}>
-              <EstadoMensaje
-                icono="history"
-                titulo="Aún no hay actividad"
-                mensaje="Los destinos que abras aparecerán aquí."
-                accion={{ texto: 'Explorar destinos', onPress: () => navigation.navigate('Explorar') }}
-                style={styles.vacio}
-              />
-            </GlassPanel>
-          ) : (
-            <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
-              {historial.map((i, indice) => {
-                const tipo = INTERACCION[i.tipo];
-                const categoria = i.destino ? CATEGORIAS[i.destino.categoria].singular : '';
-                return (
-                  <SelectRow
-                    key={i.id}
-                    icono={tipo.icono}
-                    tonoIcono="neutral"
-                    etiqueta={i.destino?.nombre ?? 'Destino no disponible'}
-                    descripcion={`${tipo.texto} • ${categoria ? `${categoria} • ` : ''}${formatearFechaHora(i.fechaHora)}`}
-                    control={i.destino ? 'chevron' : 'none'}
-                    onPress={i.destino ? () => abrir(i) : undefined}
-                    divisor={indice < historial.length - 1}
-                  />
-                );
-              })}
-            </GlassPanel>
-          )}
-        </View>
 
         <Button variante="danger" tamano="lg" anchoCompleto icono="logout" cargando={saliendo} onPress={confirmarSalida}>
           Cerrar sesión
         </Button>
+
+        {/* OpenStreetMap, Open-Meteo y las fotos exigen atribución visible. */}
+        <Pressable
+          onPress={() => navigation.navigate('Creditos')}
+          accessibilityRole="link"
+          accessibilityLabel="Créditos y licencias"
+          hitSlop={8}
+          style={styles.creditos}
+        >
+          <Text style={styles.creditosTexto}>Créditos</Text>
+        </Pressable>
 
         {__DEV__ && (
           <Text style={styles.servidor} selectable>
@@ -327,11 +255,8 @@ const styles = StyleSheet.create({
   rol: { flexDirection: 'row', marginTop: 6 },
   edicion: { gap: spacing.gutter },
   edicionAcciones: { flexDirection: 'row', gap: spacing.sm },
-  estadisticas: { flexDirection: 'row', gap: 10 },
-  estadistica: { flex: 1, alignItems: 'center' },
-  estadisticaValor: { ...typography.headlineSm, fontFamily: typography.display.fontFamily, color: colors.textStrong },
-  estadisticaEtiqueta: { ...typography.labelMd, color: colors.textSubtle, textAlign: 'center' },
   menu: { overflow: 'hidden' },
-  vacio: { paddingVertical: spacing.md },
+  creditos: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md },
+  creditosTexto: { ...typography.labelBold, color: colors.textLink, textDecorationLine: 'underline' },
   servidor: { ...typography.labelMd, fontSize: 11, color: colors.textSubtle, textAlign: 'center' },
 });

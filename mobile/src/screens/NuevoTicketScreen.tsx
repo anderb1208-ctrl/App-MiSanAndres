@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/Button';
+import { ControlSegmentado } from '../components/ControlSegmentado';
 import { FilterChip } from '../components/FilterChip';
 import { PantallaApilada } from '../components/PantallaApilada';
 import { Overline } from '../components/ScreenHeader';
@@ -13,10 +14,18 @@ import { crearTicket } from '../services/tickets';
 import type { CategoriaTicket, PrioridadTicket } from '../services/tipos';
 import { colors, spacing, typography } from '../theme';
 import { CATEGORIAS_TICKET, ETIQUETA_PRIORIDAD, PRIORIDADES_TICKET } from '../utils/tickets';
+import { MisReportes } from './TicketsScreen';
 
-/** Formulario "Reportar un problema" (cualquier usuario). */
+type Pestana = 'nuevo' | 'mios';
+const PESTANAS = [
+  { valor: 'nuevo', etiqueta: 'Nuevo' },
+  { valor: 'mios', etiqueta: 'Mis reportes' },
+] as const;
+
+/** "Reportar un problema": pestañas Nuevo (formulario) y Mis reportes (estado de lo reportado). */
 export function NuevoTicketScreen({ navigation, route }: AppScreenProps<'NuevoTicket'>) {
   const destinoFijo = route.params?.idDestino;
+  const [pestana, setPestana] = useState<Pestana>(route.params?.pestana ?? 'nuevo');
   const [categoria, setCategoria] = useState<CategoriaTicket>(destinoFijo ? 'informacion_incorrecta' : 'app');
   const [asunto, setAsunto] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -39,7 +48,7 @@ export function NuevoTicketScreen({ navigation, route }: AppScreenProps<'NuevoTi
     setEnviando(true);
     try {
       const ticket = await crearTicket({ categoria, asunto: asunto.trim(), descripcion: descripcion.trim(), prioridad, idDestino });
-      Alert.alert('¡Gracias por reportarlo!', 'El equipo lo revisará. Puedes seguir su estado en "Mis reportes".');
+      Alert.alert('¡Gracias por reportarlo!', 'El equipo lo revisará. Puedes seguir su estado en la pestaña "Mis reportes".');
       navigation.replace('TicketDetalle', { id: ticket.id });
     } catch (e) {
       Alert.alert('No se pudo enviar', mensajeDeError(e));
@@ -49,7 +58,16 @@ export function NuevoTicketScreen({ navigation, route }: AppScreenProps<'NuevoTi
   };
 
   return (
-    <PantallaApilada titulo="Reportar un problema" subtitulo="Cuéntanos qué pasó" onVolver={navigation.goBack}>
+    <PantallaApilada
+      titulo="Reportar un problema"
+      subtitulo={pestana === 'nuevo' ? 'Cuéntanos qué pasó' : 'Lo que reportaste y su estado'}
+      onVolver={navigation.goBack}
+    >
+      <ControlSegmentado opciones={PESTANAS} valor={pestana} onCambiar={setPestana} etiquetaAccesible="Reportar un problema" />
+      {pestana === 'mios' ? (
+        <MisReportes onAbrir={(id) => navigation.navigate('TicketDetalle', { id })} onNuevo={() => setPestana('nuevo')} />
+      ) : (
+      <>
       <Overline>TIPO DE PROBLEMA</Overline>
       <View style={styles.chips}>
         {CATEGORIAS_TICKET.map((c) => (
@@ -115,6 +133,8 @@ export function NuevoTicketScreen({ navigation, route }: AppScreenProps<'NuevoTi
       <Button tamano="lg" anchoCompleto icono="send" cargando={enviando} onPress={() => void enviar()}>
         Enviar reporte
       </Button>
+      </>
+      )}
     </PantallaApilada>
   );
 }
