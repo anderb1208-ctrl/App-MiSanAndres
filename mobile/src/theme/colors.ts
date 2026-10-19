@@ -66,6 +66,8 @@ export const colors = {
   error: palette.red600,
   errorContainer: palette.red100,
   errorBorder: 'rgba(186,26,26,0.2)',
+  /** Borde de botones destructivos sin relleno (3:1 sobre surfaceApp). */
+  errorOutline: 'rgba(186,26,26,0.6)',
   /** Fondo del círculo del estado de error (rojo de ocupación Alta, suave). */
   dangerSoft: 'rgba(217,48,37,0.12)',
 

@@ -39,6 +39,8 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
   const espacioInferior = useEspacioTabBar();
   const { correo, rol, cerrarSesion } = useAuth();
   const esTurista = rol === 'turista';
+  // Herramienta de prueba: solo en desarrollo o para administradores.
+  const conPruebaNotificacion = __DEV__ || rol === 'administrador';
   const { datos, error, cargando, refrescando, recargar } = useAsync(() => cargarPerfil(rol), [rol], { recargarAlEnfocar: true });
 
   const [editando, setEditando] = useState(false);
@@ -156,45 +158,50 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
 
         {pasaporte && <PasaporteViajero pasaporte={pasaporte} onExplorarPendientes={explorarPendientes} />}
 
-        <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
-          {esTurista && (
-            <>
+        {(esTurista || conPruebaNotificacion) && (
+          <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
+            {esTurista && (
+              <>
+                <SelectRow
+                  icono="tune"
+                  etiqueta="Mis preferencias"
+                  descripcion="Ver y editar preferencias"
+                  control="chevron"
+                  onPress={() => navigation.navigate('Preferencias')}
+                />
+                <SelectRow
+                  icono="history"
+                  etiqueta="Historial"
+                  descripcion="Lo que has consultado, lo más visto y lo popular"
+                  control="chevron"
+                  onPress={() => navigation.navigate('Historial')}
+                />
+                <SelectRow
+                  icono="report-problem"
+                  tonoIcono="neutral"
+                  etiqueta="Reportar un problema"
+                  descripcion="Nuevo reporte o estado de tus reportes"
+                  control="chevron"
+                  divisor={conPruebaNotificacion}
+                  onPress={() => navigation.navigate('NuevoTicket')}
+                />
+              </>
+            )}
+            {conPruebaNotificacion && (
               <SelectRow
-                icono="tune"
-                etiqueta="Mis preferencias"
-                descripcion="Ver y editar preferencias"
-                control="chevron"
-                onPress={() => navigation.navigate('Preferencias')}
-              />
-              <SelectRow
-                icono="history"
-                etiqueta="Historial"
-                descripcion="Lo que has consultado, lo más visto y lo popular"
-                control="chevron"
-                onPress={() => navigation.navigate('Historial')}
-              />
-              <SelectRow
-                icono="report-problem"
+                icono="notifications-active"
                 tonoIcono="neutral"
-                etiqueta="Reportar un problema"
-                descripcion="Nuevo reporte o estado de tus reportes"
-                control="chevron"
-                onPress={() => navigation.navigate('NuevoTicket')}
+                etiqueta="Probar notificación"
+                descripcion="Aviso local de prueba a los 5 segundos"
+                control="none"
+                divisor={false}
+                onPress={() => void probar()}
               />
-            </>
-          )}
-          <SelectRow
-            icono="notifications-active"
-            tonoIcono="neutral"
-            etiqueta="Probar notificación"
-            descripcion="Aviso local de prueba a los 5 segundos"
-            control="none"
-            divisor={false}
-            onPress={() => void probar()}
-          />
-        </GlassPanel>
+            )}
+          </GlassPanel>
+        )}
 
-        <Button variante="danger" tamano="lg" anchoCompleto icono="logout" cargando={saliendo} onPress={confirmarSalida}>
+        <Button variante="dangerOutline" anchoCompleto icono="logout" cargando={saliendo} onPress={confirmarSalida}>
           Cerrar sesión
         </Button>
 

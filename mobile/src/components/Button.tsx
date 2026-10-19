@@ -4,7 +4,7 @@ import type { NombreIcono } from '../utils/categorias';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
-type Variante = 'primary' | 'secondary' | 'glass' | 'light' | 'danger';
+type Variante = 'primary' | 'secondary' | 'glass' | 'light' | 'danger' | 'dangerOutline';
 
 interface Props {
   children: string;
@@ -25,6 +25,8 @@ const VARIANTES: Record<Variante, { fondo: string; texto: string; borde: string 
   glass: { fondo: colors.glassStrong, texto: colors.textStrong, borde: colors.glassBorder },
   light: { fondo: colors.white, texto: colors.primary, borde: colors.white },
   danger: { fondo: colors.errorContainer, texto: colors.error, borde: colors.errorBorder },
+  /** Acción destructiva secundaria: solo borde y texto en rojo. */
+  dangerOutline: { fondo: 'transparent', texto: colors.error, borde: colors.errorOutline },
 };
 
 /** Botón principal (CustomButton del diagrama de componentes). */
