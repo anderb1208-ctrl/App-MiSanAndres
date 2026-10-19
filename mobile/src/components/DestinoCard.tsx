@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   destacado: { ...typography.labelBold, color: colors.secondary },
   metadatos: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.sm, rowGap: 4 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
-  metaTexto: { ...typography.labelMd, color: colors.textSubtle, flexShrink: 1 },
+  metaTexto: { ...typography.labelMd, color: colors.textMuted, flexShrink: 1 },
   descripcion: { ...typography.bodyMd, color: colors.textMuted },
   porQueTexto: { ...typography.labelBold, color: colors.secondary, flex: 1 },
   nota: { ...typography.bodyMd, color: colors.textMuted },

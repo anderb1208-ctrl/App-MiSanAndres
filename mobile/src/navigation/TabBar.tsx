@@ -36,7 +36,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       {state.routes.map((ruta, indice) => {
         const activa = state.index === indice;
         const tab = TABS[ruta.name as keyof TabsParamList];
-        const color = activa ? colors.secondary : colors.textSubtle;
+        // Inactiva en textMuted: textSubtle no llega a 4.5:1 sobre el vidrio.
+        const color = activa ? colors.secondary : colors.textMuted;
 
         const alPresionar = () => {
           const evento = navigation.emit({ type: 'tabPress', target: ruta.key, canPreventDefault: true });
@@ -55,7 +56,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             <View style={[styles.indicador, activa && styles.indicadorActivo]}>
               <Icon name={tab.icono} size={22} color={color} />
             </View>
-            <Text style={[styles.etiqueta, { color }]}>{tab.etiqueta}</Text>
+            <Text style={[styles.etiqueta, { color }]} numberOfLines={1}>
+              {tab.etiqueta}
+            </Text>
           </Pressable>
         );
       })}
@@ -77,5 +80,5 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
   indicador: { width: 52, height: 30, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
   indicadorActivo: { backgroundColor: colors.secondarySoft },
-  etiqueta: { ...typography.labelMd, fontSize: 11, lineHeight: 14 },
+  etiqueta: typography.labelMd,
 });

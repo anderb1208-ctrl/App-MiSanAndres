@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   resumenCabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.gutter },
   overline: { ...typography.overline, color: colors.textMuted },
   actualizado: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  actualizadoTexto: { ...typography.labelMd, color: colors.textSubtle },
+  actualizadoTexto: { ...typography.labelMd, color: colors.textMuted },
   niveles: { flexDirection: 'row', gap: spacing.sm },
   nivel: { flex: 1, paddingVertical: 10, paddingHorizontal: spacing.gutter, borderRadius: radius.lg, borderWidth: 1 },
   nivelNumero: { ...typography.headlineMd, fontFamily: typography.display.fontFamily },

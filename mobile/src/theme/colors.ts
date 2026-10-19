@@ -140,6 +140,7 @@ export const mapColors = {
  */
 export const occupancyColors = {
   Bajo: { main: '#1e8e3e', bg: '#e8f5e9', fg: '#2e7d32', border: '#c8e6c9' },
-  Medio: { main: '#f9ab00', bg: '#fff3e0', fg: '#ef6c00', border: '#ffe0b2' },
+  // fg oscurecido para texto: 5.06:1 sobre bg (antes #ef6c00, 2.81:1).
+  Medio: { main: '#f9ab00', bg: '#fff3e0', fg: '#a84f00', border: '#ffe0b2' },
   Alto: { main: '#d93025', bg: '#ffebee', fg: '#c62828', border: '#ffcdd2' },
 } as const;

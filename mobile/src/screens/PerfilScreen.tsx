@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   avatarTexto: { ...typography.headlineMd, color: colors.white },
   nombre: { ...typography.headlineSm, color: colors.textStrong },
   correo: { ...typography.bodyMd, color: colors.textMuted },
-  desde: { ...typography.labelMd, color: colors.textSubtle, marginTop: 2 },
+  desde: { ...typography.labelMd, color: colors.textMuted, marginTop: 2 },
   rol: { flexDirection: 'row', marginTop: 6 },
   edicion: { gap: spacing.gutter },
   edicionAcciones: { flexDirection: 'row', gap: spacing.sm },
