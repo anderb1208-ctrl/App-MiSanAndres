@@ -231,7 +231,7 @@ El entregable prevé un modelo Random Forest expuesto con `POST /predict`. Se im
 | `POST /predict` | Porcentaje, nivel y personas para un destino, fecha, hora y clima opcional | Cabecera `X-API-Key` (`ML_API_KEY`) |
 | `POST /predict/lote` | Lo mismo para varias consultas (hasta 500); lo usa el backend | Cabecera `X-API-Key` |
 
-- Modelo: `RandomForestRegressor(n_estimators=100, random_state=42)` con `min_samples_leaf=20` (para que el archivo pese ~11 MB). Variables: las de `FeaturesPrediccion` (hora, día de la semana, fin de semana, festivo, puente, temporada, temperatura, precipitación, viento) más el destino, su categoría y su capacidad. Validación **temporal** (entrena con las fechas antiguas, prueba con las recientes) y comparación contra un baseline (promedio por destino y hora).
+- Modelo (versión inicial; ver la sección 18 para la comparación de tres modelos que lo reemplazó): `RandomForestRegressor(n_estimators=100, random_state=42)` con `min_samples_leaf=20` (para que el archivo pese ~11 MB). Variables: las de `FeaturesPrediccion` (hora, día de la semana, fin de semana, festivo, puente, temporada, temperatura, precipitación, viento) más el destino, su categoría y su capacidad. Validación **temporal** (entrena con las fechas antiguas, prueba con las recientes) y comparación contra un baseline (promedio por destino y hora).
 - **Datos sintéticos**: mientras no haya mediciones reales, el modelo se entrena con un dataset simulado (`ml/generar_mock_dataset.py`) con los mismos supuestos del seed y el mismo calendario del backend (`ml/calendario.py` replica `calendarioService`). Cada respuesta indica el origen (`mock`/`real`) y la app muestra "Estimación basada en datos simulados".
 - **Datos reales**: plantilla y guía en `ml/datos/`; `ml/cargar_datos_reales.py` valida y normaliza el archivo y opcionalmente lo inserta en `ocupacion` con `origen = real`; `python entrenar_modelo.py --dataset real` reentrena. Con menos de 4 semanas por destino el modelo no queda "listo para producción".
 - Se despliega como un segundo Web Service en Render (Root Directory `ml`).
@@ -294,3 +294,32 @@ Migración `20261016120200_presupuesto_y_resenas.sql`.
 - Las reseñas públicas no muestran el nombre del autor (RLS no deja a anon leer `usuario`); la app muestra "Viajero".
 
 **Agregar al entregable**: los roles y los actores técnico y administrador en los casos de uso, las tablas `ticket`, `ticket_comentario`, `favorito`, `dispositivo_push` y `resena`, los campos de precio y presupuesto, y la Expo Push API en el diagrama de arquitectura (Backend → Expo Push → FCM/APNs → teléfono).
+
+## 18. Comparación de modelos y datos simulados calibrados
+
+El entregable prevé un solo modelo (Random Forest). Para justificar la elección se **compararon tres modelos** y se usa el mejor. Detalle para el entregable: [`docs/seleccion-de-modelo.md`](seleccion-de-modelo.md).
+
+- **Datos**: `ml/generar_dataset_simulado.py` (alias `generar_mock_dataset.py`) genera 24,5 meses de ocupación horaria **simulada** para los 30 destinos, calibrada con datos reales: clima observado hora por hora de Open-Meteo (`ml/datos/clima_historico_san_andres.csv`, versionado), festivos y temporadas de Colombia, llegadas oficiales de turistas por mes (`ml/datos/llegadas_turistas_mensuales.csv`), capacidad de Johnny Cay y cierre judicial de El Acuario. Columnas nuevas del dataset: `origen_dato` (`simulado_calibrado`), `categoria`, `capacidad` y `evento` (cierres con ocupación 0). Fuentes y supuestos: `ml/datos/FUENTES.md`; chequeos: `ml/calidad_dataset.py` → `ml/reportes/calidad_dataset.md`.
+- **Modelos**: Ridge (one-hot de destino, mes y categoría × hora, hora cíclica e interacciones), Random Forest y HistGradientBoosting, más el baseline (promedio por destino y hora) como referencia. Pipelines con `ColumnTransformer` e imputación del clima por **climatología mensual** (el backend manda clima nulo para fechas sin pronóstico).
+- **Validación**: temporal (prueba = últimos 3 meses) y `RandomizedSearchCV` con `TimeSeriesSplit` (semilla 42). **Selección**: menor RMSE; si la diferencia es menor al 2 %, el más liviano; restricciones de ≤ 50 MB y < 100 ms por predicción. **Ganador: HistGradientBoosting** (RMSE 6,48 frente a 6,65 de Random Forest, 8,94 de Ridge y 9,50 del baseline; 0,64 MB).
+- **Servicio ML**: `GET /modelo` (ganador y comparativa); `/predict` y `/predict/lote` indican `modelo` y `modelo_clave`; `origen_modelo` pasa de `mock` a `simulado` (el backend acepta los dos). El modelo ganador se versiona en `ml/modelos/` y el Build Command de Render queda en `pip install -r requirements.txt`.
+- **Backend**: la predicción agrega `modelo` (el que respondió) y la app muestra "Estimado con [modelo] · datos simulados" en el detalle.
+- **Calendario**: se agrega el **receso escolar de octubre** como temporada alta (backend y ML).
+
+**Agregar al entregable**: la sección de selección de modelo (metodología, tabla comparativa, ganador y limitaciones), el aviso de datos simulados y el campo `modelo` de la predicción.
+
+## 19. Historial y pasaporte del viajero
+
+- `GET /historial?filtro=recientes|semana|mes|mas_vistos|populares&pagina=&tamano=` reemplaza la lista de historial del Perfil: junta las visitas repetidas al mismo destino en el mismo día de Colombia ("Visto 3 veces") y pagina. `populares` usa la función nueva `destinos_populares(p_desde, p_limite)` (migración `20261019120000_destinos_populares.sql`, `security definer`), que solo devuelve totales por destino, sin datos personales. `DELETE /historial` borra el historial propio (RLS ya permitía borrar las interacciones propias).
+- `GET /me/pasaporte`: destinos **explorados** (con alguna interacción en la app; no significa visitados) sobre el total, favoritos, días activos e insignias por categoría (por ejemplo, 3 cayos o 5 playas) y de avance (Primeros pasos, Medio camino, Isleño), con los destinos que faltan para cada una. Se calcula desde `interaccion` y `favorito`, sin tablas nuevas.
+- Perfil: se quitan la lista de historial (queda la fila "Historial"), la fila "Créditos y licencias" (queda el enlace "Créditos" al final, por la atribución obligatoria), la fila "Mis reportes" (ahora es la pestaña "Mis reportes" dentro de "Reportar un problema") y el modo demostración "Pedir inicio de sesión al abrir la app" (código y ajuste local).
+
+**Agregar al entregable**: la pantalla Historial y el Pasaporte del viajero en el diseño de la app, y los endpoints nuevos.
+
+## 20. Ajustes de la interfaz
+
+- Tarjetas de Inicio: sin chips de razones; descripción breve y una sola razón corta (`porQueCorto`, generada en el backend). El detalle completo ("Por qué es para ti", ✓ y ⚠) queda solo en el detalle del lugar. Compatibilidad y ocupación separadas, con un componente de ocupación compartido por Inicio, Explorar y Favoritos.
+- Favoritos muestra la ocupación actual: `GET /favoritos` la calcula en lote con el mismo `prediccionService` que Inicio (antes no la calculaba y la app mostraba "Sin datos de ocupación").
+- Accesos rápidos de Inicio sin tarjetas: ícono circular plano y texto.
+- Botón flotante de regresar (`BotonVolver`) en las pantallas secundarias, con desenfoque esmerilado (expo-blur), dos variantes (sobre imagen y sobre fondo claro) y respaldo a Inicio si no hay historial.
+

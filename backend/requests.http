@@ -127,6 +127,23 @@ Content-Type: application/json
 GET {{baseUrl}}/interacciones?limite=20
 Authorization: Bearer {{token}}
 
+### Historial con filtros (recientes | semana | mes | mas_vistos | populares) y paginación.
+### Junta las visitas repetidas del mismo día ("veces"); populares = totales de todos, sin datos personales.
+GET {{baseUrl}}/historial?filtro=recientes&pagina=1&tamano=20
+Authorization: Bearer {{token}}
+
+### Destinos más consultados por todos en los últimos 30 días (requiere la migración destinos_populares)
+GET {{baseUrl}}/historial?filtro=populares
+Authorization: Bearer {{token}}
+
+### Borrar todo el historial propio
+DELETE {{baseUrl}}/historial
+Authorization: Bearer {{token}}
+
+### Pasaporte del viajero: explorados, favoritos, días activos e insignias
+GET {{baseUrl}}/me/pasaporte
+Authorization: Bearer {{token}}
+
 ### Recomendaciones personalizadas para ahora. Cada una trae "razones"
 ### [{codigo, texto, tipo: positiva|advertencia}] y una frase corta "porQue"
 GET {{baseUrl}}/recomendaciones
@@ -359,8 +376,11 @@ GET http://localhost:3000/destinos/johnny-cay.jpg
 @mlUrl = http://localhost:8000
 @mlKey = cambia-esta-clave
 
-### Estado del servicio y del modelo (origen mock/real, métricas)
+### Estado del servicio y del modelo (modelo ganador, origen simulado/real, métricas)
 GET {{mlUrl}}/health
+
+### Modelo ganador y comparativa de los tres modelos (Ridge, Random Forest, HistGradientBoosting) y el baseline
+GET {{mlUrl}}/modelo
 
 ### Una predicción
 POST {{mlUrl}}/predict

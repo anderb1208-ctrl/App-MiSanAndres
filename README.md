@@ -26,7 +26,13 @@ App móvil de turismo para San Andrés (Colombia) que recomienda destinos según
                                            └──────────────────────┘
 ```
 
-Opcionalmente, el backend llama al **servicio de ML** (`ml/`, `POST /predict/lote` con API key) para la predicción de ocupación; ver [Proveedores de predicción](#proveedores-de-predicción).
+Opcionalmente, el backend llama al **servicio de ML** (`ml/`, `POST /predict/lote` con API key) para la predicción de ocupación; ver [Proveedores de predicción](#proveedores-de-predicción). El servicio usa el **ganador de una comparación de tres modelos** (Ridge, Random Forest y HistGradientBoosting; hoy gana HistGradientBoosting) entrenados con **datos de ocupación simulados** calibrados con datos reales (clima observado, festivos, llegadas oficiales de turistas): ver [`ml/README.md`](ml/README.md) y [`docs/seleccion-de-modelo.md`](docs/seleccion-de-modelo.md).
+
+```
+App ──▶ Backend ──▶ Servicio ML (FastAPI)  GET /modelo · POST /predict · POST /predict/lote
+                     └─ modelo ganador versionado (ml/modelos/modelo_ocupacion.joblib, < 1 MB)
+                        ◀─ entrenado con ml/datos/dataset_ocupacion_san_andres.csv (simulado)
+```
 
 1. **Presentación (`mobile/`)**: pantallas, navegación y estado de la sesión. No accede a la base de datos: todos los datos llegan por la API REST. Solo habla directamente con Supabase Auth para iniciar sesión, registrarse y renovar el token.
 2. **Lógica de negocio (`backend/`)**: valida las entradas, aplica las reglas (recomendaciones, predicción de ocupación con clima y calendario) y responde JSON con errores en un formato consistente. Consulta el clima a [Open-Meteo](https://open-meteo.com/) (gratis para uso no comercial, sin clave).
@@ -105,7 +111,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 │       ├── hooks/               # Hooks reutilizables
 │       ├── utils/               # Utilidades de formato y validación
 │       └── theme/               # Colores, tipografía, espaciado
-├── ml/                          # Servicio de predicción (Random Forest + FastAPI); ver ml/README.md
+├── ml/                          # Predicción: datos simulados calibrados, 3 modelos comparados (gana HistGradientBoosting) + FastAPI; ver ml/README.md
 ├── supabase/
 │   ├── migrations/              # Migraciones SQL versionadas
 │   ├── seed.sql                 # Datos de prueba de San Andrés (ocupación sintética)
@@ -115,6 +121,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
     ├── cambios-al-diseno.md          # Diferencias entre el diseño y lo implementado
     ├── datos-sinteticos.md           # Supuestos de la ocupación sintética
     ├── datos-por-verificar.md        # Datos de los destinos que hay que confirmar
+    ├── seleccion-de-modelo.md        # Metodología y resultados de la comparación de modelos (para el entregable)
     ├── revision-ubicaciones.html     # Mapa para revisar y corregir las ubicaciones (doble clic)
     └── creditos-imagenes.md          # Autor y licencia de las fotos
 ```
@@ -138,11 +145,14 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 | GET / PUT / DELETE | `/preferencias` 🔒 | Preferencias del usuario |
 | GET / PUT | `/perfil` 🔒 | Perfil del usuario |
 | GET / POST | `/interacciones` 🔒 | Historial y registro de interacciones |
-| GET | `/recomendaciones?fecha=&hora=&presupuestoMin=&presupuestoMax=` 🔒 | Recomendaciones personalizadas con `razones` (✓/⚠) y `porQue`; hora planeada y filtro rápido de presupuesto opcionales |
+| GET | `/historial?filtro=&pagina=&tamano=` 🔒 | Historial con filtros (`recientes`, `semana`, `mes`, `mas_vistos`, `populares`), visitas repetidas juntadas y paginación |
+| DELETE | `/historial` 🔒 | Borrar el historial propio |
+| GET | `/recomendaciones?fecha=&hora=&presupuestoMin=&presupuestoMax=` 🔒 | Recomendaciones personalizadas con `razones` (✓/⚠), `porQue` y `porQueCorto` (una línea para las tarjetas); hora planeada y filtro rápido de presupuesto opcionales |
 | GET | `/me` 🔒 | Usuario del token con su rol |
+| GET | `/me/pasaporte` 🔒 | Pasaporte del viajero: destinos explorados, favoritos, días activos e insignias |
 | GET | `/destinos/:id/resenas` | Reseñas visibles y promedio |
 | GET / PUT / DELETE | `/destinos/:id/resena` 🔒 | Reseña propia (una por destino) |
-| GET / POST | `/favoritos` 🔒 | Favoritos con sus avisos |
+| GET / POST | `/favoritos` 🔒 | Favoritos con sus avisos y la ocupación de ahora de cada destino |
 | PATCH / DELETE | `/favoritos/:idDestino` 🔒 | Cambiar los avisos o quitar el favorito |
 | POST / DELETE | `/dispositivos` 🔒 | Registrar o desasociar el token push del teléfono |
 | GET / POST | `/tickets` 🔒 | Reportes de soporte (el turista ve los suyos; el personal, todos) |
@@ -171,7 +181,7 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 2. **Variables** (`services/featuresPrediccion.ts`, `FeaturesPrediccion`): hora, día de la semana, fin de semana, festivo, puente, temporada y clima. Son las mismas que recibirá el modelo de ML.
 3. **Factores** multiplicativos, todos en `config/factoresPrediccion.ts`: lluvia probable (baja playas, cayos y actividades; sube un poco restaurantes y cultura), tormenta, festivo, puente y temporada alta. El resultado se limita a 0–100 % y se clasifica en Bajo / Medio / Alto. Fuera del horario del destino la respuesta es "Cerrado".
 
-**Calendario** (`calendarioService`, sin API externa): festivos de Colombia calculados con la Ley 51 de 1983 (Ley Emiliani), incluidos los que dependen de la Pascua; puentes (bloques de 3 o más días no laborales) y temporadas. Las fechas de temporada alta son **supuestos configurables** en `config/calendario.ts`: 15 dic – 15 ene, Semana Santa y 15 jun – 15 jul.
+**Calendario** (`calendarioService`, sin API externa): festivos de Colombia calculados con la Ley 51 de 1983 (Ley Emiliani), incluidos los que dependen de la Pascua; puentes (bloques de 3 o más días no laborales) y temporadas. Las fechas de temporada alta son **configurables** en `config/calendario.ts`: 15 dic – 15 ene, Semana Santa, 15 jun – 15 jul y el receso escolar de octubre (del sábado anterior a la semana de receso hasta el lunes festivo del 12 de octubre). `ml/calendario.py` aplica las mismas reglas.
 
 **Clima** (`services/clima/`): la interfaz `ProveedorClima` aísla al proveedor; `OpenMeteoProvider` pide temperatura, probabilidad de precipitación, precipitación, código WMO y viento por hora (zona `America/Bogota`), con todos los destinos en una sola llamada y un timeout de 4 s. `climaService` guarda cada destino en caché 30 minutos. Ante un timeout, error de red o HTTP 5xx reintenta una vez (`CLIMA_TIMEOUT_MS`, 6 s por intento; `CLIMA_REINTENTOS`, 1); si aun así falla, no vuelve a consultar durante 1 minuto (5 si fue por límite de peticiones) y registra el motivo en el log (`[clima] Open-Meteo falló (…)`). Sin clima, la predicción sigue funcionando y `motivoSinClima` dice por qué: `fuera_de_rango`, `sin_datos`, `no_configurado`, `timeout`, `error_red`, `limite_excedido`, `error_http` o `respuesta_invalida`. `GET /v1/health` incluye el estado del clima y su última falla.
 
@@ -184,10 +194,10 @@ El porcentaje lo calcula un proveedor intercambiable (`backend/src/services/pred
 | Valor | Qué hace |
 | --- | --- |
 | `heuristico` (por defecto) | Promedio histórico + factores (lo descrito arriba). No necesita nada más. |
-| `ml` | Servicio de `ml/` (Random Forest, `POST /predict/lote`). Si no responde, la predicción da 503. |
+| `ml` | Servicio de `ml/` (el ganador de la comparación, hoy HistGradientBoosting; `POST /predict/lote`). Si no responde, la predicción da 503. |
 | `auto` | Servicio de `ml/` y, si falla o tarda más de `ML_TIMEOUT_MS`, el heurístico; la API no se rompe. |
 
-Cada predicción indica `proveedor`, `proveedorRespaldo`, `origenDatos` y `datosSimulados`; mientras los datos sean simulados, `mensajeOrigen` dice "Estimación basada en datos simulados" y la app lo muestra en el detalle. Cómo entrenar, desplegar y pasar a datos reales: [`ml/README.md`](ml/README.md).
+Cada predicción indica `proveedor`, `modelo` (el que respondió: "HistGradientBoosting", "promedio histórico"…), `proveedorRespaldo`, `origenDatos` y `datosSimulados`; la app lo muestra en el detalle como "Estimado con HistGradientBoosting · datos simulados". Cómo entrenar, desplegar y pasar a datos reales: [`ml/README.md`](ml/README.md).
 
 ### Atribución del clima
 
@@ -303,6 +313,31 @@ Variables de `mobile/.env` (ver `mobile/.env.example`):
 4. Si cambias el `.env`, reinicia con `npm run start:limpio` (`npx expo start --clear`). Expo **incrusta** las variables `EXPO_PUBLIC_*` en el bundle; sin limpiar la caché, la app sigue usando el valor anterior. En desarrollo la app imprime la URL de la API al arrancar y la muestra al final de **Perfil**; la configuración está centralizada en `mobile/src/config/env.ts` y, si falta una variable, la app lo dice en vez de usar otra URL.
 
 Verificación de tipos: `npm run typecheck`.
+
+### 3. Servicio de ML (opcional)
+
+Python 3.11. Ver [`ml/README.md`](ml/README.md).
+
+```powershell
+cd ml
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+python generar_dataset_simulado.py    # dataset SIMULADO calibrado con datos reales (~5 s, sin internet)
+python calidad_dataset.py             # chequeos de coherencia → reportes/calidad_dataset.md
+python entrenar_modelo.py --comparar  # compara Ridge, Random Forest y HistGradientBoosting y guarda al ganador
+uvicorn app:app --port 8000           # necesita ML_API_KEY en ml/.env
+pytest
+```
+
+En el backend: `PREDICCION_PROVEEDOR=auto`, `ML_SERVICE_URL=http://localhost:8000` y la misma `ML_API_KEY`. El modelo ganador está versionado, así que el servicio arranca sin entrenar.
+
+### Pruebas y tipos
+
+| Carpeta | Pruebas | Tipos |
+| --- | --- | --- |
+| `backend/` | `npm test` (Jest + Supertest) | `npm run typecheck` |
+| `mobile/` | `npm test` (Jest con jest-expo, lógica de pantallas) | `npm run typecheck` |
+| `ml/` | `pytest` | — |
 
 ### Mapa
 

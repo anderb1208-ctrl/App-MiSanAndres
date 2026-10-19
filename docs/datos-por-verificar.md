@@ -135,7 +135,7 @@ Consultado en octubre de 2026. Fuentes públicas: operadores y guías turística
 
 ## Otros datos
 
-- **Capacidades** (`destino.capacidad`): todas son estimaciones para el cálculo de personas; no hay fuente oficial.
+- **Capacidades** (`destino.capacidad`): son estimaciones para el cálculo de personas, salvo **Johnny Cay**: las 800 personas simultáneas coinciden con el tope del fallo judicial (el estudio de capacidad de carga del plan de manejo de CORALINA da 854 simultáneas y el acuerdo limita a 1.500 por día). Pedir a CORALINA las de El Acuario y Haynes Cay (el Tribunal ordenó estudios semestrales).
 - **Primera Iglesia Bautista**: la descripción dice "fundada en 1844"; confirmar el año.
 - **Haynes Cay**: la descripción menciona que en sus alrededores se suelen ver mantarrayas.
 - **Cómo llegar**: los tiempos de viaje desde el centro son aproximados.
@@ -145,3 +145,18 @@ Consultado en octubre de 2026. Fuentes públicas: operadores y guías turística
 - **Jardín Botánico de San Andrés**: confirmar el mirador y si se visita con guía o reserva.
 - **Buceo con Karibik Diver**: en OpenStreetMap aparece como "Karibik Diving"; confirmar el nombre comercial.
 - **Aquanautas**: según su web, edad mínima de 12 años (o 1,45 m de estatura) y unos 25 minutos bajo el agua.
+
+## Dataset simulado del modelo de ML
+
+El dataset de ocupación es **simulado**. Lo que conviene confirmar para acercarlo a la realidad (detalle y fuentes en `ml/datos/FUENTES.md`):
+
+- **Llegadas mensuales de turistas**: solo julio, octubre y diciembre de 2025 y junio de 2026 tienen cifra oficial publicada (más los totales de 2024, 2025 y de los primeros semestres). Los demás meses de `ml/datos/llegadas_turistas_mensuales.csv` están repartidos para cuadrar con esos totales; pedir la serie mensual a la Secretaría de Turismo departamental (tarjeta de turismo) o a Migración Colombia.
+- **Octubre de 2025**: la fuente dice "más de 90.000"; se usó 90.500.
+- **Julio a octubre de 2026**: estimados como el mismo mes de 2025 + 12 %.
+- **El Acuario (Rose Cay)**: se simula cerrado del 23 de agosto de 2025 al 22 de febrero de 2026 (seis meses ordenados por el Tribunal). Una nota de Portafolio de octubre de 2026 lo describe todavía con restricciones: confirmar si reabrió y con qué aforo, y actualizar el estado del destino en la app.
+- **Haynes Cay**: el Tribunal ordenó cierres trimestrales de 3 días; las fechas no se publicaron (se asumen martes a jueves de la segunda semana de febrero, mayo, agosto y noviembre).
+- **Receso escolar de octubre**: se toma del sábado 9 días antes del festivo del 12 de octubre hasta ese lunes (calendario A). Cada secretaría de educación fija sus fechas: confirmar las del año.
+- **Cierre de cayos por mal tiempo**: el umbral (viento medio de 8 a 16 h ≥ 39 km/h o ≥ 16 mm de lluvia en el día) sale del percentil 98 del clima real, pero la regla es un supuesto: confirmar con la Capitanía de Puerto cuándo se suspenden los zarpes.
+- **Perfiles horarios, efecto de la lluvia y del día de la semana, popularidad**: supuestos coherentes sin fuente; reemplazarlos por conteos reales cuando existan (ver `ml/datos/LEEME_DATOS.md`).
+- **Horario de los cayos (9:00–16:00)**: ligado a las salidas de lanchas de los operadores (desde 8:30, regreso hacia las 15:00); confirmar con las cooperativas.
+
