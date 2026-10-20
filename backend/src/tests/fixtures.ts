@@ -15,6 +15,7 @@ const sinContenido = {
   ubicacion_fuente: 'aproximada',
   ubicacion_verificada: false,
   motivo_cierre: null,
+  cierre_desde: null,
   cierre_hasta: null,
   precio_min_cop: null,
   precio_max_cop: null,

@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController';
 import * as climaController from '../controllers/climaController';
@@ -23,8 +24,14 @@ const publicas = Router();
 publicas.use(adjuntarClienteAnonimo);
 
 publicas.get('/health', (_req, res) => {
-  // Incluye el estado del clima (sin URL ni claves) para diagnosticar el despliegue.
-  res.json({ estado: 'ok', servicio: 'misanandres-api', fecha: new Date().toISOString(), clima: estadoClima() });
+  // Incluye el estado del clima y el proveedor de predicción (sin URL ni claves) para diagnosticar el despliegue.
+  res.json({
+    estado: 'ok',
+    servicio: 'misanandres-api',
+    fecha: new Date().toISOString(),
+    clima: estadoClima(),
+    prediccion: { proveedor: env.PREDICCION_PROVEEDOR },
+  });
 });
 
 publicas.get('/destinos', validar({ query: e.consultaDestinos }), destinoController.listar);

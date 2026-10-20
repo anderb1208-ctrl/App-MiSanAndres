@@ -46,7 +46,8 @@ export interface Destino {
   /** Estado operativo efectivo (un cierre temporal vencido cuenta como abierto). */
   estado: EstadoDestino;
   /** Cierre temporal vigente con su motivo y fin previsto, o null. */
-  cierre: { motivo: string | null; hasta: string | null } | null;
+  /** Cierre temporal vigente: motivo, fin previsto y desde cuándo (null si se cerró antes de registrarlo). */
+  cierre: { motivo: string | null; hasta: string | null; desde: string | null } | null;
   /** Horario en hora de Colombia; null = sin horario (siempre accesible). */
   horario: Horario | null;
   rangoPrecio: RangoPrecio | null;
@@ -95,7 +96,7 @@ export function aDestino(fila: DestinoRow, prediccion?: prediccionService.Predic
     capacidad: fila.capacidad,
     estado: estadoEfectivo(fila),
     cierre:
-      estadoEfectivo(fila) === 'cerrado_temporal' ? { motivo: fila.motivo_cierre ?? null, hasta: fila.cierre_hasta ?? null } : null,
+      estadoEfectivo(fila) === 'cerrado_temporal' ? { motivo: fila.motivo_cierre ?? null, hasta: fila.cierre_hasta ?? null, desde: fila.cierre_desde ?? null } : null,
     horario: horarioDe(fila),
     rangoPrecio: fila.rango_precio,
     precio:

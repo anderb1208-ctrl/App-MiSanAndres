@@ -12,6 +12,7 @@ export type Database = {
       destino: {
         Row: {
           capacidad: number;
+          cierre_desde: string | null;
           cierre_hasta: string | null;
           categoria: Database['public']['Enums']['categoria_destino'];
           como_llegar: string | null;
@@ -38,6 +39,7 @@ export type Database = {
         };
         Insert: {
           capacidad: number;
+          cierre_desde?: string | null;
           cierre_hasta?: string | null;
           categoria: Database['public']['Enums']['categoria_destino'];
           como_llegar?: string | null;
@@ -64,6 +66,7 @@ export type Database = {
         };
         Update: {
           capacidad?: number;
+          cierre_desde?: string | null;
           cierre_hasta?: string | null;
           categoria?: Database['public']['Enums']['categoria_destino'];
           como_llegar?: string | null;
