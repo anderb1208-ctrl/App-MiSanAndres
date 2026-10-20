@@ -146,3 +146,56 @@ export const occupancyColors = {
   Medio: { main: '#f9ab00', bg: '#fff3e0', fg: '#a84f00', border: '#ffe0b2' },
   Alto: { main: '#d93025', bg: '#ffebee', fg: '#c62828', border: '#ffcdd2' },
 } as const;
+
+/**
+ * Panel "Ocupación ahora" (y paneles resumen de los demás roles): degradado azul claro,
+ * textos azul marino y encabezados de sección en azul medio. Contrastes medidos sobre el
+ * fondo más oscuro del panel (degradado al 94 % sobre la foto del hero, #c3d5ea):
+ * encabezado 5,0:1, secundario 5,0:1, contorno de gráficos 3,4:1.
+ */
+export const panelColors = {
+  /** Degradado del fondo (de arriba a la izquierda hacia abajo a la derecha). */
+  degradado: ['rgba(207,225,246,0.94)', 'rgba(238,245,253,0.94)', 'rgba(213,230,248,0.94)'] as const,
+  /** Encabezados de sección ("OCUPACIÓN AHORA") y texto de la píldora "Estimado". */
+  encabezado: '#11559a',
+  /** Texto secundario (categoría, "Lluvia 24 %", "Open-Meteo"). */
+  secundario: '#43566d',
+  /** Pista del anillo (los cerrados) y relleno del cuadrito "Cerrados". */
+  pista: '#c9def4',
+  /** Contorno de los elementos gráficos (anillo y cuadrito de cerrados): ≥ 3:1. */
+  contorno: '#4a71a0',
+  /** Separadores dentro del panel. */
+  separador: 'rgba(17,85,154,0.18)',
+  /** Filas de vidrio sobre el degradado (blanco translúcido + desenfoque). */
+  vidrioFila: 'rgba(255,255,255,0.62)',
+  vidrioFilaBorde: 'rgba(255,255,255,0.85)',
+  /** Píldora blanca ("Estimado") y círculo del ícono del clima. */
+  pildora: '#ffffff',
+  pildoraBorde: 'rgba(17,85,154,0.16)',
+} as const;
+
+/**
+ * Chips de estado y prioridad de los tickets (mismo estilo que las píldoras de ocupación).
+ * No usan el espectro de ocupación (verde/ámbar/rojo), que está reservado para Bajo/Medio/Alto.
+ * Texto sobre fondo ≥ 4,5:1; punto y borde distinguibles.
+ */
+export interface TonoChip {
+  fondo: string;
+  borde: string;
+  texto: string;
+  punto: string;
+}
+
+export const ticketColors = {
+  estado: {
+    abierto: { fondo: '#e3eefc', borde: '#bcd5f5', texto: '#11559a', punto: '#1f78d1' },
+    en_revision: { fondo: '#efe9fb', borde: '#d5c8f2', texto: '#5b3fa8', punto: '#7c5cd6' },
+    resuelto: { fondo: '#e0f4f1', borde: '#b5e3dc', texto: '#0f6b5f', punto: '#159a87' },
+    cerrado: { fondo: '#eceef1', borde: '#d3d7de', texto: '#4a5160', punto: '#7a8291' },
+  },
+  prioridad: {
+    baja: { fondo: '#eceef1', borde: '#d3d7de', texto: '#4a5160', punto: '#7a8291' },
+    media: { fondo: '#e8eafc', borde: '#c9cdf5', texto: '#3c45a5', punto: '#5a64d6' },
+    alta: { fondo: '#fde7ef', borde: '#f6c3d5', texto: '#a3123f', punto: '#d81b60' },
+  },
+} as const satisfies Record<string, Record<string, TonoChip>>;

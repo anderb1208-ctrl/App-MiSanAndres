@@ -1,40 +1,38 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAsync } from '../hooks/useAsync';
 import { useReducirMovimiento } from '../hooks/useReducirMovimiento';
 import { mensajeDeError } from '../services/api';
 import { obtenerClimaIsla } from '../services/clima';
 import type { Destino } from '../services/tipos';
-import { colors, mapColors, motion, occupancyColors, radius, spacing, typography } from '../theme';
+import { colors, motion, occupancyColors, panelColors, radius, spacing, typography } from '../theme';
+import { filasLeyenda } from '../utils/anillo';
 import { CATEGORIAS } from '../utils/categorias';
 import { estadoDelTiempo, formatearTemperatura } from '../utils/clima';
 import { textoOcupacion } from '../utils/ocupacion';
-import {
-  distribuirPorNivel,
-  GRUPOS_OCUPACION,
-  horaPrevision,
-  masTranquilos,
-  segmentosDistribucion,
-  type GrupoOcupacion,
-} from '../utils/resumenOcupacion';
+import { distribuirPorNivel, horaPrevision, masTranquilos, type DistribucionOcupacion, type GrupoOcupacion } from '../utils/resumenOcupacion';
+import { AnilloOcupacion } from './AnilloOcupacion';
 import { Button } from './Button';
+import { ChipEstado, tonoOcupacion } from './ChipEstado';
 import { Icon } from './Icon';
 import { ImagenDestino } from './ImagenDestino';
-import { OcupacionCompacta } from './OcupacionCompacta';
 import { PressableScale } from './PressableScale';
 import { SuperficieVidrio } from './SuperficieVidrio';
 
-/** Etiqueta y color de cada grupo; el color nunca va sin la palabra. */
-const GRUPO: Record<GrupoOcupacion, { etiqueta: string; accesible: string; color: string }> = {
-  Bajo: { etiqueta: 'Baja', accesible: 'Ocupación baja', color: occupancyColors.Bajo.main },
-  Medio: { etiqueta: 'Media', accesible: 'Ocupación media', color: occupancyColors.Medio.main },
-  Alto: { etiqueta: 'Alta', accesible: 'Ocupación alta', color: occupancyColors.Alto.main },
-  Cerrado: { etiqueta: 'Cerrados', accesible: 'Cerrados ahora', color: mapColors.cerrado },
+/** Cuadrito de la leyenda: relleno del color del segmento y borde oscuro (≥ 3:1 sobre el panel). */
+const CUADRITO: Record<GrupoOcupacion, { relleno: string; borde: string }> = {
+  Bajo: { relleno: occupancyColors.Bajo.main, borde: occupancyColors.Bajo.fg },
+  Medio: { relleno: occupancyColors.Medio.main, borde: occupancyColors.Medio.fg },
+  Alto: { relleno: occupancyColors.Alto.main, borde: occupancyColors.Alto.fg },
+  Cerrado: { relleno: panelColors.pista, borde: panelColors.contorno },
 };
-
-const ALTO_BARRA = 12;
-/** Alto del área táctil de cada segmento (la barra mide 12; se amplía con hitSlop). */
-const AMPLIAR_SEGMENTO = (44 - ALTO_BARRA) / 2;
+const ACCESIBLE: Record<GrupoOcupacion, string> = {
+  Bajo: 'Ocupación baja',
+  Medio: 'Ocupación media',
+  Alto: 'Ocupación alta',
+  Cerrado: 'Cerrados ahora',
+};
 
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
@@ -50,27 +48,36 @@ interface Props {
 }
 
 /**
- * Panel "Ocupación ahora" de Inicio (vidrio real en iOS 26+): distribución por nivel tocable,
- * los 3 lugares más tranquilos y el clima actual de la caché del backend.
- * Dentro no hay otras superficies de vidrio (nada de vidrio sobre vidrio).
+ * Panel "Ocupación ahora" de Inicio: degradado azul claro sobre una superficie de vidrio, anillo
+ * de los abiertos por nivel con su leyenda, los 3 lugares más tranquilos en filas de vidrio y el
+ * clima actual de la caché del backend. Las filas usan desenfoque con velo blanco (no Liquid
+ * Glass), así no hay vidrio nativo sobre vidrio nativo.
  */
 export function PanelOcupacion({ destinos, cargando, error, horaRespaldo, onReintentar, onElegirGrupo, onAbrirDestino }: Props) {
   const [verNota, setVerNota] = useState(false);
   const hora = horaPrevision(destinos) ?? horaRespaldo ?? null;
 
   return (
-    <SuperficieVidrio
-      variante="panel"
-      // Velo blanco fuerte: parte del panel queda sobre la foto y el texto debe leerse (≥ 4.5:1).
-      tinte={{ fondo: colors.glassStrong, borde: colors.glassBorder }}
-      style={styles.panel}
-    >
+    <SuperficieVidrio variante="panel" style={styles.panel}>
+      <LinearGradient
+        colors={panelColors.degradado}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        locations={[0, 0.5, 1]}
+        style={[StyleSheet.absoluteFill, styles.degradado]}
+        pointerEvents="none"
+      />
+
       <View style={styles.cabecera}>
         <View style={styles.cabeceraTextos}>
-          <Text style={styles.titulo} accessibilityRole="header">
+          <Text style={styles.overline} accessibilityRole="header">
             Ocupación ahora
           </Text>
-          {hora ? <Text style={styles.hora}>Previsión para las {hora}</Text> : null}
+          {hora ? (
+            <Text style={styles.hora}>
+              Previsión para las <Text style={styles.horaNegrita}>{hora}</Text>
+            </Text>
+          ) : null}
         </View>
         <Pressable
           onPress={() => setVerNota((v) => !v)}
@@ -78,10 +85,10 @@ export function PanelOcupacion({ destinos, cargando, error, horaRespaldo, onRein
           accessibilityLabel="Estimado"
           accessibilityHint="Explica de dónde salen estas cifras"
           accessibilityState={{ expanded: verNota }}
-          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+          hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
           style={({ pressed }) => [styles.estimado, pressed && styles.estimadoPresionado]}
         >
-          <Icon name="info-outline" size={14} color={colors.textMuted} />
+          <View style={styles.estimadoPunto} />
           <Text style={styles.estimadoTexto}>Estimado</Text>
         </Pressable>
       </View>
@@ -127,12 +134,10 @@ function Contenido({ destinos, cargando, error, onReintentar, onElegirGrupo, onA
   }
 
   const distribucion = distribuirPorNivel(destinos);
-  const tranquilos = masTranquilos(destinos);
-
   if (distribucion.total === 0) {
     return (
       <View style={styles.estado}>
-        <Icon name="travel-explore" size={22} color={colors.secondary} />
+        <Icon name="travel-explore" size={22} color={panelColors.encabezado} />
         <View style={styles.estadoTextos}>
           <Text style={styles.estadoTitulo}>Aún no hay previsión</Text>
           <Text style={styles.estadoTexto}>
@@ -145,67 +150,27 @@ function Contenido({ destinos, cargando, error, onReintentar, onElegirGrupo, onA
     );
   }
 
+  const tranquilos = masTranquilos(destinos);
   return (
     <>
-      <BarraDistribucion distribucion={distribucion} onElegir={onElegirGrupo} />
-
-      <View style={styles.leyenda}>
-        {GRUPOS_OCUPACION.map((g) => {
-          const cantidad = distribucion.conteo[g];
-          return (
-            <PressableScale
-              key={g}
-              onPress={() => onElegirGrupo(g)}
-              disabled={cantidad === 0}
-              escala={motion.pressScale.chip}
-              accessibilityRole="button"
-              accessibilityLabel={`${GRUPO[g].accesible}: ${plural(cantidad, 'destino', 'destinos')}`}
-              accessibilityHint={cantidad > 0 ? 'Abre Explorar con este filtro' : undefined}
-              accessibilityState={{ disabled: cantidad === 0 }}
-              style={styles.leyendaItem}
-            >
-              <Text style={styles.leyendaCifra}>{cantidad}</Text>
-              <View style={styles.leyendaEtiqueta}>
-                <View style={[styles.punto, { backgroundColor: GRUPO[g].color }]} />
-                <Text style={styles.leyendaTexto} numberOfLines={1}>
-                  {GRUPO[g].etiqueta}
-                </Text>
-              </View>
-            </PressableScale>
-          );
-        })}
+      <View style={styles.resumen}>
+        <AnilloOcupacion distribucion={distribucion} onElegir={onElegirGrupo} />
+        <Leyenda distribucion={distribucion} onElegir={onElegirGrupo} />
       </View>
       {distribucion.sinDatos > 0 && (
         <Text style={styles.sinDatos}>{plural(distribucion.sinDatos, 'destino sin previsión', 'destinos sin previsión')}</Text>
       )}
 
       <View style={styles.separador} />
-      <Text style={styles.overline}>Lo más tranquilo ahora</Text>
+      <Text style={styles.overline} accessibilityRole="header">
+        Lo más tranquilo ahora
+      </Text>
       {tranquilos.length === 0 ? (
         <Text style={styles.estadoTexto}>Ningún destino está abierto en este momento.</Text>
       ) : (
         <View style={styles.tranquilos}>
           {tranquilos.map((d) => (
-            <PressableScale
-              key={d.id}
-              onPress={() => onAbrirDestino(d.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`${d.nombre}, ${CATEGORIAS[d.categoria].singular}. ${textoOcupacion(d.ocupacionActual).accesible}`}
-              accessibilityHint="Abre el detalle"
-              style={styles.tranquilo}
-            >
-              <ImagenDestino destino={d} style={styles.miniatura} tamanoIcono={20} />
-              <View style={styles.tranquiloTextos}>
-                <Text style={styles.tranquiloNombre} numberOfLines={1}>
-                  {d.nombre}
-                </Text>
-                <Text style={styles.tranquiloCategoria} numberOfLines={1}>
-                  {CATEGORIAS[d.categoria].singular}
-                </Text>
-              </View>
-              <OcupacionCompacta ocupacion={d.ocupacionActual} variante="chip" />
-              <Icon name="chevron-right" size={20} color={colors.textMuted} />
-            </PressableScale>
+            <FilaTranquila key={d.id} destino={d} onPress={() => onAbrirDestino(d.id)} />
           ))}
         </View>
       )}
@@ -213,47 +178,65 @@ function Contenido({ destinos, cargando, error, onReintentar, onElegirGrupo, onA
   );
 }
 
-/** Barra apilada por nivel; se llena de izquierda a derecha al aparecer. */
-function BarraDistribucion({
-  distribucion,
-  onElegir,
-}: {
-  distribucion: ReturnType<typeof distribuirPorNivel>;
-  onElegir: (g: GrupoOcupacion) => void;
-}) {
-  const reducirMovimiento = useReducirMovimiento();
-  const progreso = useRef(new Animated.Value(reducirMovimiento ? 1 : 0)).current;
-  const segmentos = segmentosDistribucion(distribucion);
-
-  useEffect(() => {
-    if (reducirMovimiento) {
-      progreso.setValue(1);
-      return;
-    }
-    progreso.setValue(0);
-    Animated.timing(progreso, {
-      toValue: 1,
-      duration: motion.duration.slow,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-    // Se vuelve a llenar solo cuando cambia la distribución, no en cada render.
-  }, [distribucion.total, distribucion.conteo.Bajo, distribucion.conteo.Medio, distribucion.conteo.Alto, reducirMovimiento, progreso]);
-
+/** Leyenda: cuadrito, nombre y cifra alineada a la derecha. Cada fila mide ≥ 44 px de área táctil. */
+function Leyenda({ distribucion, onElegir }: { distribucion: DistribucionOcupacion; onElegir: (g: GrupoOcupacion) => void }) {
   return (
-    // La leyenda de abajo es la versión accesible; la barra es su representación visual.
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.barraMarco}>
-      <Animated.View style={[styles.barra, { transform: [{ scaleX: progreso }] }]}>
-        {segmentos.map((s) => (
-          <Pressable
-            key={s.grupo}
-            onPress={() => onElegir(s.grupo)}
-            hitSlop={{ top: AMPLIAR_SEGMENTO, bottom: AMPLIAR_SEGMENTO }}
-            style={[styles.segmento, { flexGrow: s.cantidad, backgroundColor: GRUPO[s.grupo].color }]}
-          />
-        ))}
-      </Animated.View>
+    <View style={styles.leyenda}>
+      {filasLeyenda(distribucion).map((f) => (
+        <Pressable
+          key={f.grupo}
+          onPress={() => onElegir(f.grupo)}
+          disabled={f.cantidad === 0}
+          accessibilityRole="button"
+          accessibilityLabel={`${ACCESIBLE[f.grupo]}: ${plural(f.cantidad, 'destino', 'destinos')}`}
+          accessibilityHint={f.cantidad > 0 ? 'Abre Explorar con este filtro' : undefined}
+          accessibilityState={{ disabled: f.cantidad === 0 }}
+          hitSlop={{ top: 4, bottom: 4 }}
+          style={({ pressed }) => [styles.leyendaFila, pressed && styles.leyendaPresionada]}
+        >
+          <View style={[styles.cuadrito, { backgroundColor: CUADRITO[f.grupo].relleno, borderColor: CUADRITO[f.grupo].borde }]} />
+          <Text style={styles.leyendaNombre} numberOfLines={1}>
+            {f.etiqueta}
+          </Text>
+          <Text style={styles.leyendaCifra}>{f.cantidad}</Text>
+        </Pressable>
+      ))}
     </View>
+  );
+}
+
+/** Fila de "Lo más tranquilo ahora": vidrio translúcido (blanco 62 % con desenfoque) sobre el degradado. */
+function FilaTranquila({ destino, onPress }: { destino: Destino; onPress: () => void }) {
+  const o = destino.ocupacionActual;
+  const nivel = o?.nivel ? occupancyColors[o.nivel] : null;
+  return (
+    <PressableScale
+      onPress={onPress}
+      escala={motion.pressScale.button}
+      accessibilityRole="button"
+      accessibilityLabel={`${destino.nombre}, ${CATEGORIAS[destino.categoria].singular}. ${textoOcupacion(o).accesible}`}
+      accessibilityHint="Abre el detalle"
+    >
+      <SuperficieVidrio
+        variante="tarjeta"
+        calidad="desenfoque"
+        tinte={{ fondo: panelColors.vidrioFila, borde: panelColors.vidrioFilaBorde }}
+        sombra={false}
+        style={styles.fila}
+      >
+        <ImagenDestino destino={destino} style={styles.miniatura} tamanoIcono={20} />
+        <View style={styles.filaTextos}>
+          <Text style={styles.filaNombre} numberOfLines={1}>
+            {destino.nombre}
+          </Text>
+          <Text style={styles.filaCategoria} numberOfLines={1}>
+            {CATEGORIAS[destino.categoria].singular}
+          </Text>
+        </View>
+        {nivel && o ? <ChipEstado etiqueta={`${Math.round(o.porcentaje)} %`} tono={tonoOcupacion(nivel)} /> : null}
+        <Icon name="chevron-right" size={20} color={panelColors.secundario} />
+      </SuperficieVidrio>
+    </PressableScale>
   );
 }
 
@@ -278,20 +261,22 @@ function Esqueleto() {
   const bloque = (estilo: object) => <Animated.View style={[styles.bloque, estilo, { opacity: pulso }]} />;
   return (
     <View accessible accessibilityLabel="Cargando la ocupación" accessibilityState={{ busy: true }} style={styles.esqueleto}>
-      {bloque({ height: ALTO_BARRA, borderRadius: radius.full })}
-      <View style={styles.leyenda}>
-        {GRUPOS_OCUPACION.map((g) => (
-          <View key={g} style={styles.leyendaItem}>
-            {bloque({ width: 28, height: 24 })}
-            {bloque({ width: 52, height: 12, marginTop: 6 })}
-          </View>
-        ))}
+      <View style={styles.resumen}>
+        {bloque({ width: 112, height: 112, borderRadius: 56 })}
+        <View style={styles.leyenda}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={styles.leyendaFila}>
+              {bloque({ width: 12, height: 12, borderRadius: 3 })}
+              {bloque({ flex: 1, height: 12 })}
+            </View>
+          ))}
+        </View>
       </View>
       <View style={styles.separador} />
       {[0, 1, 2].map((i) => (
-        <View key={i} style={styles.tranquilo}>
-          {bloque({ width: 44, height: 44, borderRadius: radius.md })}
-          <View style={styles.tranquiloTextos}>
+        <View key={i} style={[styles.fila, styles.filaEsqueleto]}>
+          {bloque({ width: 40, height: 40, borderRadius: radius.lg })}
+          <View style={styles.filaTextos}>
             {bloque({ width: '70%', height: 14 })}
             {bloque({ width: '40%', height: 12, marginTop: 6 })}
           </View>
@@ -308,21 +293,26 @@ function LineaClima() {
   if (!actual || actual.temperatura === null) return null;
 
   const estado = estadoDelTiempo(actual.codigoClima);
+  const principal = `${formatearTemperatura(actual.temperatura)} · ${estado.texto}`;
   const lluvia = actual.probLluvia === null ? null : `Lluvia ${actual.probLluvia} %`;
-  const texto = [formatearTemperatura(actual.temperatura), estado.texto, lluvia].filter(Boolean).join(' · ');
   return (
     <>
       <View style={styles.separador} />
       <Pressable
         onPress={() => void Linking.openURL(datos?.atribucion.url ?? 'https://open-meteo.com/')}
         accessibilityRole="link"
-        accessibilityLabel={`Clima ahora en San Andrés: ${texto.replace('°', ' grados')}. Datos de Open-Meteo.com`}
+        accessibilityLabel={`Clima ahora en San Andrés: ${principal.replace('°', ' grados')}${lluvia ? `, ${lluvia}` : ''}. Datos de Open-Meteo.com`}
         style={styles.clima}
       >
-        <Icon name={estado.icono} size={20} color={colors.secondary} />
-        <Text style={styles.climaTexto} numberOfLines={1}>
-          {texto}
-        </Text>
+        <View style={styles.climaIcono}>
+          <Icon name={estado.icono} size={22} color={panelColors.encabezado} />
+        </View>
+        <View style={styles.climaTextos}>
+          <Text style={styles.climaPrincipal} numberOfLines={1}>
+            {principal}
+          </Text>
+          {lluvia ? <Text style={styles.climaLluvia}>{lluvia}</Text> : null}
+        </View>
         <Text style={styles.climaFuente}>Open-Meteo</Text>
       </Pressable>
     </>
@@ -330,63 +320,70 @@ function LineaClima() {
 }
 
 const styles = StyleSheet.create({
-  panel: { padding: spacing.md, gap: spacing.gutter },
+  panel: { padding: spacing.md, gap: spacing.gutter, borderRadius: radius.xxl },
+  degradado: { borderRadius: radius.xxl },
+
   cabecera: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  cabeceraTextos: { flex: 1 },
-  titulo: { ...typography.titleMd, color: colors.textStrong },
-  hora: { ...typography.bodyMd, color: colors.textMuted },
+  cabeceraTextos: { flex: 1, gap: 2 },
+  overline: { ...typography.overline, letterSpacing: 1.4, color: panelColors.encabezado },
+  hora: { ...typography.bodyLg, color: colors.textStrong },
+  horaNegrita: { fontFamily: typography.labelBold.fontFamily },
   estimado: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    gap: 6,
+    minHeight: 32,
+    paddingHorizontal: 12,
     borderRadius: radius.full,
+    backgroundColor: panelColors.pildora,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: panelColors.pildoraBorde,
   },
-  estimadoPresionado: { backgroundColor: colors.pressedOverlay },
-  estimadoTexto: { ...typography.labelBold, color: colors.textMuted },
-  nota: { padding: spacing.gutter, borderRadius: radius.lg, backgroundColor: colors.turquoiseTint },
+  estimadoPresionado: { backgroundColor: colors.surfaceLow },
+  estimadoPunto: { width: 8, height: 8, borderRadius: 4, backgroundColor: panelColors.encabezado },
+  estimadoTexto: { ...typography.labelBold, fontSize: 14, lineHeight: 18, color: panelColors.encabezado },
+  nota: { padding: spacing.gutter, borderRadius: radius.lg, backgroundColor: panelColors.vidrioFila },
   notaTexto: { ...typography.bodyMd, color: colors.textStrong },
 
-  barraMarco: { height: ALTO_BARRA, marginTop: spacing.xs },
-  barra: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 2,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    transformOrigin: 'left',
+  resumen: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  leyenda: { flex: 1, gap: spacing.sm },
+  // 36 px de alto + 4 px de hitSlop arriba y abajo = 44 px táctiles sin solaparse (separación 8).
+  leyendaFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.gutter, minHeight: 36, borderRadius: radius.md, paddingHorizontal: 4 },
+  leyendaPresionada: { backgroundColor: panelColors.vidrioFila },
+  cuadrito: { width: 12, height: 12, borderRadius: 3, borderWidth: 1.5 },
+  leyendaNombre: { ...typography.bodyLg, color: colors.textStrong, flex: 1 },
+  leyendaCifra: { ...typography.titleMd, fontFamily: typography.display.fontFamily, color: colors.textStrong, fontVariant: ['tabular-nums'] },
+  sinDatos: { ...typography.labelMd, color: panelColors.secundario },
+
+  separador: { height: StyleSheet.hairlineWidth * 2, backgroundColor: panelColors.separador },
+  tranquilos: { gap: spacing.sm },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: spacing.gutter, minHeight: 56, paddingVertical: spacing.sm, paddingHorizontal: spacing.gutter, borderRadius: radius.xl },
+  filaEsqueleto: { backgroundColor: panelColors.vidrioFila },
+  miniatura: { width: 40, height: 40, borderRadius: radius.lg, backgroundColor: panelColors.pista },
+  filaTextos: { flex: 1, minWidth: 0 },
+  filaNombre: { ...typography.titleMd, fontSize: 16, lineHeight: 22, color: colors.textStrong },
+  filaCategoria: { ...typography.bodyMd, color: panelColors.secundario },
+
+  clima: { flexDirection: 'row', alignItems: 'center', gap: spacing.gutter, minHeight: 48 },
+  climaIcono: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: panelColors.pildora,
+    borderWidth: 1,
+    borderColor: panelColors.pildoraBorde,
   },
-  segmento: { flexBasis: 0, minWidth: 6, height: '100%' },
-
-  leyenda: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.xs },
-  // En pantallas angostas pasa a 2 × 2 en lugar de cortar las etiquetas.
-  leyendaItem: { flexGrow: 1, flexBasis: 72, minHeight: 52, justifyContent: 'center', paddingVertical: spacing.xs },
-  leyendaCifra: { ...typography.headlineMd, fontFamily: typography.display.fontFamily, color: colors.textStrong },
-  leyendaEtiqueta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  punto: { width: 10, height: 10, borderRadius: 5 },
-  leyendaTexto: { ...typography.labelBold, color: colors.textMuted, flexShrink: 1 },
-  sinDatos: { ...typography.labelMd, color: colors.textMuted },
-
-  separador: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-  overline: { ...typography.overline, color: colors.textMuted },
-  tranquilos: { gap: spacing.xs },
-  tranquilo: { flexDirection: 'row', alignItems: 'center', gap: spacing.gutter, minHeight: 56 },
-  miniatura: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surfaceLow },
-  tranquiloTextos: { flex: 1 },
-  tranquiloNombre: { ...typography.titleMd, fontSize: 16, color: colors.textStrong },
-  tranquiloCategoria: { ...typography.labelMd, color: colors.textMuted },
-
-  clima: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
-  climaTexto: { ...typography.bodyMd, fontFamily: typography.titleMd.fontFamily, color: colors.textStrong, flex: 1 },
-  climaFuente: { ...typography.labelMd, color: colors.textLink, textDecorationLine: 'underline' },
+  climaTextos: { flex: 1, minWidth: 0 },
+  climaPrincipal: { ...typography.titleMd, fontSize: 16, lineHeight: 22, color: colors.textStrong },
+  climaLluvia: { ...typography.bodyMd, color: panelColors.secundario },
+  climaFuente: { ...typography.labelBold, color: panelColors.secundario },
 
   estado: { flexDirection: 'row', gap: spacing.gutter, paddingVertical: spacing.xs },
   estadoTextos: { flex: 1, gap: 4 },
   estadoTitulo: { ...typography.titleMd, fontSize: 16, color: colors.textStrong },
-  estadoTexto: { ...typography.bodyMd, color: colors.textMuted },
+  estadoTexto: { ...typography.bodyMd, color: panelColors.secundario },
   estadoBoton: { alignSelf: 'flex-start', marginTop: spacing.sm },
   esqueleto: { gap: spacing.gutter },
   bloque: { backgroundColor: colors.track, borderRadius: radius.sm },

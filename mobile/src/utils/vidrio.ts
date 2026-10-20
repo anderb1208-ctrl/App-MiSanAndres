@@ -37,8 +37,8 @@ export const esVidrioCostoso = (modo: ModoVidrio) => modo === 'nativo' || modo =
  * Contador de superficies costosas montadas a la vez (medición de rendimiento).
  * En desarrollo se registra el máximo alcanzado para compararlo con el presupuesto.
  */
-/** Inicio en iOS 26 usa 12 (barra, avatar, panel y 3 tarjetas del carrusel × 3); deja margen. */
-export const PRESUPUESTO_VIDRIO = 14;
+/** Inicio en iOS 26 usa 15 (barra, avatar, panel, 3 filas de "Lo más tranquilo" y 3 tarjetas del carrusel × 3); deja margen. */
+export const PRESUPUESTO_VIDRIO = 16;
 const activas: Record<'nativo' | 'desenfoque', number> = { nativo: 0, desenfoque: 0 };
 let maximo = 0;
 

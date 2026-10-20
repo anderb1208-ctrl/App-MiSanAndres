@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { OcupacionResumida } from '../services/tipos';
-import { colors, occupancyColors, radius, typography } from '../theme';
+import { colors, occupancyColors, typography } from '../theme';
 import { textoOcupacion } from '../utils/ocupacion';
+import { ChipEstado, TONO_NEUTRO, tonoOcupacion } from './ChipEstado';
 import { Icon } from './Icon';
-import { SuperficieVidrio } from './SuperficieVidrio';
 
 interface Props {
   ocupacion: OcupacionResumida | null | undefined;
@@ -25,16 +25,15 @@ export function OcupacionCompacta({ ocupacion, variante = 'indicador', sobreOscu
   const c = ocupacion?.nivel && ocupacion.estado !== 'Cerrado' ? occupancyColors[ocupacion.nivel] : null;
 
   if (variante === 'chip') {
-    // Va dentro de tarjetas (listas, panel de Inicio): calidad ligera, nunca vidrio sobre vidrio.
-    // El tinte es el del nivel, así el texto mantiene su contraste (≥ 4.5:1) en todos los modos.
-    const tinte = c ? { fondo: c.bg, borde: c.border, fondoOpaco: c.bg } : TINTE_NEUTRO;
+    // Misma píldora que los estados de los tickets (ChipEstado); el texto dice el nivel con palabras.
     return (
-      <SuperficieVidrio variante="chip" calidad="ligera" tinte={tinte} accessible accessibilityLabel={t.accesible} style={styles.chip}>
-        {c ? <View style={[styles.punto, { backgroundColor: c.main }]} /> : <Icon name={t.icono} size={12} color={colors.textMuted} />}
-        <Text style={[styles.chipTexto, { color: c ? c.fg : colors.textMuted }]} numberOfLines={1}>
-          {t.corto}
-        </Text>
-      </SuperficieVidrio>
+      <ChipEstado
+        etiqueta={t.corto}
+        accesible={t.accesible}
+        tono={c ? tonoOcupacion(c) : TONO_NEUTRO}
+        icono={c ? undefined : t.icono}
+        tamano="sm"
+      />
     );
   }
 
@@ -53,21 +52,9 @@ export function OcupacionCompacta({ ocupacion, variante = 'indicador', sobreOscu
   );
 }
 
-const TINTE_NEUTRO = { fondo: colors.surfaceLow, borde: colors.borderCard, fondoOpaco: colors.surfaceLow };
-
 const styles = StyleSheet.create({
   indicador: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 },
   indicadorTexto: { ...typography.labelBold },
   punto: { width: 8, height: 8, borderRadius: 4 },
   puntoBorde: { borderWidth: 1, borderColor: colors.white, width: 10, height: 10, borderRadius: 5 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-    flexShrink: 0,
-  },
-  chipTexto: { ...typography.labelBold, fontSize: 12 },
 });

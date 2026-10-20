@@ -27,6 +27,9 @@ import { formatearPresupuesto, PRESUPUESTO_INICIAL } from '../utils/presupuesto'
 import { primerNombre } from '../utils/validacion';
 
 const DESTACADOS = 3;
+/** Alto del hero sin el área segura: marca y avatar, saludo y lo que se monta el panel encima.
+ * Así el carrusel "Destacados para ti" asoma en la primera pantalla de un iPhone de 6,1". */
+const ALTO_HERO = 172;
 
 async function cargarInicio() {
   const [destinos, perfil] = await Promise.all([listarDestinos(), obtenerPerfil()]);
@@ -58,6 +61,48 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
   const resultado = recs.datos;
   const lista = resultado?.recomendaciones ?? [];
 
+  // Presupuesto: "Mi presupuesto ✎" abre Preferencias y el chip filtra por precio. Va después del carrusel.
+  const bloqueFiltro = recs.datos?.tienePreferencias ? (
+    <View style={styles.filtro}>
+      <View style={styles.filtroFila}>
+        {/* Etiqueta tocable: lleva a Preferencias para cambiar el presupuesto guardado. */}
+        <Pressable
+          onPress={irAPreferencias}
+          accessibilityRole="button"
+          accessibilityLabel={
+            recs.datos.presupuesto
+              ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}. Editar en preferencias`
+              : 'Definir mi presupuesto en preferencias'
+          }
+          hitSlop={{ top: 8, bottom: 8 }}
+          style={({ pressed }) => [styles.miPresupuesto, pressed && styles.miPresupuestoPresionado]}
+        >
+          <Icon name="payments" size={16} color={colors.secondary} />
+          <Text style={styles.miPresupuestoTexto} numberOfLines={1}>
+            {recs.datos.presupuesto ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}` : 'Definir mi presupuesto'}
+          </Text>
+          <Icon name="edit" size={14} color={colors.textLink} />
+        </Pressable>
+        <FilterChip icono="tune" acento="turquoise" compacto activo={filtro !== null || verFiltro} onPress={() => setVerFiltro((v) => !v)}>
+          {filtro ? formatearPresupuesto(filtro) : 'Filtrar por precio'}
+        </FilterChip>
+        {filtro && (
+          <FilterChip icono="close" activo={false} compacto onPress={() => setFiltro(null)}>
+            Quitar
+          </FilterChip>
+        )}
+      </View>
+      {verFiltro && (
+        <GlassPanel tono="strong" radius={radius.xl} padding={spacing.md}>
+          <RangoPresupuesto
+            valor={filtro ?? recs.datos.presupuesto ?? PRESUPUESTO_INICIAL}
+            onCambioFinal={setFiltro}
+          />
+        </GlassPanel>
+      )}
+    </View>
+  ) : null;
+
   const contenido = () => {
     if (cargando) return <EstadoCargando mensaje="Buscando tus recomendaciones…" />;
     if (error && !resultado) return <EstadoError error={error} onReintentar={recargar} />;
@@ -74,12 +119,15 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
     }
     if (lista.length === 0) {
       return filtro ? (
-        <EstadoMensaje
-          icono="payments"
-          titulo="Nada en ese presupuesto"
-          mensaje={`Ningún destino que te guste entra en ${formatearPresupuesto(filtro)}. Amplía el rango.`}
-          accion={{ texto: 'Quitar el filtro', onPress: () => setFiltro(null) }}
-        />
+        <>
+          {bloqueFiltro}
+          <EstadoMensaje
+            icono="payments"
+            titulo="Nada en ese presupuesto"
+            mensaje={`Ningún destino que te guste entra en ${formatearPresupuesto(filtro)}. Amplía el rango.`}
+            accion={{ texto: 'Quitar el filtro', onPress: () => setFiltro(null) }}
+          />
+        </>
       ) : (
         <EstadoMensaje
           icono="travel-explore"
@@ -95,10 +143,7 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
     return (
       <>
         <View style={styles.seccion}>
-          <SectionHeader
-            titulo="Destacados para ti"
-            subtitulo={`Según tus preferencias y la ocupación prevista a las ${resultado.hora}`}
-          />
+          <SectionHeader titulo="Destacados para ti" />
         </View>
         <ScrollView
           horizontal
@@ -120,6 +165,8 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
             />
           ))}
         </ScrollView>
+
+        {bloqueFiltro}
 
         {otros.length > 0 && (
           <View style={styles.seccion}>
@@ -148,7 +195,7 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
         contentContainerStyle={{ paddingBottom: espacioInferior }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={recargar} tintColor={colors.white} />}
       >
-        <View style={styles.hero}>
+        <View style={[styles.hero, { height: insets.top + ALTO_HERO }]}>
           <Image source={IMAGENES.heroAerial} style={StyleSheet.absoluteFill} resizeMode="cover" />
           <LinearGradient colors={colors.scrimBottom} locations={[0, 0.5, 1]} style={[StyleSheet.absoluteFill, styles.scrim]} />
           <View style={[styles.heroArriba, { top: insets.top + spacing.sm }]}>
@@ -173,7 +220,6 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
             <Text style={styles.hola} accessibilityRole="header">
               {nombre ? `Hola, ${nombre}` : 'Hola'}
             </Text>
-            <Text style={styles.holaSub}>Estas son tus recomendaciones personalizadas</Text>
           </View>
         </View>
 
@@ -188,47 +234,6 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
             onAbrirDestino={abrir}
           />
         </View>
-        {recs.datos?.tienePreferencias && (
-          <View style={styles.filtro}>
-            <View style={styles.filtroFila}>
-              {/* Etiqueta tocable: lleva a Preferencias para cambiar el presupuesto guardado. */}
-              <Pressable
-                onPress={irAPreferencias}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  recs.datos.presupuesto
-                    ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}. Editar en preferencias`
-                    : 'Definir mi presupuesto en preferencias'
-                }
-                hitSlop={{ top: 8, bottom: 8 }}
-                style={({ pressed }) => [styles.miPresupuesto, pressed && styles.miPresupuestoPresionado]}
-              >
-                <Icon name="payments" size={16} color={colors.secondary} />
-                <Text style={styles.miPresupuestoTexto} numberOfLines={1}>
-                  {recs.datos.presupuesto ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}` : 'Definir mi presupuesto'}
-                </Text>
-                <Icon name="edit" size={14} color={colors.textLink} />
-              </Pressable>
-              <FilterChip icono="tune" acento="turquoise" compacto activo={filtro !== null || verFiltro} onPress={() => setVerFiltro((v) => !v)}>
-                {filtro ? formatearPresupuesto(filtro) : 'Filtrar por precio'}
-              </FilterChip>
-              {filtro && (
-                <FilterChip icono="close" activo={false} compacto onPress={() => setFiltro(null)}>
-                  Quitar
-                </FilterChip>
-              )}
-            </View>
-            {verFiltro && (
-              <GlassPanel tono="strong" radius={radius.xl} padding={spacing.md}>
-                <RangoPresupuesto
-                  valor={filtro ?? recs.datos.presupuesto ?? PRESUPUESTO_INICIAL}
-                  onCambioFinal={setFiltro}
-                />
-              </GlassPanel>
-            )}
-          </View>
-        )}
-
         {contenido()}
       </ScrollView>
     </ScreenBackground>
@@ -237,7 +242,6 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
 
 const styles = StyleSheet.create({
   hero: {
-    height: 320,
     borderBottomLeftRadius: radius.sheet,
     borderBottomRightRadius: radius.sheet,
     overflow: 'hidden',
@@ -261,12 +265,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarTexto: { ...typography.titleMd, color: colors.white },
-  saludo: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 64 },
+  saludo: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 60 },
   hola: { ...typography.headlineMd, color: colors.white },
-  holaSub: { ...typography.bodyMd, color: colors.textOnDarkMuted, marginTop: 2 },
-  resumen: { marginTop: -44, marginHorizontal: spacing.screen },
-  seccion: { paddingHorizontal: spacing.screen, paddingTop: 28 },
-  filtro: { paddingHorizontal: spacing.screen, paddingTop: spacing.md, gap: spacing.sm },
+  resumen: { marginTop: -48, marginHorizontal: spacing.screen },
+  seccion: { paddingHorizontal: spacing.screen, paddingTop: spacing.lg },
+  filtro: { paddingHorizontal: spacing.screen, paddingTop: spacing.lg, gap: spacing.sm },
   filtroFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   miPresupuesto: {
     flexDirection: 'row',
