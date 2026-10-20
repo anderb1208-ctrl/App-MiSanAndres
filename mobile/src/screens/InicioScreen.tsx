@@ -1,13 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ClimaIsla } from '../components/ClimaIsla';
 import { DestinoCard } from '../components/DestinoCard';
 import { FilterChip } from '../components/FilterChip';
 import { SuperficieVidrio } from '../components/SuperficieVidrio';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
+import { PanelOcupacion } from '../components/PanelOcupacion';
 import { PressableScale } from '../components/PressableScale';
 import { RangoPresupuesto } from '../components/RangoPresupuesto';
 import { SectionHeader } from '../components/ScreenHeader';
@@ -20,11 +20,9 @@ import type { TabScreenProps } from '../navigation/types';
 import { listarDestinos } from '../services/destinos';
 import { obtenerPerfil } from '../services/perfil';
 import { obtenerRecomendaciones } from '../services/recomendaciones';
-import type { Destino, NivelOcupacion, Presupuesto } from '../services/tipos';
-import { colors, motion, occupancyColors, radius, sizes, spacing, typography } from '../theme';
-import type { NombreIcono } from '../utils/categorias';
+import type { Presupuesto } from '../services/tipos';
+import { colors, motion, radius, sizes, spacing, typography } from '../theme';
 import { IMAGENES } from '../utils/imagenes';
-import { ADJETIVO_NIVEL, NIVELES } from '../utils/ocupacion';
 import { formatearPresupuesto, PRESUPUESTO_INICIAL } from '../utils/presupuesto';
 import { primerNombre } from '../utils/validacion';
 
@@ -33,12 +31,6 @@ const DESTACADOS = 3;
 async function cargarInicio() {
   const [destinos, perfil] = await Promise.all([listarDestinos(), obtenerPerfil()]);
   return { destinos, perfil };
-}
-
-function contarPorNivel(destinos: Destino[]): Record<NivelOcupacion, number> {
-  const conteo: Record<NivelOcupacion, number> = { Bajo: 0, Medio: 0, Alto: 0 };
-  for (const d of destinos) if (d.ocupacionActual?.nivel) conteo[d.ocupacionActual.nivel]++;
-  return conteo;
 }
 
 export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
@@ -62,16 +54,9 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
   const abrir = (id: number) => navigation.navigate('DetalleDestino', { id });
   const irAPreferencias = () => navigation.navigate('Preferencias');
 
-  const accesos: { icono: NombreIcono; etiqueta: string; onPress: () => void }[] = [
-    { icono: 'search', etiqueta: 'Explorar', onPress: () => navigation.navigate('Explorar') },
-    { icono: 'map', etiqueta: 'Mapa', onPress: () => navigation.navigate('Mapa') },
-    { icono: 'tune', etiqueta: 'Preferencias', onPress: irAPreferencias },
-  ];
-
   const nombre = primerNombre(datos?.perfil.nombre);
   const resultado = recs.datos;
   const lista = resultado?.recomendaciones ?? [];
-  const conteo = datos ? contarPorNivel(datos.destinos) : null;
 
   const contenido = () => {
     if (cargando) return <EstadoCargando mensaje="Buscando tus recomendaciones…" />;
@@ -185,7 +170,6 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
             </PressableScale>
           </View>
           <View style={styles.saludo}>
-            <ClimaIsla style={styles.clima} />
             <Text style={styles.hola} accessibilityRole="header">
               {nombre ? `Hola, ${nombre}` : 'Hola'}
             </Text>
@@ -194,68 +178,45 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
         </View>
 
         <View style={styles.resumen}>
-          <GlassPanel tono="strong" radius={20}>
-            <View style={styles.resumenCabecera}>
-              <Text style={styles.overline}>Ocupación ahora</Text>
-              {resultado && (
-                <View style={styles.actualizado}>
-                  <Icon name="schedule" size={14} color={colors.textSubtle} />
-                  <Text style={styles.actualizadoTexto}>Previsión {resultado.hora}</Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.niveles}>
-              {NIVELES.map((nivel) => {
-                const c = occupancyColors[nivel];
-                return (
-                  <View key={nivel} style={[styles.nivel, { backgroundColor: c.bg, borderColor: c.border }]}>
-                    <Text style={[styles.nivelNumero, { color: c.fg }]}>{conteo ? conteo[nivel] : '–'}</Text>
-                    <Text style={[styles.nivelEtiqueta, { color: c.fg }]}>Ocupación {ADJETIVO_NIVEL[nivel]}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </GlassPanel>
+          <PanelOcupacion
+            destinos={datos?.destinos ?? null}
+            cargando={inicio.cargando}
+            error={inicio.error}
+            horaRespaldo={resultado?.hora}
+            onReintentar={inicio.recargar}
+            onElegirGrupo={(grupo) => navigation.navigate('Explorar', { ocupacion: grupo })}
+            onAbrirDestino={abrir}
+          />
         </View>
-
-        {/* Accesos rápidos: solo el ícono circular y su texto, sin tarjeta. */}
-        <View style={styles.accesos}>
-          {accesos.map((a) => (
-            <PressableScale
-              key={a.etiqueta}
-              onPress={a.onPress}
-              escala={motion.pressScale.icon}
-              accessibilityRole="button"
-              accessibilityLabel={a.etiqueta}
-              hitSlop={4}
-              style={styles.acceso}
-            >
-              <View style={styles.accesoIcono}>
-                <Icon name={a.icono} size={24} color={colors.secondary} />
-              </View>
-              <Text style={styles.accesoTexto} numberOfLines={1}>
-                {a.etiqueta}
-              </Text>
-            </PressableScale>
-          ))}
-        </View>
-
         {recs.datos?.tienePreferencias && (
           <View style={styles.filtro}>
             <View style={styles.filtroFila}>
-              <FilterChip
-                icono="payments"
-                acento="turquoise"
-                activo={filtro !== null || verFiltro}
-                onPress={() => setVerFiltro((v) => !v)}
+              {/* Etiqueta tocable: lleva a Preferencias para cambiar el presupuesto guardado. */}
+              <Pressable
+                onPress={irAPreferencias}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  recs.datos.presupuesto
+                    ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}. Editar en preferencias`
+                    : 'Definir mi presupuesto en preferencias'
+                }
+                hitSlop={{ top: 8, bottom: 8 }}
+                style={({ pressed }) => [styles.miPresupuesto, pressed && styles.miPresupuestoPresionado]}
               >
-                {filtro
-                  ? formatearPresupuesto(filtro)
-                  : recs.datos.presupuesto
-                    ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}`
-                    : 'Filtrar por presupuesto'}
+                <Icon name="payments" size={16} color={colors.secondary} />
+                <Text style={styles.miPresupuestoTexto} numberOfLines={1}>
+                  {recs.datos.presupuesto ? `Mi presupuesto: ${formatearPresupuesto(recs.datos.presupuesto)}` : 'Definir mi presupuesto'}
+                </Text>
+                <Icon name="edit" size={14} color={colors.textLink} />
+              </Pressable>
+              <FilterChip icono="tune" acento="turquoise" compacto activo={filtro !== null || verFiltro} onPress={() => setVerFiltro((v) => !v)}>
+                {filtro ? formatearPresupuesto(filtro) : 'Filtrar por precio'}
               </FilterChip>
-              {filtro && <FilterChip icono="close" activo={false} compacto onPress={() => setFiltro(null)}>Quitar</FilterChip>}
+              {filtro && (
+                <FilterChip icono="close" activo={false} compacto onPress={() => setFiltro(null)}>
+                  Quitar
+                </FilterChip>
+              )}
             </View>
             {verFiltro && (
               <GlassPanel tono="strong" radius={radius.xl} padding={spacing.md}>
@@ -301,33 +262,23 @@ const styles = StyleSheet.create({
   },
   avatarTexto: { ...typography.titleMd, color: colors.white },
   saludo: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 64 },
-  clima: { marginBottom: spacing.sm },
   hola: { ...typography.headlineMd, color: colors.white },
   holaSub: { ...typography.bodyMd, color: colors.textOnDarkMuted, marginTop: 2 },
   resumen: { marginTop: -44, marginHorizontal: spacing.screen },
-  resumenCabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.gutter },
-  overline: { ...typography.overline, color: colors.textMuted },
-  actualizado: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  actualizadoTexto: { ...typography.labelMd, color: colors.textMuted },
-  niveles: { flexDirection: 'row', gap: spacing.sm },
-  nivel: { flex: 1, paddingVertical: 10, paddingHorizontal: spacing.gutter, borderRadius: radius.lg, borderWidth: 1 },
-  nivelNumero: { ...typography.headlineMd, fontFamily: typography.display.fontFamily },
-  nivelEtiqueta: typography.labelMd,
-  accesos: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: spacing.screen, paddingTop: spacing.lg },
-  // Área táctil de al menos 44 × 44 (todo el bloque ícono + texto es tocable).
-  acceso: { minWidth: 76, minHeight: 76, alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 },
-  accesoIcono: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.secondarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accesoTexto: { ...typography.labelBold, fontSize: 13, color: colors.textStrong },
   seccion: { paddingHorizontal: spacing.screen, paddingTop: 28 },
   filtro: { paddingHorizontal: spacing.screen, paddingTop: spacing.md, gap: spacing.sm },
-  filtroFila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  filtroFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+  miPresupuesto: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 36,
+    flexShrink: 1,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.md,
+  },
+  miPresupuestoPresionado: { backgroundColor: colors.pressedOverlay },
+  miPresupuestoTexto: { ...typography.labelBold, fontSize: 13, color: colors.textLink, flexShrink: 1 },
   carrusel: { gap: spacing.gutter, paddingHorizontal: spacing.screen, paddingBottom: spacing.xs },
   tarjetaDestacada: { width: 272 },
   lista: { gap: spacing.gutter },
