@@ -6,7 +6,8 @@ import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { RangoPresupuesto } from '../components/RangoPresupuesto';
 import { BotonVolver } from '../components/BotonVolver';
-import { Overline, ScreenHeader } from '../components/ScreenHeader';
+import { EncabezadoPantalla } from '../components/EncabezadoPantalla';
+import { Overline } from '../components/ScreenHeader';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SelectRow } from '../components/SelectRow';
 import { EstadoCargando, EstadoError } from '../components/StateView';
@@ -225,7 +226,7 @@ export function PreferenciasScreen({ onboarding = false }: Props) {
     <ScreenBackground>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <ScrollView contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}>
-          <ScreenHeader
+          <EncabezadoPantalla
             titulo={onboarding ? 'Configura tus preferencias' : 'Editar preferencias'}
             subtitulo={
               onboarding

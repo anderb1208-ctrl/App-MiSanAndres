@@ -5,7 +5,7 @@ import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { PasaporteViajero } from '../components/PasaporteViajero';
 import { IconButton } from '../components/IconButton';
-import { ScreenHeader } from '../components/ScreenHeader';
+import { EncabezadoPantalla } from '../components/EncabezadoPantalla';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SelectRow } from '../components/SelectRow';
 import { EstadoCargando, EstadoError } from '../components/StateView';
@@ -233,7 +233,7 @@ export function PerfilScreen({ navigation }: TabScreenProps<'Perfil'>) {
           refreshControl={<RefreshControl refreshing={refrescando} onRefresh={recargar} tintColor={colors.secondary} />}
           keyboardShouldPersistTaps="handled"
         >
-          <ScreenHeader titulo="Mi perfil" />
+          <EncabezadoPantalla titulo="Mi perfil" />
           {cuerpo()}
         </ScrollView>
       </SafeAreaView>

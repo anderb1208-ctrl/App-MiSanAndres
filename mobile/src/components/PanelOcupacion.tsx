@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAsync } from '../hooks/useAsync';
@@ -19,6 +18,7 @@ import { Icon } from './Icon';
 import { ImagenDestino } from './ImagenDestino';
 import { PressableScale } from './PressableScale';
 import { SuperficieVidrio } from './SuperficieVidrio';
+import { EncabezadoPanel, OverlinePanel, PanelDegradado, SeparadorPanel } from './TarjetaResumen';
 
 /** Cuadrito de la leyenda: relleno del color del segmento y borde oscuro (≥ 3:1 sobre el panel). */
 const CUADRITO: Record<GrupoOcupacion, { relleno: string; borde: string }> = {
@@ -58,40 +58,31 @@ export function PanelOcupacion({ destinos, cargando, error, horaRespaldo, onRein
   const hora = horaPrevision(destinos) ?? horaRespaldo ?? null;
 
   return (
-    <SuperficieVidrio variante="panel" style={styles.panel}>
-      <LinearGradient
-        colors={panelColors.degradado}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        locations={[0, 0.5, 1]}
-        style={[StyleSheet.absoluteFill, styles.degradado]}
-        pointerEvents="none"
-      />
-
-      <View style={styles.cabecera}>
-        <View style={styles.cabeceraTextos}>
-          <Text style={styles.overline} accessibilityRole="header">
-            Ocupación ahora
-          </Text>
-          {hora ? (
-            <Text style={styles.hora}>
+    <PanelDegradado>
+      <EncabezadoPanel
+        titulo="Ocupación ahora"
+        subtitulo={
+          hora ? (
+            <>
               Previsión para las <Text style={styles.horaNegrita}>{hora}</Text>
-            </Text>
-          ) : null}
-        </View>
-        <Pressable
-          onPress={() => setVerNota((v) => !v)}
-          accessibilityRole="button"
-          accessibilityLabel="Estimado"
-          accessibilityHint="Explica de dónde salen estas cifras"
-          accessibilityState={{ expanded: verNota }}
-          hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-          style={({ pressed }) => [styles.estimado, pressed && styles.estimadoPresionado]}
-        >
-          <View style={styles.estimadoPunto} />
-          <Text style={styles.estimadoTexto}>Estimado</Text>
-        </Pressable>
-      </View>
+            </>
+          ) : undefined
+        }
+        derecha={
+          <Pressable
+            onPress={() => setVerNota((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel="Estimado"
+            accessibilityHint="Explica de dónde salen estas cifras"
+            accessibilityState={{ expanded: verNota }}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+            style={({ pressed }) => [styles.estimado, pressed && styles.estimadoPresionado]}
+          >
+            <View style={styles.estimadoPunto} />
+            <Text style={styles.estimadoTexto}>Estimado</Text>
+          </Pressable>
+        }
+      />
 
       {verNota && (
         <View style={styles.nota} accessibilityLiveRegion="polite">
@@ -112,7 +103,7 @@ export function PanelOcupacion({ destinos, cargando, error, horaRespaldo, onRein
       />
 
       <LineaClima />
-    </SuperficieVidrio>
+    </PanelDegradado>
   );
 }
 
@@ -161,10 +152,8 @@ function Contenido({ destinos, cargando, error, onReintentar, onElegirGrupo, onA
         <Text style={styles.sinDatos}>{plural(distribucion.sinDatos, 'destino sin previsión', 'destinos sin previsión')}</Text>
       )}
 
-      <View style={styles.separador} />
-      <Text style={styles.overline} accessibilityRole="header">
-        Lo más tranquilo ahora
-      </Text>
+      <SeparadorPanel />
+      <OverlinePanel>Lo más tranquilo ahora</OverlinePanel>
       {tranquilos.length === 0 ? (
         <Text style={styles.estadoTexto}>Ningún destino está abierto en este momento.</Text>
       ) : (
@@ -272,7 +261,7 @@ function Esqueleto() {
           ))}
         </View>
       </View>
-      <View style={styles.separador} />
+      <SeparadorPanel />
       {[0, 1, 2].map((i) => (
         <View key={i} style={[styles.fila, styles.filaEsqueleto]}>
           {bloque({ width: 40, height: 40, borderRadius: radius.lg })}
@@ -297,7 +286,7 @@ function LineaClima() {
   const lluvia = actual.probLluvia === null ? null : `Lluvia ${actual.probLluvia} %`;
   return (
     <>
-      <View style={styles.separador} />
+      <SeparadorPanel />
       <Pressable
         onPress={() => void Linking.openURL(datos?.atribucion.url ?? 'https://open-meteo.com/')}
         accessibilityRole="link"
@@ -320,13 +309,6 @@ function LineaClima() {
 }
 
 const styles = StyleSheet.create({
-  panel: { padding: spacing.md, gap: spacing.gutter, borderRadius: radius.xxl },
-  degradado: { borderRadius: radius.xxl },
-
-  cabecera: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  cabeceraTextos: { flex: 1, gap: 2 },
-  overline: { ...typography.overline, letterSpacing: 1.4, color: panelColors.encabezado },
-  hora: { ...typography.bodyLg, color: colors.textStrong },
   horaNegrita: { fontFamily: typography.labelBold.fontFamily },
   estimado: {
     flexDirection: 'row',
@@ -355,7 +337,6 @@ const styles = StyleSheet.create({
   leyendaCifra: { ...typography.titleMd, fontFamily: typography.display.fontFamily, color: colors.textStrong, fontVariant: ['tabular-nums'] },
   sinDatos: { ...typography.labelMd, color: panelColors.secundario },
 
-  separador: { height: StyleSheet.hairlineWidth * 2, backgroundColor: panelColors.separador },
   tranquilos: { gap: spacing.sm },
   fila: { flexDirection: 'row', alignItems: 'center', gap: spacing.gutter, minHeight: 56, paddingVertical: spacing.sm, paddingHorizontal: spacing.gutter, borderRadius: radius.xl },
   filaEsqueleto: { backgroundColor: panelColors.vidrioFila },

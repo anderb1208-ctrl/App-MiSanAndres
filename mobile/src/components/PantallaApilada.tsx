@@ -3,13 +3,16 @@ import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBarraEstado } from '../hooks/useBarraEstado';
 import { colors, spacing } from '../theme';
+import type { Rol } from '../services/tipos';
 import type { NombreIcono } from '../utils/categorias';
 import { BotonVolver } from './BotonVolver';
 import { ScreenBackground } from './ScreenBackground';
-import { ScreenHeader } from './ScreenHeader';
+import { EncabezadoPantalla } from './EncabezadoPantalla';
 
 interface Props {
   titulo: string;
+  /** Pantalla de inicio de un rol: "Hola, [nombre]" con su etiqueta (reemplaza al título). */
+  saludo?: { nombre: string | null | undefined; rol: Rol };
   subtitulo?: string;
   /** Pantalla secundaria: muestra el BotonVolver flotante (no en las pestañas raíz). */
   conVolver?: boolean;
@@ -22,7 +25,7 @@ interface Props {
 }
 
 /** Estructura común de las pantallas de formulario y detalle: fondo, encabezado y scroll. */
-export function PantallaApilada({ titulo, subtitulo, conVolver = false, acciones, refrescando, onRefrescar, espacioInferior = spacing.xl, children }: Props) {
+export function PantallaApilada({ titulo, saludo, subtitulo, conVolver = false, acciones, refrescando, onRefrescar, espacioInferior = spacing.xl, children }: Props) {
   useBarraEstado('dark');
   return (
     <ScreenBackground>
@@ -37,7 +40,7 @@ export function PantallaApilada({ titulo, subtitulo, conVolver = false, acciones
               ) : undefined
             }
           >
-            <ScreenHeader titulo={titulo} subtitulo={subtitulo} conBotonVolver={conVolver} acciones={acciones} />
+            <EncabezadoPantalla titulo={titulo} saludo={saludo} subtitulo={subtitulo} conBotonVolver={conVolver} acciones={acciones} />
             <View style={styles.cuerpo}>{children}</View>
           </ScrollView>
         </KeyboardAvoidingView>

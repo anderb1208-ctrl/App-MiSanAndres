@@ -24,6 +24,8 @@ export function FilterChip({ children, activo, onPress, icono, acento = 'navy', 
       accessibilityRole="button"
       accessibilityState={{ selected: activo }}
       accessibilityLabel={children}
+      // 36 px de alto + 4 px arriba y abajo = 44 px táctiles.
+      hitSlop={{ top: 4, bottom: 4 }}
       style={[
         styles.base,
         compacto && styles.compacto,
@@ -46,7 +48,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: 1,
   },
-  compacto: { height: 30, paddingHorizontal: spacing.gutter },
+  compacto: { paddingHorizontal: spacing.gutter },
   inactivo: { backgroundColor: colors.glassStrong, borderColor: colors.glassBorder },
   texto: { ...typography.labelBold, fontSize: 13 },
   textoCompacto: { fontSize: 12 },
