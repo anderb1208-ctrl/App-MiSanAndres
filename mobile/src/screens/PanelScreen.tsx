@@ -15,15 +15,18 @@ import { useAsync } from '../hooks/useAsync';
 import { useEspacioTabBar } from '../navigation/TabBar';
 import type { TabScreenProps } from '../navigation/types';
 import { listarDestinosAdmin, obtenerMetricas, obtenerModelosMl, obtenerSaludBackend } from '../services/admin';
+import { mensajeDeError } from '../services/api';
 import { obtenerClimaIsla } from '../services/clima';
+import { listarDestinos } from '../services/destinos';
+import { obtenerPrediccion } from '../services/ocupacion';
 import { obtenerPerfil } from '../services/perfil';
 import { listarTickets } from '../services/tickets';
 import type { EstadoTicket } from '../services/tipos';
 import { colors, radius, spacing, ticketColors, type TonoChip, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
 import { textoSinClima } from '../utils/clima';
-import { formatearFechaLarga } from '../utils/fecha';
-import { alertasAdmin, variacion, type EstadoMl, type Variacion } from '../utils/panelAdmin';
+import { formatearFechaLarga, hoyEnColombia } from '../utils/fecha';
+import { alertasAdmin, elegirDestinoSonda, estadoMlDesde, HORA_SONDA, variacion, type Variacion } from '../utils/panelAdmin';
 import { resumenAdmin } from '../utils/resumenTickets';
 import { ESTADOS_TICKET, ETIQUETA_ESTADO_TICKET } from '../utils/tickets';
 import { primerNombre } from '../utils/validacion';
@@ -36,13 +39,30 @@ async function cargarPanel() {
   return { metricas, tickets, destinos, perfil };
 }
 
-/** Estado de la plataforma: cada servicio por separado (si uno falla, los demás se muestran). */
+/** Predicción de prueba de hoy a mediodía: dice qué proveedor responde de verdad (ML o heurístico). */
+async function prediccionDePrueba() {
+  const id = elegirDestinoSonda(await listarDestinos());
+  return id === null ? null : obtenerPrediccion(id, hoyEnColombia(), HORA_SONDA);
+}
+
+/**
+ * Estado de la plataforma: cada servicio por separado (si uno falla, los demás se muestran).
+ * La comparativa (/v1/admin/modelos) y las predicciones son cosas distintas: la primera puede
+ * fallar (backend sin el endpoint, ML viejo) mientras las predicciones salen del ML sin problema.
+ */
 async function cargarPlataforma() {
-  const [salud, modelos, clima] = await Promise.allSettled([obtenerSaludBackend(), obtenerModelosMl(), obtenerClimaIsla(1)]);
+  const [salud, modelos, clima, prediccion] = await Promise.allSettled([
+    obtenerSaludBackend(),
+    obtenerModelosMl(),
+    obtenerClimaIsla(1),
+    prediccionDePrueba(),
+  ]);
   return {
     salud: salud.status === 'fulfilled' ? salud.value : null,
     modelos: modelos.status === 'fulfilled' ? modelos.value : null,
+    errorModelos: modelos.status === 'rejected' ? mensajeDeError(modelos.reason) : null,
     clima: clima.status === 'fulfilled' ? clima.value : null,
+    prediccion: prediccion.status === 'fulfilled' ? prediccion.value : null,
   };
 }
 
@@ -129,15 +149,8 @@ export function PanelScreen({ navigation }: TabScreenProps<'Panel'>) {
 
   const proveedor = plataforma.datos?.salud?.prediccion?.proveedor;
   const modelos = plataforma.datos?.modelos;
-  const estadoMl: EstadoMl | null = plataforma.cargando
-    ? null
-    : modelos
-      ? modelos.respaldo
-        ? 'respaldo'
-        : 'ok'
-      : proveedor === 'heuristico'
-        ? 'heuristico'
-        : 'sin_respuesta';
+  const prediccion = plataforma.datos?.prediccion;
+  const estadoMl = plataforma.cargando ? null : estadoMlDesde({ prediccion, comparativa: modelos, proveedorConfig: proveedor });
   const alertas = datos ? alertasAdmin(datos.tickets, datos.destinos, estadoMl) : [];
   const irA = { tickets: () => navigation.navigate('Tickets'), destinos: () => navigation.navigate('Destinos', { estado: 'cerrado_temporal' }), modelos: () => navigation.navigate('ModelosMl') };
 
@@ -149,7 +162,8 @@ export function PanelScreen({ navigation }: TabScreenProps<'Panel'>) {
   const clima = plataforma.datos?.clima;
   const estadoClima = plataforma.datos?.salud?.clima?.estado;
   const climaOk = Boolean(clima?.disponible);
-  const nombreModelo = modelos?.modelos.find((x) => x.activo)?.nombre ?? modelos?.modelos.find((x) => x.ganador)?.nombre;
+  const nombreModelo =
+    (prediccion?.proveedor === 'ml' ? prediccion.modelo : null) ?? modelos?.modelos.find((x) => x.activo)?.nombre ?? modelos?.modelos.find((x) => x.ganador)?.nombre;
 
   return (
     <PantallaApilada
@@ -267,16 +281,25 @@ export function PanelScreen({ navigation }: TabScreenProps<'Panel'>) {
             />
             <FilaPlataforma
               icono="insights"
-              nombre="Servicio de ML"
-              estado={estadoMl === 'ok' ? 'En uso' : estadoMl === 'respaldo' ? 'Respaldo' : estadoMl === 'heuristico' ? 'Desactivado' : 'Sin respuesta'}
+              nombre="Predicciones"
+              estado={estadoMl === 'ok' ? 'ML en uso' : estadoMl === 'respaldo' ? 'Respaldo' : estadoMl === 'heuristico' ? 'Heurístico' : 'Sin ML'}
               detalle={
                 estadoMl === 'ok'
-                  ? `Modelo en uso: ${nombreModelo ?? 'el ganador'}.`
+                  ? `Las calcula el modelo ${nombreModelo ?? 'ganador'}.`
                   : estadoMl === 'respaldo'
-                    ? `Responde un modelo de respaldo${nombreModelo ? ` (${nombreModelo})` : ''}.`
-                    : 'Las predicciones usan el respaldo heurístico (promedio histórico).'
+                    ? `Responde un modelo de respaldo${nombreModelo ? ` (${nombreModelo})` : ''}: el ganador no cargó.`
+                    : estadoMl === 'heuristico'
+                      ? 'El backend está configurado con el cálculo heurístico (PREDICCION_PROVEEDOR=heuristico).'
+                      : 'Se pidió el ML y no respondió: se usa el promedio histórico.'
               }
               tono={estadoMl === 'ok' ? TONO_OK : TONO_AVISO}
+            />
+            <FilaPlataforma
+              icono="table-chart"
+              nombre="Comparativa de modelos"
+              estado={modelos ? 'Disponible' : 'No disponible'}
+              detalle={modelos ? 'GET /v1/admin/modelos responde (pantalla Modelos de ML).' : (plataforma.datos?.errorModelos ?? 'Sin respuesta.')}
+              tono={modelos ? TONO_OK : TONO_AVISO}
             />
             <FilaPlataforma
               icono="cloud"

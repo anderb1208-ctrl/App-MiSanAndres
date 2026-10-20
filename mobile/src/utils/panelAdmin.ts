@@ -94,3 +94,33 @@ export function segmentosBarra<K extends string>(conteos: Partial<Record<K, numb
     segmentos: orden.filter((k) => (conteos[k] ?? 0) > 0).map((k) => ({ clave: k, cantidad: conteos[k]!, fraccion: conteos[k]! / total })),
   };
 }
+
+/** Hora de la predicción de prueba del panel (a mediodía casi todos los destinos atienden). */
+export const HORA_SONDA = '12:00';
+
+/** Destino para la predicción de prueba: visible y abierto a HORA_SONDA (o sin horario). */
+export function elegirDestinoSonda(
+  destinos: readonly Pick<Destino, 'id' | 'estado' | 'horario'>[] | null | undefined,
+): number | null {
+  const abiertoA = (h: Destino['horario']) => !h || (h.apertura <= HORA_SONDA && HORA_SONDA < h.cierre);
+  return (destinos ?? []).find((d) => d.estado === 'abierto' && abiertoA(d.horario))?.id ?? null;
+}
+
+/**
+ * Estado del ML según lo que de verdad pasó en una predicción de prueba (el proveedor que la
+ * respondió), no según si responde la comparativa de modelos (/v1/admin/modelos), que es otra cosa:
+ * - proveedor ml: funciona (o con un modelo de respaldo si la comparativa lo dice).
+ * - heurístico con proveedorRespaldo: se pidió el ML y no respondió.
+ * - heurístico sin respaldo: el backend está configurado para no usar el ML.
+ * Sin predicción de prueba, se usa la comparativa y, si tampoco hay, la configuración del backend.
+ */
+export function estadoMlDesde(p: {
+  prediccion?: { proveedor: 'heuristico' | 'ml' | 'horario'; proveedorRespaldo: boolean } | null;
+  comparativa?: { respaldo: boolean } | null;
+  proveedorConfig?: string | null;
+}): EstadoMl {
+  if (p.prediccion?.proveedor === 'ml') return p.comparativa?.respaldo ? 'respaldo' : 'ok';
+  if (p.prediccion?.proveedor === 'heuristico') return p.prediccion.proveedorRespaldo ? 'sin_respuesta' : 'heuristico';
+  if (p.comparativa) return p.comparativa.respaldo ? 'respaldo' : 'ok';
+  return p.proveedorConfig === 'heuristico' ? 'heuristico' : 'sin_respuesta';
+}

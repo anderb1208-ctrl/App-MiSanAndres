@@ -183,3 +183,33 @@ describe('formatearFechaLarga', () => {
     expect(formatearFechaLarga(new Date('2026-10-20T02:00:00Z'))).toMatch(/lunes.*19.*octubre/);
   });
 });
+
+describe('estado del ML en el panel', () => {
+  const { elegirDestinoSonda, estadoMlDesde } = jest.requireActual('./panelAdmin') as typeof import('./panelAdmin');
+
+  it('elige un destino abierto a mediodía para la predicción de prueba', () => {
+    expect(
+      elegirDestinoSonda([
+        { id: 1, estado: 'cerrado_temporal', horario: null },
+        { id: 2, estado: 'abierto', horario: { apertura: '18:00', cierre: '23:00' } },
+        { id: 3, estado: 'abierto', horario: { apertura: '08:00', cierre: '17:00' } },
+      ]),
+    ).toBe(3);
+    expect(elegirDestinoSonda([{ id: 4, estado: 'abierto', horario: null }])).toBe(4);
+    expect(elegirDestinoSonda([])).toBeNull();
+  });
+
+  it('decide por la predicción real, no por la comparativa', () => {
+    // La comparativa falla (p. ej. backend sin /admin/modelos), pero la predicción vino del ML: funciona.
+    expect(estadoMlDesde({ prediccion: { proveedor: 'ml', proveedorRespaldo: false }, comparativa: null })).toBe('ok');
+    expect(estadoMlDesde({ prediccion: { proveedor: 'ml', proveedorRespaldo: false }, comparativa: { respaldo: true } })).toBe('respaldo');
+    expect(estadoMlDesde({ prediccion: { proveedor: 'heuristico', proveedorRespaldo: true } })).toBe('sin_respuesta');
+    expect(estadoMlDesde({ prediccion: { proveedor: 'heuristico', proveedorRespaldo: false } })).toBe('heuristico');
+  });
+
+  it('sin predicción de prueba usa la comparativa y luego la configuración', () => {
+    expect(estadoMlDesde({ comparativa: { respaldo: false } })).toBe('ok');
+    expect(estadoMlDesde({ proveedorConfig: 'heuristico' })).toBe('heuristico');
+    expect(estadoMlDesde({})).toBe('sin_respuesta');
+  });
+});
