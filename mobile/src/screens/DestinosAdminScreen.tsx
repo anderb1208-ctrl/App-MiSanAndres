@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ChipEstadoDestino } from '../components/ChipsTicket';
 import { FilterChip } from '../components/FilterChip';
 import { GlassPanel } from '../components/GlassPanel';
 import { HojaCierreTemporal } from '../components/HojaCierreTemporal';
 import { PantallaApilada } from '../components/PantallaApilada';
-import { EstadoCargando, EstadoError } from '../components/StateView';
-import { Tag } from '../components/Tag';
+import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateView';
 import { useAsync } from '../hooks/useAsync';
 import { useEspacioTabBar } from '../navigation/TabBar';
 import type { TabScreenProps } from '../navigation/types';
@@ -62,7 +62,6 @@ export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) 
 
   return (
     <PantallaApilada
-      conVolver
       titulo="Destinos"
       subtitulo={`${datos?.length ?? 0} en total`}
       espacioInferior={espacio}
@@ -81,14 +80,23 @@ export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) 
         <EstadoCargando mensaje="Cargando destinos…" />
       ) : error && !datos ? (
         <EstadoError error={error} onReintentar={recargar} />
+      ) : lista.length === 0 ? (
+        <GlassPanel tono="strong" radius={20}>
+          <EstadoMensaje
+            icono="place"
+            titulo={filtro ? 'Ningún destino en ese estado' : 'Aún no hay destinos'}
+            mensaje={filtro ? `No hay destinos "${ETIQUETA_ESTADO_DESTINO[filtro].toLowerCase()}".` : 'Crea el primero con el botón +.'}
+            accion={filtro ? { texto: 'Ver todos', onPress: () => setFiltro(undefined) } : undefined}
+          />
+        </GlassPanel>
       ) : (
         lista.map((d) => (
-          <GlassPanel key={d.id} tono="strong" radius={16} padding={14} onPress={() => opciones(d)} accessibilityLabel={`${d.nombre}, ${ETIQUETA_ESTADO_DESTINO[d.estado]}`}>
+          <GlassPanel key={d.id} tono="strong" calidad="ligera" radius={16} padding={14} onPress={() => opciones(d)} accessibilityLabel={`${d.nombre}, ${ETIQUETA_ESTADO_DESTINO[d.estado]}`}>
             <View style={styles.fila}>
               <Text style={styles.nombre} numberOfLines={1}>
                 {d.nombre}
               </Text>
-              <Tag tono={d.estado === 'abierto' ? 'turquoise' : 'neutral'}>{ETIQUETA_ESTADO_DESTINO[d.estado]}</Tag>
+              <ChipEstadoDestino estado={d.estado} tamano="sm" />
             </View>
             {d.cierre?.motivo ? <Text style={styles.meta}>Motivo: {d.cierre.motivo}</Text> : null}
             <Text style={styles.meta}>

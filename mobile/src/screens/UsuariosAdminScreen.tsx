@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { PantallaApilada } from '../components/PantallaApilada';
-import { EstadoCargando, EstadoError } from '../components/StateView';
+import { EstadoCargando, EstadoError, EstadoMensaje } from '../components/StateView';
 import { Tag } from '../components/Tag';
 import { useAsync } from '../hooks/useAsync';
 import { useEspacioTabBar } from '../navigation/TabBar';
@@ -52,7 +52,7 @@ export function UsuariosAdminScreen(_props: TabScreenProps<'Usuarios'>) {
   };
 
   return (
-    <PantallaApilada conVolver titulo="Usuarios" subtitulo={`${datos?.length ?? 0} registrados`} espacioInferior={espacio} refrescando={refrescando} onRefrescar={recargar}>
+    <PantallaApilada titulo="Usuarios" subtitulo={`${datos?.length ?? 0} registrados`} espacioInferior={espacio} refrescando={refrescando} onRefrescar={recargar}>
       <View style={styles.buscador}>
         <Icon name="search" size={20} color={colors.textSubtle} />
         <TextInput
@@ -69,9 +69,18 @@ export function UsuariosAdminScreen(_props: TabScreenProps<'Usuarios'>) {
         <EstadoCargando mensaje="Cargando usuarios…" />
       ) : error && !datos ? (
         <EstadoError error={error} onReintentar={recargar} />
+      ) : lista.length === 0 ? (
+        <GlassPanel tono="strong" radius={20}>
+          <EstadoMensaje
+            icono="person-search"
+            titulo={q ? 'Ningún usuario coincide' : 'Aún no hay usuarios'}
+            mensaje={q ? `No hay usuarios con "${busqueda.trim()}" en el nombre o el correo.` : 'Cuando alguien se registre aparecerá aquí.'}
+            accion={q ? { texto: 'Borrar la búsqueda', onPress: () => setBusqueda('') } : undefined}
+          />
+        </GlassPanel>
       ) : (
         lista.map((u) => (
-          <GlassPanel key={u.id} tono="strong" radius={16} padding={14} onPress={() => elegirRol(u)} accessibilityLabel={`${u.nombre ?? u.correo}, ${ETIQUETA_ROL[u.rol]}`}>
+          <GlassPanel key={u.id} tono="strong" calidad="ligera" radius={16} padding={14} onPress={() => elegirRol(u)} accessibilityLabel={`${u.nombre ?? u.correo}, ${ETIQUETA_ROL[u.rol]}`}>
             <View style={styles.fila}>
               <Icon name={ICONO_ROL[u.rol]} size={22} color={colors.secondary} />
               <View style={styles.textos}>

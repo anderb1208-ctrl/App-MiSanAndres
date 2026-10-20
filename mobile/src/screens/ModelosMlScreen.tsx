@@ -11,13 +11,15 @@ import { PantallaApilada } from '../components/PantallaApilada';
 import { SectionHeader } from '../components/ScreenHeader';
 import { SelectRow } from '../components/SelectRow';
 import { EstadoCargando, EstadoError } from '../components/StateView';
-import { Tag } from '../components/Tag';
+import { ChipEstado } from '../components/ChipEstado';
 import { useAsync } from '../hooks/useAsync';
 import type { AppScreenProps } from '../navigation/types';
 import { compararModelosMl, listarDestinosAdmin, obtenerModelosMl } from '../services/admin';
 import { mensajeDeError } from '../services/api';
 import type { ComparacionPrediccion, Destino, ModeloMl } from '../services/tipos';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, radius, spacing, ticketColors, typography } from '../theme';
+
+const CHIP_EN_USO = <ChipEstado etiqueta="En uso" icono="verified" tono={ticketColors.estado.resuelto} tamano="sm" />;
 import { hoyEnColombia } from '../utils/fecha';
 
 const HORAS = Array.from({ length: 17 }, (_, i) => `${String(i + 6).padStart(2, '0')}:00`); // 06:00 a 22:00
@@ -51,13 +53,9 @@ function Fila({ m, respaldo, ultima }: { m: FilaTabla; respaldo: boolean; ultima
         <Text style={[styles.filaNombre, esBaseline && styles.filaNombreBaseline]} numberOfLines={2}>
           {m.nombre}
         </Text>
-        {m.ganador && (
-          <Tag tono="turquoise" icono="verified">
-            En uso
-          </Tag>
-        )}
-        {respaldo && m.activo && <Tag icono="swap-horiz">Respaldo activo</Tag>}
-        {!esBaseline && m.disponible === false && <Tag icono="error-outline">Sin archivo</Tag>}
+        {m.ganador && CHIP_EN_USO}
+        {respaldo && m.activo && <ChipEstado etiqueta="Respaldo activo" icono="swap-horiz" tono={ticketColors.estado.en_revision} tamano="sm" />}
+        {!esBaseline && m.disponible === false && <ChipEstado etiqueta="Sin archivo" icono="error-outline" tono={ticketColors.estado.cerrado} tamano="sm" />}
       </View>
       <View style={styles.metricas}>
         {[
@@ -213,11 +211,7 @@ export function ModelosMlScreen(_props: AppScreenProps<'ModelosMl'>) {
                       <Text style={styles.filaNombre} numberOfLines={2}>
                         {r.nombre}
                       </Text>
-                      {r.ganador && (
-                        <Tag tono="turquoise" icono="verified">
-                          En uso
-                        </Tag>
-                      )}
+                      {r.ganador && CHIP_EN_USO}
                     </View>
                     {!r.disponible && <Text style={styles.error}>{r.error ?? 'No disponible.'}</Text>}
                     {r.disponible && r.personasEstimadas !== null && comparacion.estado === 'Abierto' && (

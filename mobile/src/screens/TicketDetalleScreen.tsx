@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/Button';
+import { ChipEstadoTicket, ChipPrioridad } from '../components/ChipsTicket';
 import { FilterChip } from '../components/FilterChip';
 import { GlassPanel } from '../components/GlassPanel';
 import { PantallaApilada } from '../components/PantallaApilada';
@@ -79,8 +80,8 @@ export function TicketDetalleScreen({ navigation, route }: AppScreenProps<'Ticke
           <GlassPanel tono="strong" radius={20}>
             <Text style={styles.asunto}>{t.asunto}</Text>
             <View style={styles.etiquetas}>
-              <Tag tono="turquoise">{ETIQUETA_ESTADO_TICKET[t.estado]}</Tag>
-              <Tag>{`Prioridad ${ETIQUETA_PRIORIDAD[t.prioridad].toLowerCase()}`}</Tag>
+              <ChipEstadoTicket estado={t.estado} />
+              <ChipPrioridad prioridad={t.prioridad} />
               <Tag>{ETIQUETA_CATEGORIA_TICKET[t.categoria]}</Tag>
             </View>
             <Text style={styles.descripcion}>{t.descripcion}</Text>
