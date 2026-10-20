@@ -1,7 +1,7 @@
 """
 Valida un dataset de ocupación (simulado o real) antes de entrenar.
 
-Uso:  python validar_dataset.py [--dataset mock|real] [--archivo ruta.csv]
+Uso:  python -m misanandres_ml.datos.validar_dataset [--dataset simulado|real] [--archivo ruta.csv]
 
 Revisa: columnas, vacíos, rangos (porcentaje 0–100, personas ≥ 0 y ≤ capacidad),
 coherencia con el calendario (hora, día, festivo, puente, temporada), duplicados,
@@ -18,9 +18,9 @@ from pathlib import Path
 
 import pandas as pd
 
-import calendario
-import config
-from comun import a_fecha_hora_local, horas_abiertas, leer_dataset, leer_destinos
+from misanandres_ml import calendario
+from misanandres_ml import config
+from misanandres_ml.comun import a_fecha_hora_local, horas_abiertas, leer_dataset, leer_destinos
 
 MAX_EJEMPLOS = 5
 VERDADEROS = {"true", "1", "si", "sí", "verdadero", "t", "s", "yes"}

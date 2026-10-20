@@ -3,12 +3,12 @@ from datetime import date
 import pandas as pd
 import pytest
 
-import calidad_dataset
-import config
-import generar_dataset_simulado as gen
-from comun import horas_abiertas, leer_dataset
-from generar_dataset_simulado import AVISO, COLUMNAS_SALIDA, generar, guardar, leer_llegadas
-from validar_dataset import validar
+from misanandres_ml.datos import calidad_dataset
+from misanandres_ml import config
+from misanandres_ml.datos import generar_dataset_simulado as gen
+from misanandres_ml.comun import horas_abiertas, leer_dataset
+from misanandres_ml.datos.generar_dataset_simulado import AVISO, COLUMNAS_SALIDA, generar, guardar, leer_llegadas
+from misanandres_ml.datos.validar_dataset import validar
 
 
 @pytest.fixture(scope="module")
@@ -138,8 +138,3 @@ def test_el_archivo_dice_que_es_simulado_y_es_valido(dataset, destinos, tmp_path
     assert reporte.ok
     assert not any("no se usan" in a for a in reporte.advertencias)
 
-
-def test_alias_generar_mock_dataset():
-    import generar_mock_dataset
-
-    assert generar_mock_dataset.generar is generar

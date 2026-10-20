@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-import validar_dataset
-from validar_dataset import validar
+from misanandres_ml.datos import validar_dataset
+from misanandres_ml.datos.validar_dataset import validar
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ Descarga UNA VEZ el clima histórico REAL, hora por hora, de San Andrés desde l
 archivo de Open-Meteo y lo guarda en datos/clima_historico_san_andres.csv (versionado),
 para que generar_dataset_simulado.py funcione sin internet.
 
-Uso:  python descargar_clima_historico.py [--desde 2024-10-01] [--hasta 2026-10-18]
+Uso:  python -m misanandres_ml.datos.descargar_clima_historico [--desde 2024-10-01] [--hasta 2026-10-18]
 
 Fuente: https://open-meteo.com/en/docs/historical-weather-api (reanálisis ERA5 / ERA5-Land
 y modelos de Open-Meteo). Licencia de los datos: CC BY 4.0, con atribución "Weather data
@@ -20,7 +20,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-import config
+from misanandres_ml import config
 
 URL_ARCHIVO = "https://archive-api.open-meteo.com/v1/archive"
 # Centro de la isla de San Andrés (la API devuelve la celda de la grilla más cercana).

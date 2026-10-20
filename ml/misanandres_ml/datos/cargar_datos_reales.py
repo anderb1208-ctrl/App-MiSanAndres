@@ -2,7 +2,7 @@
 Carga un archivo de ocupación REAL y lo deja listo para entrenar.
 
 Uso:
-    python cargar_datos_reales.py [--archivo datos/real/mi_archivo.csv] [--subir-a-supabase]
+    python -m misanandres_ml.datos.cargar_datos_reales [--archivo datos/real/mi_archivo.csv] [--subir-a-supabase]
 
 Pasos:
   1. Toma el archivo CSV de ml/datos/real/ (si hay uno solo no hace falta --archivo).
@@ -32,10 +32,10 @@ import numpy as np
 import pandas as pd
 import requests
 
-import calendario
-import config
-from comun import a_fecha_hora_local, leer_dataset, leer_destinos
-from validar_dataset import Reporte, buscar_filas_ejemplo, validar
+from misanandres_ml import calendario
+from misanandres_ml import config
+from misanandres_ml.comun import a_fecha_hora_local, leer_dataset, leer_destinos
+from misanandres_ml.datos.validar_dataset import Reporte, buscar_filas_ejemplo, validar
 
 TAMANO_LOTE = 500
 

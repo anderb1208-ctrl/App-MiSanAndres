@@ -4,11 +4,11 @@ from datetime import date
 import pandas as pd
 import pytest
 
-import config
-from cargar_datos_reales import ErrorCarga, elegir_archivo, procesar
-from comun import leer_destinos
-from entrenar_modelo import entrenar
-from generar_mock_dataset import generar  # el alias anterior sigue funcionando
+from misanandres_ml import config
+from misanandres_ml.datos.cargar_datos_reales import ErrorCarga, elegir_archivo, procesar
+from misanandres_ml.comun import leer_destinos
+from misanandres_ml.modelos.comparar import entrenar
+from misanandres_ml.datos.generar_dataset_simulado import generar
 from tests.conftest import HIPER_RAPIDOS
 
 

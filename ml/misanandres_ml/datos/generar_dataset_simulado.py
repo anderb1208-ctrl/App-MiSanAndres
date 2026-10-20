@@ -7,7 +7,7 @@ los destinos.
       de Colombia, temporadas, llegadas oficiales de turistas por mes, capacidades y
       cierres oficiales), pero el número de personas en cada lugar es una simulación.
 
-Uso:  python generar_dataset_simulado.py [--desde 2024-10-01] [--hasta 2026-10-18] [--semilla 42]
+Uso:  python -m misanandres_ml.datos.generar_dataset_simulado [--desde 2024-10-01] [--hasta 2026-10-18] [--semilla 42]
 
 Es reproducible: con la misma semilla, rango, destinos y archivos de datos produce
 exactamente el mismo archivo. Solo genera las horas en que cada destino atiende
@@ -38,9 +38,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import calendario
-import config
-from comun import horas_abiertas, leer_destinos
+from misanandres_ml import calendario
+from misanandres_ml import config
+from misanandres_ml.comun import horas_abiertas, leer_destinos
 
 AVISO = (
     "# DATOS SIMULADOS (origen_dato = simulado_calibrado) generados por ml/generar_dataset_simulado.py. "

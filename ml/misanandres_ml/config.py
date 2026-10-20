@@ -3,9 +3,9 @@ Configuración central del servicio de predicción de ocupación.
 
 DATASET elige con qué datos se trabaja:
   - "simulado": dataset SIMULADO calibrado con datos reales (clima observado, festivos,
-    llegadas oficiales de turistas), generado por generar_dataset_simulado.py. Es el valor
+    llegadas oficiales de turistas), generado por misanandres_ml.datos.generar_dataset_simulado. Es el valor
     por defecto. "mock" se sigue aceptando como alias de "simulado".
-  - "real": dataset real normalizado por cargar_datos_reales.py.
+  - "real": dataset real normalizado por misanandres_ml.datos.cargar_datos_reales.
 Se toma de la variable de entorno DATASET o del argumento --dataset de cada script
 (el argumento gana). Cambiar de simulado a real no requiere tocar código.
 """
@@ -17,7 +17,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-RAIZ = Path(__file__).resolve().parent
+# Raíz de ml/ (este archivo vive en ml/misanandres_ml/).
+RAIZ = Path(__file__).resolve().parents[1]
 # ml/.env (opcional) con DATASET, ML_API_KEY y credenciales de Supabase. Nunca se sube.
 load_dotenv(RAIZ / ".env")
 
@@ -31,9 +32,9 @@ ORIGEN_SIMULADO = "simulado_calibrado"
 # ---------------------------------------------------------------------------
 # Rutas
 # ---------------------------------------------------------------------------
-DIR_DATOS = RAIZ / "datos"
-DIR_MODELOS = RAIZ / "modelos"
-DIR_REPORTES = RAIZ / "reportes"
+DIR_DATOS = RAIZ / "datos"  # solo archivos de datos
+DIR_REPORTES = RAIZ / "reportes"  # informes y gráficos
+DIR_ARTEFACTOS = RAIZ / "artefactos"  # modelos entrenados (versionados en git)
 
 NOMBRE_DATASET = "dataset_ocupacion_san_andres.csv"
 DESTINOS_CSV = DIR_DATOS / "destinos.csv"
@@ -48,11 +49,21 @@ RUTAS_DATASET = {
     "real": DIR_DATOS / "procesado_real" / NOMBRE_DATASET,
 }
 
-MODELO_ARCHIVO = DIR_MODELOS / "modelo_ocupacion.joblib"
-METADATOS_ARCHIVO = DIR_MODELOS / "modelo_ocupacion.json"
-# Ganador e hiperparámetros de la última comparación (versionado): lo usa el
-# entrenamiento rápido (sin búsqueda) para reentrenar solo al ganador.
-GANADOR_ARCHIVO = DIR_REPORTES / "ganador.json"
+# Artefactos: <clave>.joblib (pipeline, metadatos y destinos) y <clave>.json (metadatos legibles)
+# por cada modelo, ganador.json (cuál gana, orden de respaldo y comparativa) y baseline.json
+# (promedios por destino y hora, para /comparar).
+NOMBRE_GANADOR = "ganador.json"
+NOMBRE_BASELINE = "baseline.json"
+GANADOR_ARCHIVO = DIR_ARTEFACTOS / NOMBRE_GANADOR
+BASELINE_ARCHIVO = DIR_ARTEFACTOS / NOMBRE_BASELINE
+
+
+def ruta_modelo(clave: str, directorio: Path = DIR_ARTEFACTOS) -> Path:
+    return directorio / f"{clave}.joblib"
+
+
+def ruta_metadatos(clave: str, directorio: Path = DIR_ARTEFACTOS) -> Path:
+    return directorio / f"{clave}.json"
 
 # ---------------------------------------------------------------------------
 # Esquema del dataset (coincide con FeaturesPrediccion del backend; ver README)
@@ -90,13 +101,15 @@ MARCA_EJEMPLO = "EJEMPLO"
 # Modelo
 # ---------------------------------------------------------------------------
 SEMILLA = 42
-MODELOS = ("ridge", "random_forest", "hist_gradient_boosting")
+MODELOS = ("ridge", "random_forest", "gradient_boosting")
 NOMBRES_MODELO = {
     "ridge": "Ridge (regresión lineal regularizada)",
     "random_forest": "Random Forest",
-    "hist_gradient_boosting": "HistGradientBoosting",
+    "gradient_boosting": "HistGradientBoosting",
     "baseline": "Baseline (promedio por destino y hora)",
 }
+# Clave anterior del gradient boosting (artefactos y ganador.json viejos).
+ALIAS_MODELO = {"hist_gradient_boosting": "gradient_boosting"}
 # Validación temporal: se prueba con los últimos MESES_PRUEBA meses. Si el dataset es corto
 # (menos de 2 × MESES_PRUEBA meses), con la última FRACCION_PRUEBA de las fechas.
 MESES_PRUEBA = 3
@@ -109,6 +122,12 @@ TOLERANCIA_RMSE = 0.02
 # Restricciones de despliegue (Render gratis: 512 MB de memoria).
 MAX_MB_MODELO = 50
 MAX_MS_PREDICCION = 100
+# Versionado en git: si un modelo pasa de MB_OBJETIVO_VERSIONADO se intenta reducir (más
+# compresión y menos profundidad) sin empeorar su RMSE más de TOLERANCIA_REDUCCION. Si aun así
+# pasa de MB_MAXIMO_VERSIONADO, se versionan solo sus metadatos y métricas.
+MB_OBJETIVO_VERSIONADO = 15
+MB_MAXIMO_VERSIONADO = 30
+TOLERANCIA_REDUCCION = 0.02
 SEMANAS_MINIMAS_PRODUCCION = 4
 
 # Mismos cortes que backend/src/utils/nivelOcupacion.ts: Bajo < 40, Medio 40–70, Alto > 70.

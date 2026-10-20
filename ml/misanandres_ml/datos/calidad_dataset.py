@@ -2,7 +2,7 @@
 Chequeos de coherencia del dataset simulado (además de validar_dataset.py) y reporte
 ml/reportes/calidad_dataset.md con gráficos simples.
 
-Uso:  python calidad_dataset.py [--archivo datos/dataset_ocupacion_san_andres.csv] [--sin-graficos]
+Uso:  python -m misanandres_ml.datos.calidad_dataset [--archivo datos/dataset_ocupacion_san_andres.csv] [--sin-graficos]
 
 Chequeos:
   1. Capacidad: nunca más personas que la capacidad; muy pocos casos ≥ 95 % y casi todos
@@ -23,11 +23,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import config
-import graficos
-from comun import horas_abiertas, leer_dataset, leer_destinos
-from generar_dataset_simulado import EVENTOS_ADMINISTRATIVOS, leer_llegadas
-from validar_dataset import a_booleano, validar
+from misanandres_ml import config
+from misanandres_ml.modelos import graficos
+from misanandres_ml.comun import horas_abiertas, leer_dataset, leer_destinos
+from misanandres_ml.datos.generar_dataset_simulado import EVENTOS_ADMINISTRATIVOS, leer_llegadas
+from misanandres_ml.datos.validar_dataset import a_booleano, validar
 
 MAX_FRACCION_TOPE = 0.005       # ≤ 0,5 % de las filas en 95 % o más
 MIN_TOPE_EN_ALTA = 0.8          # y al menos el 80 % de ellas en temporada alta, festivo o puente
@@ -199,8 +199,8 @@ def reporte_markdown(datos: pd.DataFrame, chequeos: list[Chequeo], tablas: dict,
         "",
         f"- Filas: **{len(datos):,}** · destinos: **{datos['id_destino'].nunique()}** · "
         f"desde {fechas.min()[:10]} hasta {fechas.max()[:10]}",
-        f"- Generado con `python generar_dataset_simulado.py` (semilla {config.SEMILLA}); "
-        "este reporte con `python calidad_dataset.py`.",
+        f"- Generado con `python -m misanandres_ml.datos.generar_dataset_simulado` (semilla {config.SEMILLA}); "
+        "este reporte con `python -m misanandres_ml.datos.calidad_dataset`.",
         "",
         "## Chequeos",
         "",

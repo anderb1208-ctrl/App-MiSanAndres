@@ -53,7 +53,7 @@ Solo llenó la fecha y hora, el lugar y las personas; el resto lo calcula el sis
 Copia el CSV en la carpeta **`ml/datos/real/`** del proyecto (por ejemplo `ml/datos/real/ocupacion_2026.csv`). Esa carpeta no se sube a GitHub. Luego quien administra el sistema corre:
 
 ```
-python cargar_datos_reales.py
+python -m misanandres_ml.datos.cargar_datos_reales
 python entrenar_modelo.py --dataset real
 ```
 

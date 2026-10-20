@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import config
+from misanandres_ml import config
 
 COLUMNAS_DESTINO = ["id_destino", "nombre", "capacidad", "categoria", "horario_apertura", "horario_cierre"]
 
@@ -47,8 +47,8 @@ def leer_dataset(ruta: Path) -> pd.DataFrame:
     """Lee un CSV del dataset; las líneas que empiezan por '#' son comentarios (aviso de datos sintéticos)."""
     if not ruta.exists():
         raise FileNotFoundError(
-            f"No existe {ruta}. Para datos simulados: python generar_mock_dataset.py. "
-            "Para datos reales: python cargar_datos_reales.py."
+            f"No existe {ruta}. Para datos simulados: python -m misanandres_ml.datos.generar_dataset_simulado. "
+            "Para datos reales: python -m misanandres_ml.datos.cargar_datos_reales."
         )
     return pd.read_csv(ruta, comment="#", dtype={"fecha_hora": "string", "temporada": "string"})
 

@@ -1,7 +1,7 @@
 """
-Limpieza, features y pipelines de los tres modelos (lo usan entrenar_modelo.py y app.py).
+Limpieza, features y transformadores propios (los usan los modelos y app.py).
 
-Uso (para revisar el resultado):  python preparar_dataset.py [--dataset simulado|real]
+Uso (para revisar el resultado):  python -m misanandres_ml.datos.preparar_dataset [--dataset simulado|real]
 
 Features (las del backend, FeaturesPrediccion, más datos del destino):
   - Destino: id_destino y categoria (categóricas) y capacidad.
@@ -12,12 +12,9 @@ Features (las del backend, FeaturesPrediccion, más datos del destino):
     CLIMATOLOGÍA MENSUAL aprendida al entrenar (promedio de ese mes), no con un valor fijo.
 La imputación y la codificación viven dentro del Pipeline guardado: la API recibe los
 valores tal cual y aplica exactamente la misma transformación que al entrenar.
-
-Modelos (construir_pipeline):
-  - ridge: regresión lineal regularizada. One-hot de destino, mes y categoría × hora, e
-    interacciones de la categoría con la hora cíclica, el calendario y el clima.
-  - random_forest: RandomForestRegressor con profundidad y hojas limitadas (tamaño del archivo).
-  - hist_gradient_boosting: HistGradientBoostingRegressor con destino y categoría nativas.
+Los pipelines de cada modelo están en misanandres_ml/modelos/ (ridge, random_forest,
+gradient_boosting). Los transformadores de este archivo quedan guardados dentro de los
+artefactos (joblib guarda su ruta): no se deben mover ni renombrar sin reentrenar.
 """
 from __future__ import annotations
 
@@ -28,16 +25,11 @@ from datetime import date
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
-from sklearn.linear_model import Ridge
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
-import calendario
-import config
-from comun import a_fecha_hora_local, leer_dataset, leer_destinos
-from validar_dataset import a_booleano
+from misanandres_ml import calendario
+from misanandres_ml import config
+from misanandres_ml.comun import a_fecha_hora_local, leer_dataset, leer_destinos
+from misanandres_ml.datos.validar_dataset import a_booleano
 
 CATEGORICAS = ["id_destino", "categoria"]
 CALENDARIO = [
@@ -187,59 +179,9 @@ class CategoriaHora(BaseEstimator, TransformerMixin):
         return pd.DataFrame({"categoria_hora": x["categoria"].astype(str) + "_" + x["hora"].astype(int).astype(str)})
 
 
-# ---------------------------------------------------------------------------
-# Pipelines
-# ---------------------------------------------------------------------------
-HIPERPARAMETROS_POR_DEFECTO = {
-    "ridge": {"alpha": 1.0},
-    "random_forest": {"n_estimators": 100, "max_depth": 14, "min_samples_leaf": 20, "max_features": 0.8},
-    "hist_gradient_boosting": {"learning_rate": 0.1, "max_iter": 300, "max_leaf_nodes": 31,
-                               "min_samples_leaf": 20, "l2_regularization": 0.0},
-}
-# Búsqueda pequeña y reproducible (RandomizedSearchCV, semilla 42). Profundidad y hojas
-# acotadas en el bosque para que el archivo no pase de MAX_MB_MODELO.
-ESPACIOS_BUSQUEDA = {
-    "ridge": {"alpha": [0.1, 1.0, 10.0, 100.0]},
-    "random_forest": {"n_estimators": [60, 100], "max_depth": [10, 14, 18], "min_samples_leaf": [10, 20, 40],
-                      "max_features": [0.5, 0.8, 1.0]},
-    "hist_gradient_boosting": {"learning_rate": [0.05, 0.1, 0.2], "max_iter": [200, 400], "max_leaf_nodes": [31, 63],
-                               "min_samples_leaf": [20, 50], "l2_regularization": [0.0, 1.0]},
-}
-ITERACIONES_BUSQUEDA = {"ridge": 4, "random_forest": 6, "hist_gradient_boosting": 8}
-
-
-def _resto() -> list[str]:
+def columnas_resto() -> list[str]:
+    """Columnas numéricas y de clima (todo menos destino y categoría)."""
     return NUMERICAS + CLIMA
-
-
-def construir_pipeline(modelo: str = "random_forest", **hiper) -> Pipeline:
-    params = {**HIPERPARAMETROS_POR_DEFECTO[modelo], **hiper}
-    if modelo == "ridge":
-        columnas = ColumnTransformer([
-            ("destino", OneHotEncoder(handle_unknown="ignore"), ["id_destino"]),
-            ("mes", OneHotEncoder(handle_unknown="ignore"), ["mes"]),
-            ("categoria_hora", Pipeline([("cruce", CategoriaHora()), ("onehot", OneHotEncoder(handle_unknown="ignore"))]),
-             ["categoria", "hora"]),
-            ("interacciones", Pipeline([("cruce", InteraccionesCategoria()), ("escala", StandardScaler())]),
-             ["categoria", *INTERACCIONES]),
-            ("numericas", StandardScaler(), _resto()),
-        ])
-        estimador = Ridge(alpha=params["alpha"])
-    elif modelo == "random_forest":
-        columnas = ColumnTransformer([
-            ("categoricas", OneHotEncoder(handle_unknown="ignore"), CATEGORICAS),
-            ("resto", "passthrough", _resto()),
-        ])
-        estimador = RandomForestRegressor(random_state=config.SEMILLA, n_jobs=-1, **params)
-    elif modelo == "hist_gradient_boosting":
-        columnas = ColumnTransformer([
-            ("categoricas", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=np.nan, dtype=float), CATEGORICAS),
-            ("resto", "passthrough", _resto()),
-        ])
-        estimador = HistGradientBoostingRegressor(random_state=config.SEMILLA, categorical_features=[0, 1], **params)
-    else:
-        raise ValueError(f"Modelo desconocido: {modelo}. Opciones: {', '.join(config.MODELOS)}.")
-    return Pipeline([("clima", ImputadorClimatologia()), ("columnas", columnas), ("modelo", estimador)])
 
 
 def fila_para_prediccion(

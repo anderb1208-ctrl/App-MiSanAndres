@@ -126,28 +126,19 @@ $RECYCLE.BIN/
 # Caché de Overpass del script de geolocalización
 backend/scripts/ubicaciones/.cache/
 
-# Servicio de ML: entorno, datos y modelos generados (se regeneran con los scripts)
+# Servicio de ML (ml/)
+# - Se ignoran: entorno, cachés de Python y pytest, y los CSV grandes o locales.
+# - Se versionan: ml/artefactos/ COMPLETO (los tres modelos, sus metadatos, ganador.json y
+#   baseline.json: Render no entrena), los CSV pequeños de datos y los reportes del entregable.
 ml/.venv/
 ml/.pytest_cache/
 ml/**/__pycache__/
+# Exportado de Supabase en cada PC (el versionado es destinos_respaldo.csv)
 ml/datos/destinos.csv
-ml/datos/mock/
-# Dataset simulado (~24 MB): se regenera igual con python generar_dataset_simulado.py (semilla 42)
+# Dataset simulado (~24 MB): se regenera igual con python -m misanandres_ml.datos.generar_dataset_simulado (semilla 42)
 ml/datos/dataset_ocupacion_san_andres.csv
 ml/datos/procesado_real/
 ml/datos/real/*
 !ml/datos/real/.gitkeep
-ml/modelos/*
-!ml/modelos/.gitkeep
-# El modelo ganador es liviano (< 1 MB): se versiona para que el build de Render no entrene.
-!ml/modelos/modelo_ocupacion.joblib
-!ml/modelos/modelo_ocupacion.json
-ml/reportes/*
-!ml/reportes/.gitkeep
-# Reportes del entregable (los de cada entrenamiento rápido no se suben)
-!ml/reportes/calidad_dataset.md
-!ml/reportes/calidad_*.png
-!ml/reportes/comparacion_modelos.md
-!ml/reportes/comparacion_modelos.csv
-!ml/reportes/comparacion_*.png
-!ml/reportes/ganador.json
+# Reportes de cada entrenamiento rápido (los de la comparación sí se versionan)
+ml/reportes/entrenamiento_*.md

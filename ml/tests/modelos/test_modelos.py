@@ -5,10 +5,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import config
-import entrenar_modelo
-from entrenar_modelo import comparar, division_temporal, elegir_ganador, entrenar
-from preparar_dataset import CLIMA, ImputadorClimatologia, agregar_filas_sin_clima, construir_pipeline, preparar
+from misanandres_ml import config
+from misanandres_ml import modelos
+from misanandres_ml.datos.preparar_dataset import CLIMA, ImputadorClimatologia, agregar_filas_sin_clima, preparar
+from misanandres_ml.modelos import construir_pipeline
+from misanandres_ml.modelos.comparar import comparar, entrenar
+from misanandres_ml.modelos.evaluacion import buscar_hiperparametros, division_temporal, elegir_ganador
 from tests.conftest import HIPER_RAPIDOS
 
 
@@ -69,49 +71,88 @@ def _r(clave, rmse, mb, cumple=True):
 
 
 def test_gana_el_menor_rmse():
-    clave, motivo = elegir_ganador([_r("ridge", 9.0, 0.01), _r("random_forest", 6.0, 20), _r("hist_gradient_boosting", 6.5, 1)])
+    clave, motivo = elegir_ganador([_r("ridge", 9.0, 0.01), _r("random_forest", 6.0, 20), _r("gradient_boosting", 6.5, 1)])
     assert clave == "random_forest" and "Menor RMSE" in motivo
 
 
 def test_con_menos_de_2_por_ciento_gana_el_mas_liviano():
-    clave, motivo = elegir_ganador([_r("ridge", 9.0, 0.01), _r("random_forest", 6.00, 20), _r("hist_gradient_boosting", 6.10, 1)])
-    assert clave == "hist_gradient_boosting" and "más liviano" in motivo
+    clave, motivo = elegir_ganador([_r("ridge", 9.0, 0.01), _r("random_forest", 6.00, 20), _r("gradient_boosting", 6.10, 1)])
+    assert clave == "gradient_boosting" and "más liviano" in motivo
 
 
 def test_excluye_los_que_no_cumplen_restricciones():
-    clave, _ = elegir_ganador([_r("random_forest", 5.0, 80, cumple=False), _r("hist_gradient_boosting", 6.0, 1)])
-    assert clave == "hist_gradient_boosting"
+    clave, _ = elegir_ganador([_r("random_forest", 5.0, 80, cumple=False), _r("gradient_boosting", 6.0, 1)])
+    assert clave == "gradient_boosting"
     with pytest.raises(SystemExit):
         elegir_ganador([_r("random_forest", 5.0, 80, cumple=False)])
 
 
-def test_comparar_guarda_ganador_reportes_y_metadatos(archivo_dataset, destinos, tmp_path):
-    m = comparar("simulado", archivo_dataset, destinos, tmp_path, tmp_path, hiperparametros=HIPER_RAPIDOS, graficos=False)
-    claves = [r["clave"] for r in m["comparacion"]]
+def test_comparar_guarda_los_tres_artefactos_y_el_ganador(archivo_dataset, destinos, tmp_path):
+    indice = comparar("simulado", archivo_dataset, destinos, tmp_path, tmp_path, hiperparametros=HIPER_RAPIDOS, graficos=False)
+    claves = [r["clave"] for r in indice["comparacion"]]
     assert claves == [*config.MODELOS, "baseline"]
-    assert sum(r["ganador"] for r in m["comparacion"]) == 1
-    assert m["modelo"]["clave"] == m["seleccion"]["ganador"] in config.MODELOS
-    for r in m["comparacion"][:3]:
+    assert sum(r["ganador"] for r in indice["comparacion"]) == 1
+    assert indice["modelo"] == indice["seleccion"]["ganador"] in config.MODELOS
+    for r in indice["comparacion"][:3]:
         assert {"mae", "rmse", "r2", "rmse_sin_clima", "mae_por_categoria", "mae_por_temporada",
                 "tiempo_entrenamiento_s", "tamano_mb", "ms_prediccion"} <= r.keys()
         assert r["tamano_mb"] <= config.MAX_MB_MODELO and r["ms_prediccion"] < config.MAX_MS_PREDICCION
-    assert m["origen_dato"] == "simulado_calibrado" and m["datos_sinteticos"] is True
-    assert (tmp_path / "comparacion_modelos.md").exists() and (tmp_path / "comparacion_modelos.csv").exists()
-    ganador = json.loads((tmp_path / "ganador.json").read_text(encoding="utf-8"))
-    assert ganador["modelo"] == m["modelo"]["clave"]
-    assert "simulados" in (tmp_path / "comparacion_modelos.md").read_text(encoding="utf-8").lower()
+    assert indice["origen_dato"] == "simulado_calibrado" and indice["datos_sinteticos"] is True
 
-    # Entrenamiento rápido: reentrena solo al ganador, con sus hiperparámetros y sin búsqueda.
-    rapido = entrenar("simulado", archivo_dataset, destinos, tmp_path / "rapido", tmp_path / "rapido",
-                      archivo_ganador=tmp_path / "ganador.json")
+    # Los tres modelos, sus metadatos, el índice y el baseline.
+    for clave in config.MODELOS:
+        assert config.ruta_modelo(clave, tmp_path).exists()
+        meta = json.loads(config.ruta_metadatos(clave, tmp_path).read_text(encoding="utf-8"))
+        assert meta["modelo"]["clave"] == clave and meta["es_ganador"] == (clave == indice["modelo"])
+        assert indice["artefactos"][clave]["versionado"] is True
+    ganador = json.loads((tmp_path / "ganador.json").read_text(encoding="utf-8"))
+    assert ganador["modelo"] == indice["modelo"]
+    # Orden de respaldo: el ganador y luego los demás por RMSE.
+    otros = sorted((r for r in indice["comparacion"][:3] if not r["ganador"]), key=lambda r: r["rmse"])
+    assert ganador["orden_respaldo"] == [indice["modelo"], *(r["clave"] for r in otros)]
+    baseline = json.loads((tmp_path / "baseline.json").read_text(encoding="utf-8"))
+    assert baseline["por_hora"] and baseline["global"] > 0
+    assert (tmp_path / "comparacion_modelos.md").exists() and (tmp_path / "comparacion_modelos.csv").exists()
+    texto = (tmp_path / "comparacion_modelos.md").read_text(encoding="utf-8")
+    assert "simulados" in texto.lower() and "Orden de respaldo" in texto
+
+    # Entrenamiento rápido: reentrena solo al ganador, con sus hiperparámetros, y no toca a los otros.
+    tiempos = {c: config.ruta_modelo(c, tmp_path).stat().st_mtime_ns for c in config.MODELOS}
+    rapido = entrenar("simulado", archivo_dataset, destinos, tmp_path, tmp_path / "rapido")
     assert rapido["modelo"]["clave"] == ganador["modelo"]
     assert rapido["modelo"]["hiperparametros"] == ganador["hiperparametros"]
-    assert rapido["comparacion"] == ganador["comparacion"]
+    for c in config.MODELOS:
+        if c != ganador["modelo"]:
+            assert config.ruta_modelo(c, tmp_path).stat().st_mtime_ns == tiempos[c]
+
+
+def test_reduce_el_bosque_si_pesa_mas_del_objetivo(archivo_dataset, destinos, tmp_path, monkeypatch):
+    from misanandres_ml.modelos import random_forest
+
+    monkeypatch.setattr(config, "MB_OBJETIVO_VERSIONADO", 0.0)
+    monkeypatch.setattr(config, "TOLERANCIA_REDUCCION", 10.0)  # acepta cualquier RMSE en esta prueba
+    monkeypatch.setattr(random_forest, "REDUCCIONES", [{"max_depth": 3}])
+    indice = comparar("simulado", archivo_dataset, destinos, tmp_path, tmp_path, modelos=("random_forest",),
+                      hiperparametros=HIPER_RAPIDOS, graficos=False)
+    bosque = indice["comparacion"][0]
+    assert bosque["reduccion"]["aplicada"] is True
+    assert bosque["hiperparametros"]["max_depth"] == 3
+    assert bosque["tamano_mb"] <= bosque["reduccion"]["original"]["tamano_mb"]
+
+
+def test_modelo_demasiado_grande_versiona_solo_metadatos(archivo_dataset, destinos, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "MB_MAXIMO_VERSIONADO", 0.0)
+    indice = comparar("simulado", archivo_dataset, destinos, tmp_path, tmp_path, modelos=("ridge",),
+                      hiperparametros=HIPER_RAPIDOS, graficos=False)
+    assert indice["artefactos"]["ridge"]["versionado"] is False
+    assert not config.ruta_modelo("ridge", tmp_path).exists()
+    assert config.ruta_metadatos("ridge", tmp_path).exists()
+    assert indice["orden_respaldo"] == []
 
 
 def test_busqueda_de_hiperparametros_reproducible(xy, monkeypatch):
     x, y, _ = xy
-    monkeypatch.setitem(entrenar_modelo.ITERACIONES_BUSQUEDA, "ridge", 2)
-    a = entrenar_modelo.buscar_hiperparametros("ridge", x, y)
-    b = entrenar_modelo.buscar_hiperparametros("ridge", x, y)
+    monkeypatch.setitem(modelos.ITERACIONES_BUSQUEDA, "ridge", 2)
+    a = buscar_hiperparametros("ridge", x, y)
+    b = buscar_hiperparametros("ridge", x, y)
     assert a == b and a["alpha"] in (0.1, 1.0, 10.0, 100.0)

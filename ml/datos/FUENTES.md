@@ -45,7 +45,7 @@ Fecha de consulta de todas las fuentes: **19 de octubre de 2026**.
 ## Reproducir
 
 ```powershell
-python descargar_clima_historico.py   # solo si se quiere actualizar el clima (necesita internet)
-python generar_dataset_simulado.py    # semilla 42, ~5 s, sin internet
-python calidad_dataset.py             # chequeos y reportes/calidad_dataset.md
+python -m misanandres_ml.datos.descargar_clima_historico   # solo si se quiere actualizar el clima (necesita internet)
+python -m misanandres_ml.datos.generar_dataset_simulado    # semilla 42, ~5 s, sin internet
+python -m misanandres_ml.datos.calidad_dataset             # chequeos y reportes/calidad_dataset.md
 ```

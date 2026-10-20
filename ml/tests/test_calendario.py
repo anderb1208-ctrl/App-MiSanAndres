@@ -3,7 +3,7 @@ from datetime import date
 
 import pytest
 
-import calendario
+from misanandres_ml import calendario
 
 d = date.fromisoformat
 

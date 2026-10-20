@@ -30,7 +30,7 @@ Opcionalmente, el backend llama al **servicio de ML** (`ml/`, `POST /predict/lot
 
 ```
 App ──▶ Backend ──▶ Servicio ML (FastAPI)  GET /modelo · POST /predict · POST /predict/lote
-                     └─ modelo ganador versionado (ml/modelos/modelo_ocupacion.joblib, < 1 MB)
+                     └─ tres modelos versionados (ml/artefactos/; atiende el ganador)
                         ◀─ entrenado con ml/datos/dataset_ocupacion_san_andres.csv (simulado)
 ```
 
@@ -322,8 +322,8 @@ Python 3.11. Ver [`ml/README.md`](ml/README.md).
 cd ml
 python -m venv .venv; .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-python generar_dataset_simulado.py    # dataset SIMULADO calibrado con datos reales (~5 s, sin internet)
-python calidad_dataset.py             # chequeos de coherencia → reportes/calidad_dataset.md
+python -m misanandres_ml.datos.generar_dataset_simulado    # dataset SIMULADO calibrado con datos reales (~5 s, sin internet)
+python -m misanandres_ml.datos.calidad_dataset             # chequeos de coherencia → reportes/calidad_dataset.md
 python entrenar_modelo.py --comparar  # compara Ridge, Random Forest y HistGradientBoosting y guarda al ganador
 uvicorn app:app --port 8000           # necesita ML_API_KEY en ml/.env
 pytest

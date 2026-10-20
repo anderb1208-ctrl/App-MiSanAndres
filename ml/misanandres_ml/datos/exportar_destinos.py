@@ -2,7 +2,7 @@
 Exporta los destinos de Supabase a ml/datos/destinos.csv
 (id, nombre, capacidad, categoría, horario de apertura y cierre, estado).
 
-Uso:  python exportar_destinos.py
+Uso:  python -m misanandres_ml.datos.exportar_destinos
 
 Lee SUPABASE_URL y SUPABASE_PUBLISHABLE_KEY del entorno o de ml/.env (solo lectura:
 la tabla destino es pública por RLS). Si no hay credenciales o Supabase no responde,
@@ -18,8 +18,8 @@ import sys
 import pandas as pd
 import requests
 
-import config
-from comun import COLUMNAS_DESTINO
+from misanandres_ml import config
+from misanandres_ml.comun import COLUMNAS_DESTINO
 
 CAMPOS = "id_destino,nombre,capacidad,categoria,horario_apertura,horario_cierre,estado"
 
