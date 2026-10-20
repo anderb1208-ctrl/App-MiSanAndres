@@ -3,6 +3,7 @@ import type { OcupacionResumida } from '../services/tipos';
 import { colors, occupancyColors, radius, typography } from '../theme';
 import { textoOcupacion } from '../utils/ocupacion';
 import { Icon } from './Icon';
+import { SuperficieVidrio } from './SuperficieVidrio';
 
 interface Props {
   ocupacion: OcupacionResumida | null | undefined;
@@ -24,17 +25,16 @@ export function OcupacionCompacta({ ocupacion, variante = 'indicador', sobreOscu
   const c = ocupacion?.nivel && ocupacion.estado !== 'Cerrado' ? occupancyColors[ocupacion.nivel] : null;
 
   if (variante === 'chip') {
+    // Va dentro de tarjetas (listas, panel de Inicio): calidad ligera, nunca vidrio sobre vidrio.
+    // El tinte es el del nivel, así el texto mantiene su contraste (≥ 4.5:1) en todos los modos.
+    const tinte = c ? { fondo: c.bg, borde: c.border, fondoOpaco: c.bg } : TINTE_NEUTRO;
     return (
-      <View
-        accessible
-        accessibilityLabel={t.accesible}
-        style={[styles.chip, c ? { backgroundColor: c.bg, borderColor: c.border } : styles.chipNeutro]}
-      >
+      <SuperficieVidrio variante="chip" calidad="ligera" tinte={tinte} accessible accessibilityLabel={t.accesible} style={styles.chip}>
         {c ? <View style={[styles.punto, { backgroundColor: c.main }]} /> : <Icon name={t.icono} size={12} color={colors.textMuted} />}
         <Text style={[styles.chipTexto, { color: c ? c.fg : colors.textMuted }]} numberOfLines={1}>
           {t.corto}
         </Text>
-      </View>
+      </SuperficieVidrio>
     );
   }
 
@@ -53,6 +53,8 @@ export function OcupacionCompacta({ ocupacion, variante = 'indicador', sobreOscu
   );
 }
 
+const TINTE_NEUTRO = { fondo: colors.surfaceLow, borde: colors.borderCard, fondoOpaco: colors.surfaceLow };
+
 const styles = StyleSheet.create({
   indicador: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 },
   indicadorTexto: { ...typography.labelBold },
@@ -65,9 +67,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: radius.full,
-    borderWidth: 1,
     flexShrink: 0,
   },
-  chipNeutro: { backgroundColor: colors.surfaceLow, borderColor: colors.borderCard },
   chipTexto: { ...typography.labelBold, fontSize: 12 },
 });

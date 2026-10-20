@@ -13,6 +13,7 @@ import { Icon } from './Icon';
 import { ImagenDestino } from './ImagenDestino';
 import { OcupacionCompacta } from './OcupacionCompacta';
 import { PressableScale } from './PressableScale';
+import { GrupoVidrio, SuperficieVidrio } from './SuperficieVidrio';
 
 interface Props {
   destino: Destino;
@@ -67,20 +68,26 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, conDesc
       >
         <ImagenDestino destino={destino} style={StyleSheet.absoluteFill} tamanoIcono={56} />
         <LinearGradient colors={colors.scrimBottom} locations={[0.3, 0.62, 1]} style={StyleSheet.absoluteFill} />
-        <View style={styles.featuredArriba}>
+        {/* Controles cercanos sobre la foto: un grupo de vidrio (GlassContainer en iOS 26). */}
+        <GrupoVidrio espaciado={spacing.sm} style={styles.featuredArriba}>
           {destacado ? (
-            <View style={styles.compatibilidad}>
+            <SuperficieVidrio
+              variante="chip"
+              tinte={{ fondo: colors.glassStrong, borde: colors.glassBorder }}
+              style={styles.compatibilidad}
+            >
               <Icon name="auto-awesome" size={14} color={colors.secondary} />
               <Text style={styles.compatibilidadTexto} numberOfLines={1}>
                 {destacado}
               </Text>
-            </View>
+            </SuperficieVidrio>
           ) : (
             <View />
           )}
           {!sinFavorito && <BotonFavorito destino={destino} tono="glass" tamano={20} />}
-        </View>
-        <GlassPanel tono="dark" padding={14} radius={18} style={styles.featuredLeyenda}>
+        </GrupoVidrio>
+        {/* Vidrio oscuro sobre el degradado: el velo navy mantiene el texto blanco legible. */}
+        <SuperficieVidrio variante="tarjeta" tono="oscuro" style={styles.featuredLeyenda}>
           <Text style={styles.featuredMeta} numberOfLines={1}>
             {categoria.singular}
             {cerrado(destino) ? ' • Cerrado temporalmente' : ''}
@@ -115,7 +122,7 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, conDesc
             ) : null}
             <OcupacionCompacta ocupacion={destino.ocupacionActual} sobreOscuro />
           </View>
-        </GlassPanel>
+        </SuperficieVidrio>
       </PressableScale>
     );
   }
@@ -128,6 +135,7 @@ export function DestinoCard({ destino, layout = 'list', nota, destacado, conDesc
   return (
     <GlassPanel
       tono="strong"
+      calidad="ligera"
       padding={12}
       radius={radius.xl}
       onPress={onPress}
@@ -212,12 +220,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.full,
-    backgroundColor: colors.glassStrong,
   },
   compatibilidadTexto: { ...typography.labelBold, color: colors.secondary, flexShrink: 1 },
   corazon: { marginTop: -8, marginRight: -8 },
   controles: { flexDirection: 'row', alignItems: 'center', marginTop: -10, marginRight: -8, marginBottom: -10 },
-  featuredLeyenda: { gap: 3 },
+  featuredLeyenda: { gap: 3, padding: 14, borderRadius: 18 },
   featuredMeta: { ...typography.labelMd, color: colors.textOnDarkMuted },
   featuredNombre: { ...typography.headlineSm, color: colors.white },
   featuredDescripcion: { ...typography.bodyMd, color: colors.textOnDarkMuted },

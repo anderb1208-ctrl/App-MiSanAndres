@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { DestinoMapa } from '../services/tipos';
-import { colors, radius, shadows, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 import { CATEGORIAS } from '../utils/categorias';
 import { formatearDistancia } from '../utils/distancia';
 import { Button } from './Button';
-import { GlassPanel } from './GlassPanel';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 import { ImagenDestino } from './ImagenDestino';
 import { IndicadorOcupacion } from './IndicadorOcupacion';
+import { SuperficieVidrio } from './SuperficieVidrio';
 
 interface Props {
   destino: DestinoMapa;
@@ -23,7 +23,14 @@ interface Props {
 export function TarjetaDestinoMapa({ destino, km, onVerDetalle, onCerrar, style }: Props) {
   const categoria = CATEGORIAS[destino.categoria];
   return (
-    <GlassPanel tono="strong" radius={radius.xl} padding={12} style={[shadows.lg, style]}>
+    // Flota sobre el mapa: vidrio real en iOS 26+. Velo blanco fuerte para que el texto se lea
+    // sobre cualquier zona del mapa. La ocupación de adentro no es vidrio (nada de vidrio sobre vidrio).
+    <SuperficieVidrio
+      variante="tarjeta"
+      sombra="lg"
+      tinte={{ fondo: colors.glassStrong, borde: colors.glassBorder }}
+      style={[styles.tarjeta, style]}
+    >
       <View style={styles.fila}>
         <ImagenDestino destino={destino} style={styles.foto} tamanoIcono={26} />
         <View style={styles.info}>
@@ -44,17 +51,18 @@ export function TarjetaDestinoMapa({ destino, km, onVerDetalle, onCerrar, style 
       <Button iconoDerecha="arrow-forward" onPress={onVerDetalle} style={styles.boton}>
         Ver detalle
       </Button>
-    </GlassPanel>
+    </SuperficieVidrio>
   );
 }
 
 const styles = StyleSheet.create({
+  tarjeta: { padding: 12, borderRadius: radius.xl },
   fila: { flexDirection: 'row', gap: spacing.gutter, alignItems: 'flex-start' },
   foto: { width: 84, height: 84, borderRadius: radius.lg },
   info: { flex: 1, gap: 6 },
   nombre: { ...typography.titleMd, color: colors.textStrong },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaTexto: { ...typography.labelMd, color: colors.textSubtle, flexShrink: 1 },
+  metaTexto: { ...typography.labelMd, color: colors.textMuted, flexShrink: 1 },
   cerrar: { marginTop: -4, marginRight: -4 },
   boton: { marginTop: spacing.gutter },
 });
