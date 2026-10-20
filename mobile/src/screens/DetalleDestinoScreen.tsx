@@ -1,9 +1,20 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
-import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotonFavorito } from '../components/BotonFavorito';
 import { Button } from '../components/Button';
+import { altoCabeceraVidrio, CabeceraVidrio } from '../components/CabeceraVidrio';
 import { GlassControl } from '../components/GlassControl';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
@@ -50,6 +61,10 @@ async function cargarCurva(id: number) {
   return { tipica, registros: reales?.registros ?? [], horaActual: horaEnColombia() };
 }
 
+/** Alto de la foto y cuánto se monta encima la hoja blanca. */
+const ALTO_HERO = 360;
+const SOLAPE_HOJA = 32;
+
 /** "los martes", "los sábados" (lunes a viernes no cambian en plural). */
 const pluralDia = (dia: string) => (dia.endsWith('s') ? dia : `${dia}s`);
 
@@ -76,9 +91,21 @@ function Dato({ icono, children }: { icono: NombreIcono; children: string }) {
 }
 
 export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'DetalleDestino'>) {
-  useBarraEstado('light');
   const { id } = route.params;
   const insets = useSafeAreaInsets();
+  // Cabecera de vidrio: aparece cuando la hoja blanca llega debajo de ella.
+  const [conCabecera, setConCabecera] = useState(false);
+  const cabeceraRef = useRef(false);
+  const umbralCabecera = ALTO_HERO - SOLAPE_HOJA - altoCabeceraVidrio(insets.top);
+  // Íconos de la barra de estado claros sobre la foto; oscuros sobre la cabecera.
+  useBarraEstado(conCabecera ? 'dark' : 'light');
+  const alDesplazar = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const visible = e.nativeEvent.contentOffset.y > umbralCabecera;
+    if (visible !== cabeceraRef.current) {
+      cabeceraRef.current = visible;
+      setConCabecera(visible);
+    }
+  };
   const registrada = useRef<number | null>(null);
   const { rol } = useAuth();
 
@@ -142,6 +169,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
     <View style={styles.fondo}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}
+        onScroll={alDesplazar}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={destino.refrescando} onRefresh={recargarTodo} tintColor={colors.white} />}
       >
         <View style={styles.hero}>
@@ -325,7 +354,8 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
         </View>
       </ScrollView>
 
-      {/* Sobre la foto: variante oscura para que siempre se vea. */}
+      <CabeceraVidrio titulo={d.nombre} visible={conCabecera} />
+      {/* Sobre la foto o la cabecera: variante oscura para que siempre se vea. */}
       <BotonVolver variante="imagen" />
       <BotonFavorito destino={d} tono="glass" tamano={24} style={[styles.favorito, { top: insets.top + spacing.sm }]} />
 
@@ -357,7 +387,7 @@ const styles = StyleSheet.create({
   cierreTextos: { flex: 1, gap: 2 },
   cierreTitulo: { ...typography.labelBold, color: colors.error },
   cierreTexto: { ...typography.bodyMd, color: colors.textStrong },
-  hero: { height: 360, backgroundColor: colors.navy950 },
+  hero: { height: ALTO_HERO, backgroundColor: colors.navy950 },
   scrimSuperior: { position: 'absolute', top: 0, left: 0, right: 0, height: 130 },
   credito: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 44, alignItems: 'flex-start' },
   creditoTexto: {
@@ -371,7 +401,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.glassDark,
   },
   hoja: {
-    marginTop: -32,
+    marginTop: -SOLAPE_HOJA,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
     backgroundColor: colors.white,
