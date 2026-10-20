@@ -1,13 +1,12 @@
-import type { Destino, EstadoTicket, MetricasAdmin, Ticket } from '../services/tipos';
-
-/** Estados en los que un ticket todavía necesita trabajo. */
-const ACTIVOS: EstadoTicket[] = ['abierto', 'en_revision'];
-const esActivo = (t: Pick<Ticket, 'estado'>) => ACTIVOS.includes(t.estado);
+import type { Destino, MetricasAdmin, Ticket } from '../services/tipos';
+import { esActivo } from './panelTecnico';
 
 export interface ResumenTecnico {
   /** Activos (abiertos o en revisión) asignados al técnico. */
   asignadosAMi: number;
   abiertos: number;
+  /** Abiertos que nadie tiene asignados (los que el técnico puede tomar). */
+  abiertosSinAsignar: number;
   enRevision: number;
 }
 
@@ -20,6 +19,7 @@ export function resumenTecnico(
   return {
     asignadosAMi: idUsuario ? lista.filter((t) => esActivo(t) && t.tecnico?.id === idUsuario).length : 0,
     abiertos: lista.filter((t) => t.estado === 'abierto').length,
+    abiertosSinAsignar: lista.filter((t) => t.estado === 'abierto' && !t.tecnico).length,
     enRevision: lista.filter((t) => t.estado === 'en_revision').length,
   };
 }

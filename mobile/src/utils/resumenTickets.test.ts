@@ -18,12 +18,12 @@ const TICKETS = [
 
 describe('resumenTecnico', () => {
   it('cuenta los activos asignados a mí, los abiertos y los en revisión', () => {
-    expect(resumenTecnico(TICKETS, YO)).toEqual({ asignadosAMi: 2, abiertos: 2, enRevision: 2 });
+    expect(resumenTecnico(TICKETS, YO)).toEqual({ asignadosAMi: 2, abiertos: 2, abiertosSinAsignar: 1, enRevision: 2 });
   });
 
   it('sin usuario o sin tickets no falla', () => {
     expect(resumenTecnico(TICKETS, null).asignadosAMi).toBe(0);
-    expect(resumenTecnico(undefined, YO)).toEqual({ asignadosAMi: 0, abiertos: 0, enRevision: 0 });
+    expect(resumenTecnico(undefined, YO)).toEqual({ asignadosAMi: 0, abiertos: 0, abiertosSinAsignar: 0, enRevision: 0 });
   });
 });
 

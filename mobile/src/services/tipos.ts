@@ -51,7 +51,8 @@ export interface Destino {
   capacidad: number;
   estado: EstadoDestino;
   /** Cierre temporal vigente (motivo y fin previsto), o null. */
-  cierre: { motivo: string | null; hasta: string | null } | null;
+  /** desde: inicio del cierre (null si se cerró antes de registrarlo o si la base no tiene la columna). */
+  cierre: { motivo: string | null; hasta: string | null; desde?: string | null } | null;
   /** null = sin horario (siempre accesible). */
   horario: Horario | null;
   rangoPrecio: RangoPrecio | null;
@@ -428,10 +429,20 @@ export interface UsuarioAdmin {
 }
 
 export interface MetricasAdmin {
-  usuarios: { total: number; porRol: Partial<Record<Rol, number>>; ultimos30Dias: number };
-  interacciones: { total: number; ultimos7Dias: number; porTipo: Partial<Record<TipoInteraccion, number>> };
+  /** anteriores30Dias, usuariosActivos y favoritosMasGuardados llegan con la migración 20261020120000 (opcionales). */
+  usuarios: { total: number; porRol: Partial<Record<Rol, number>>; ultimos30Dias: number; anteriores30Dias?: number };
+  interacciones: { total: number; ultimos7Dias: number; anteriores7Dias?: number; porTipo: Partial<Record<TipoInteraccion, number>> };
+  usuariosActivos?: { ultimos7Dias: number; anteriores7Dias: number };
   ticketsPorEstado: Partial<Record<EstadoTicket, number>>;
   destinosMasVistos: { idDestino: number; nombre: string; vistas: number }[];
+  favoritosMasGuardados?: { idDestino: number; nombre: string; favoritos: number }[];
+}
+
+/** GET /v1/health del backend (público). */
+export interface SaludBackend {
+  estado: string;
+  clima?: { proveedor: string | null; estado: 'sin_consultar' | 'ok' | 'desactualizado' | 'fallando' | 'no_configurado' };
+  prediccion?: { proveedor: 'heuristico' | 'ml' | 'auto' };
 }
 
 export interface CamposDestino {
