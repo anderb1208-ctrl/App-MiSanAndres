@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ChipEstadoDestino } from '../components/ChipsTicket';
 import { FilterChip } from '../components/FilterChip';
@@ -17,12 +17,20 @@ import { CATEGORIAS } from '../utils/categorias';
 import { ESTADOS_DESTINO, ETIQUETA_ESTADO_DESTINO } from '../utils/tickets';
 
 /** Destinos para el administrador: todos (también los ocultos), su estado y acceso a editar. */
-export function DestinosAdminScreen({ navigation }: TabScreenProps<'Destinos'>) {
+export function DestinosAdminScreen({ navigation, route }: TabScreenProps<'Destinos'>) {
   const espacio = useEspacioTabBar();
   const [filtro, setFiltro] = useState<EstadoDestino>();
   const { datos, error, cargando, refrescando, recargar } = useAsync(listarDestinosAdmin, [], { recargarAlEnfocar: true });
   const [cerrando, setCerrando] = useState<Destino | null>(null);
   const lista = useMemo(() => (datos ?? []).filter((d) => !filtro || d.estado === filtro), [datos, filtro]);
+
+  // Desde el Panel ("Destinos cerrados"): se abre con ese filtro y el parámetro se consume.
+  const estadoInicial = route.params?.estado;
+  useEffect(() => {
+    if (!estadoInicial) return;
+    setFiltro(estadoInicial);
+    navigation.setParams({ estado: undefined });
+  }, [estadoInicial, navigation]);
 
   /** Resumen del push enviado (cierre o reapertura) para el administrador. */
   const informarAviso = (aviso: ResultadoAviso | null) => {

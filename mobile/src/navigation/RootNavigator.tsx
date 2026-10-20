@@ -20,6 +20,7 @@ import { DetalleDestinoScreen } from '../screens/DetalleDestinoScreen';
 import { ExplorarScreen } from '../screens/ExplorarScreen';
 import { FavoritosScreen } from '../screens/FavoritosScreen';
 import { InicioScreen } from '../screens/InicioScreen';
+import { InicioTecnicoScreen } from '../screens/InicioTecnicoScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { MapaScreen } from '../screens/MapaScreen';
 import { PerfilScreen } from '../screens/PerfilScreen';
@@ -56,7 +57,11 @@ function TabsNavigator() {
           <Tabs.Screen name="Usuarios" component={UsuariosAdminScreen} />
         </>
       ) : rol === 'tecnico' ? (
-        <Tabs.Screen name="Tickets" component={TicketsScreen} />
+        <>
+          {/* El Inicio del técnico es su panel de trabajo (otra pantalla que la del turista). */}
+          <Tabs.Screen name="Inicio" component={InicioTecnicoScreen} />
+          <Tabs.Screen name="Tickets" component={TicketsScreen} />
+        </>
       ) : (
         <>
           <Tabs.Screen name="Inicio" component={InicioScreen} />

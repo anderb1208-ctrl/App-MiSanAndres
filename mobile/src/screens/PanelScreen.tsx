@@ -1,162 +1,326 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ChipEstadoTicket } from '../components/ChipsTicket';
+import { StyleSheet, Text, View } from 'react-native';
+import { AccesosRapidos } from '../components/AccesosRapidos';
+import { BannerAlerta } from '../components/BannerAlerta';
+import { BarraApilada } from '../components/BarraApilada';
+import { ChipEstado } from '../components/ChipEstado';
+import { EsqueletoLista } from '../components/Esqueleto';
 import { GlassPanel } from '../components/GlassPanel';
+import { Icon } from '../components/Icon';
 import { PantallaApilada } from '../components/PantallaApilada';
 import { SectionHeader } from '../components/ScreenHeader';
-import { SelectRow } from '../components/SelectRow';
-import { EstadoCargando, EstadoError } from '../components/StateView';
+import { EstadoError, EstadoMensaje } from '../components/StateView';
 import { TarjetaResumen } from '../components/TarjetaResumen';
+import { GrupoVidrio } from '../components/SuperficieVidrio';
 import { useAsync } from '../hooks/useAsync';
 import { useEspacioTabBar } from '../navigation/TabBar';
 import type { TabScreenProps } from '../navigation/types';
-import { listarDestinosAdmin, obtenerMetricas } from '../services/admin';
+import { listarDestinosAdmin, obtenerMetricas, obtenerModelosMl, obtenerSaludBackend } from '../services/admin';
+import { obtenerClimaIsla } from '../services/clima';
 import { obtenerPerfil } from '../services/perfil';
 import { listarTickets } from '../services/tickets';
-import { colors, radius, spacing, typography } from '../theme';
+import type { EstadoTicket } from '../services/tipos';
+import { colors, radius, spacing, ticketColors, type TonoChip, typography } from '../theme';
+import type { NombreIcono } from '../utils/categorias';
+import { textoSinClima } from '../utils/clima';
+import { formatearFechaLarga } from '../utils/fecha';
+import { alertasAdmin, variacion, type EstadoMl, type Variacion } from '../utils/panelAdmin';
 import { resumenAdmin } from '../utils/resumenTickets';
-import { ESTADOS_TICKET, ETIQUETA_ESTADO_TICKET, ETIQUETA_ROL } from '../utils/tickets';
+import { ESTADOS_TICKET, ETIQUETA_ESTADO_TICKET } from '../utils/tickets';
 import { primerNombre } from '../utils/validacion';
 
 const fmt = (n: number | undefined) => (n ?? 0).toLocaleString('es-CO');
 
-/** Métricas, tickets y destinos a la vez (todos son del administrador). */
+/** Métricas, tickets, destinos y perfil (todo del administrador). */
 async function cargarPanel() {
-  const [metricas, tickets, destinos, perfil] = await Promise.all([
-    obtenerMetricas(),
-    listarTickets(),
-    listarDestinosAdmin(),
-    obtenerPerfil(),
-  ]);
+  const [metricas, tickets, destinos, perfil] = await Promise.all([obtenerMetricas(), listarTickets(), listarDestinosAdmin(), obtenerPerfil()]);
   return { metricas, tickets, destinos, perfil };
 }
 
-function Cifra({ valor, etiqueta }: { valor: string; etiqueta: string }) {
+/** Estado de la plataforma: cada servicio por separado (si uno falla, los demás se muestran). */
+async function cargarPlataforma() {
+  const [salud, modelos, clima] = await Promise.allSettled([obtenerSaludBackend(), obtenerModelosMl(), obtenerClimaIsla(1)]);
+  return {
+    salud: salud.status === 'fulfilled' ? salud.value : null,
+    modelos: modelos.status === 'fulfilled' ? modelos.value : null,
+    clima: clima.status === 'fulfilled' ? clima.value : null,
+  };
+}
+
+const TONO_VARIACION: Record<Variacion['direccion'], { tono: TonoChip; icono: NombreIcono }> = {
+  sube: { tono: ticketColors.estado.resuelto, icono: 'trending-up' },
+  baja: { tono: ticketColors.prioridad.alta, icono: 'trending-down' },
+  igual: { tono: ticketColors.estado.cerrado, icono: 'trending-flat' },
+  nuevo: { tono: ticketColors.estado.abierto, icono: 'fiber-new' },
+};
+const TONO_OK = ticketColors.estado.resuelto;
+const TONO_AVISO = ticketColors.estado.en_revision;
+const TONO_ERROR = ticketColors.prioridad.alta;
+
+function TarjetaActividad({ valor, etiqueta, actual, anterior }: { valor: number | null; etiqueta: string; actual?: number; anterior?: number }) {
+  const v = actual !== undefined ? variacion(actual, anterior) : null;
   return (
-    <GlassPanel padding={12} radius={radius.xl} style={styles.cifra}>
-      <Text style={styles.valor}>{valor}</Text>
-      <Text style={styles.etiqueta}>{etiqueta}</Text>
+    <GlassPanel
+      tono="strong"
+      radius={radius.xl}
+      padding={spacing.gutter}
+      style={styles.actividad}
+    >
+      <View accessible accessibilityLabel={`${etiqueta}: ${valor === null ? 'sin datos' : fmt(valor)}${v ? `, ${v.texto} frente al periodo anterior` : ''}`} style={styles.actividadInterior}>
+        <Text style={styles.actividadValor}>{valor === null ? '—' : fmt(valor)}</Text>
+        <Text style={styles.actividadEtiqueta}>{etiqueta}</Text>
+        {v ? (
+          <ChipEstado etiqueta={v.texto} icono={TONO_VARIACION[v.direccion].icono} tono={TONO_VARIACION[v.direccion].tono} tamano="sm" />
+        ) : (
+          <Text style={styles.nota}>Sin datos del periodo anterior</Text>
+        )}
+      </View>
     </GlassPanel>
   );
 }
 
+function Ranking({ filas, unidad }: { filas: { idDestino: number; nombre: string; valor: number }[]; unidad: string }) {
+  const max = Math.max(1, ...filas.map((f) => f.valor));
+  return (
+    <>
+      {filas.map((f, i) => (
+        <View key={f.idDestino} style={styles.rankingFila} accessible accessibilityLabel={`${i + 1}. ${f.nombre}: ${f.valor} ${unidad}`}>
+          <Text style={styles.rankingNombre}>
+            {i + 1}. {f.nombre}
+          </Text>
+          <View style={styles.rankingBarraFila}>
+            <View style={styles.rankingFondo}>
+              <View style={[styles.rankingBarra, { width: `${(f.valor / max) * 100}%` }]} />
+            </View>
+            <Text style={styles.rankingValor}>{fmt(f.valor)}</Text>
+          </View>
+        </View>
+      ))}
+    </>
+  );
+}
+
+function FilaPlataforma({ icono, nombre, estado, detalle, tono }: { icono: NombreIcono; nombre: string; estado: string; detalle: string; tono: TonoChip }) {
+  return (
+    <View style={styles.plataformaFila} accessible accessibilityLabel={`${nombre}: ${estado}. ${detalle}`}>
+      <View style={[styles.plataformaIcono, { backgroundColor: tono.fondo }]}>
+        <Icon name={icono} size={20} color={tono.texto} />
+      </View>
+      <View style={styles.plataformaTextos}>
+        <Text style={styles.plataformaNombre}>{nombre}</Text>
+        <Text style={styles.nota}>{detalle}</Text>
+      </View>
+      <ChipEstado etiqueta={estado} tono={tono} tamano="sm" />
+    </View>
+  );
+}
+
 /**
- * Inicio del administrador: saludo con su rol, resumen (tickets abiertos y sin asignar, usuarios
- * y destinos cerrados temporalmente) en el estilo del panel de Inicio, actividad, tickets por
- * estado, modelos de ML y destinos más vistos.
+ * Inicio del administrador: saludo y fecha, tarjeta héroe con lo que necesita atención (cada cifra
+ * abre su sección ya filtrada), alertas, actividad con variación, tickets por estado, rankings,
+ * estado de la plataforma y accesos rápidos.
  */
 export function PanelScreen({ navigation }: TabScreenProps<'Panel'>) {
   const espacio = useEspacioTabBar();
-  const { datos, error, cargando, refrescando, recargar } = useAsync(cargarPanel, [], { recargarAlEnfocar: true });
+  const panel = useAsync(cargarPanel, [], { recargarAlEnfocar: true });
+  const plataforma = useAsync(cargarPlataforma, [], { recargarAlEnfocar: true });
+  const { datos, error, cargando } = panel;
   const m = datos?.metricas;
   const r = resumenAdmin(m, datos?.tickets, datos?.destinos);
-  const maxVistas = Math.max(1, ...(m?.destinosMasVistos.map((d) => d.vistas) ?? [1]));
+
+  const proveedor = plataforma.datos?.salud?.prediccion?.proveedor;
+  const modelos = plataforma.datos?.modelos;
+  const estadoMl: EstadoMl | null = plataforma.cargando
+    ? null
+    : modelos
+      ? modelos.respaldo
+        ? 'respaldo'
+        : 'ok'
+      : proveedor === 'heuristico'
+        ? 'heuristico'
+        : 'sin_respuesta';
+  const alertas = datos ? alertasAdmin(datos.tickets, datos.destinos, estadoMl) : [];
+  const irA = { tickets: () => navigation.navigate('Tickets'), destinos: () => navigation.navigate('Destinos', { estado: 'cerrado_temporal' }), modelos: () => navigation.navigate('ModelosMl') };
+
+  const recargar = () => {
+    panel.recargar();
+    plataforma.recargar();
+  };
+
+  const clima = plataforma.datos?.clima;
+  const estadoClima = plataforma.datos?.salud?.clima?.estado;
+  const climaOk = Boolean(clima?.disponible);
+  const nombreModelo = modelos?.modelos.find((x) => x.activo)?.nombre ?? modelos?.modelos.find((x) => x.ganador)?.nombre;
 
   return (
     <PantallaApilada
       titulo="Panel"
       saludo={{ nombre: primerNombre(datos?.perfil.nombre), rol: 'administrador' }}
+      subtitulo={formatearFechaLarga()}
       espacioInferior={espacio}
-      refrescando={refrescando}
+      refrescando={panel.refrescando || plataforma.refrescando}
       onRefrescar={recargar}
     >
       <TarjetaResumen
-        titulo="Resumen"
-        subtitulo="Lo que necesita atención hoy"
+        titulo="Lo que necesita atención hoy"
         cargando={cargando}
         error={!datos ? error : undefined}
-        onReintentar={recargar}
+        onReintentar={panel.recargar}
         cifras={[
           { clave: 'abiertos', valor: fmt(r.ticketsAbiertos), etiqueta: 'Tickets abiertos', icono: 'mark-email-unread',
-            onPress: () => navigation.navigate('Tickets'), accesible: `${r.ticketsAbiertos} tickets abiertos. Ver tickets` },
-          { clave: 'sin-asignar', valor: fmt(r.sinAsignar), etiqueta: 'Tickets sin asignar', icono: 'assignment-late',
-            onPress: () => navigation.navigate('Tickets'), accesible: `${r.sinAsignar} tickets sin asignar. Ver tickets` },
+            onPress: () => navigation.navigate('Tickets', { estado: 'abierto' }), accesible: `${r.ticketsAbiertos} tickets abiertos. Ver tickets abiertos` },
+          { clave: 'sin-asignar', valor: fmt(r.sinAsignar), etiqueta: 'Sin asignar', icono: 'assignment-late',
+            onPress: () => navigation.navigate('Tickets', { sinAsignar: true }), accesible: `${r.sinAsignar} tickets sin asignar. Ver tickets sin asignar` },
           { clave: 'usuarios', valor: fmt(r.usuarios), etiqueta: 'Usuarios', icono: 'group',
             onPress: () => navigation.navigate('Usuarios'), accesible: `${r.usuarios} usuarios. Ver usuarios` },
-          { clave: 'cerrados', valor: fmt(r.destinosCerrados), etiqueta: 'Destinos cerrados temporalmente', icono: 'block',
-            onPress: () => navigation.navigate('Destinos'), accesible: `${r.destinosCerrados} destinos cerrados temporalmente. Ver destinos` },
+          { clave: 'cerrados', valor: fmt(r.destinosCerrados), etiqueta: 'Destinos cerrados', icono: 'block',
+            onPress: () => navigation.navigate('Destinos', { estado: 'cerrado_temporal' }), accesible: `${r.destinosCerrados} destinos cerrados temporalmente. Ver destinos cerrados` },
         ]}
       />
 
       {cargando ? (
-        <EstadoCargando mensaje="Cargando métricas…" />
-      ) : !m ? (
-        error ? <EstadoError error={error} onReintentar={recargar} /> : null
+        <EsqueletoLista etiqueta="Cargando el panel" />
+      ) : !datos || !m ? (
+        <EstadoError error={error} onReintentar={panel.recargar} />
       ) : (
         <>
-          <SectionHeader titulo="Actividad" />
-          <View style={styles.fila}>
-            <Cifra valor={fmt(m.usuarios.ultimos30Dias)} etiqueta="Usuarios nuevos (30 días)" />
-            <Cifra valor={fmt(m.interacciones.ultimos7Dias)} etiqueta="Interacciones (7 días)" />
-          </View>
-          <Text style={styles.nota}>
-            {(['turista', 'tecnico', 'administrador'] as const).map((rol) => `${ETIQUETA_ROL[rol]}: ${fmt(m.usuarios.porRol[rol])}`).join(' · ')}
-          </Text>
-
-          <SectionHeader titulo="Tickets por estado" accion={{ texto: 'Ver tickets', onPress: () => navigation.navigate('Tickets') }} />
-          <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
-            {ESTADOS_TICKET.map((e, i) => (
-              <Pressable
-                key={e}
-                onPress={() => navigation.navigate('Tickets')}
-                accessibilityRole="button"
-                accessibilityLabel={`${ETIQUETA_ESTADO_TICKET[e]}: ${fmt(m.ticketsPorEstado[e])} tickets`}
-                style={({ pressed }) => [styles.estadoFila, i < ESTADOS_TICKET.length - 1 && styles.divisor, pressed && styles.presionada]}
-              >
-                <ChipEstadoTicket estado={e} />
-                <Text style={styles.estadoCifra}>{fmt(m.ticketsPorEstado[e])}</Text>
-              </Pressable>
-            ))}
-          </GlassPanel>
-
-          <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
-            <SelectRow
-              icono="insights"
-              etiqueta="Modelos de ML"
-              descripcion="Comparativa de los tres modelos y el que está en uso"
-              control="chevron"
-              divisor={false}
-              onPress={() => navigation.navigate('ModelosMl')}
+          <SectionHeader titulo="Alertas" />
+          {alertas.length === 0 ? (
+            <BannerAlerta
+              tono="ok"
+              titulo={estadoMl === null ? 'Revisando servicios…' : 'Todo funcionando'}
+              detalle={estadoMl === null ? undefined : 'No hay tickets urgentes sin asignar, destinos cerrados ni servicios en respaldo.'}
             />
+          ) : (
+            <GrupoVidrio espaciado={spacing.sm} style={styles.alertas}>
+              {alertas.map((a) => (
+                <BannerAlerta key={a.clave} tono={a.tono} titulo={a.titulo} detalle={a.detalle} onPress={a.destino ? (a.destino === 'tickets' ? () => navigation.navigate('Tickets', { prioridad: 'alta', sinAsignar: true }) : irA[a.destino]) : undefined} />
+              ))}
+            </GrupoVidrio>
+          )}
+
+          <SectionHeader titulo="Actividad" />
+          <View style={styles.grilla}>
+            <TarjetaActividad valor={m.usuarios.ultimos30Dias} etiqueta="Usuarios nuevos (30 días)" actual={m.usuarios.ultimos30Dias} anterior={m.usuarios.anteriores30Dias} />
+            <TarjetaActividad valor={m.interacciones.ultimos7Dias} etiqueta="Interacciones (7 días)" actual={m.interacciones.ultimos7Dias} anterior={m.interacciones.anteriores7Dias} />
+            <TarjetaActividad
+              valor={m.usuariosActivos?.ultimos7Dias ?? null}
+              etiqueta="Usuarios activos (7 días)"
+              actual={m.usuariosActivos?.ultimos7Dias}
+              anterior={m.usuariosActivos?.anteriores7Dias}
+            />
+          </View>
+
+          <SectionHeader titulo="Tickets por estado" accion={{ texto: 'Ver tickets', onPress: irA.tickets }} />
+          <GlassPanel tono="strong" radius={20}>
+            {ESTADOS_TICKET.every((e) => !m.ticketsPorEstado[e]) ? (
+              <EstadoMensaje icono="inbox" titulo="Aún no hay tickets" mensaje="Cuando alguien reporte un problema, verás aquí cómo se reparten por estado." />
+            ) : (
+              <BarraApilada<EstadoTicket>
+                conteos={m.ticketsPorEstado}
+                orden={ESTADOS_TICKET}
+                etiqueta={(e) => ETIQUETA_ESTADO_TICKET[e]}
+                tono={(e) => ticketColors.estado[e]}
+                onElegir={(e) => navigation.navigate('Tickets', { estado: e })}
+                etiquetaAccesible="Tickets por estado"
+              />
+            )}
           </GlassPanel>
 
           <SectionHeader titulo="Destinos más vistos" />
-          <GlassPanel tono="strong" radius={20}>
+          <GlassPanel tono="strong" radius={20} style={styles.seccion}>
             {m.destinosMasVistos.length === 0 ? (
-              <Text style={styles.nota}>Aún no hay vistas registradas.</Text>
+              <EstadoMensaje
+                icono="visibility"
+                titulo="Aún no hay vistas"
+                mensaje="Cuando los turistas abran destinos, verás aquí los más vistos."
+                accion={{ texto: 'Ver destinos', onPress: () => navigation.navigate('Destinos') }}
+              />
             ) : (
-              m.destinosMasVistos.map((d, i) => (
-                <View key={d.idDestino} style={styles.barraFila} accessible accessibilityLabel={`${d.nombre}: ${d.vistas} vistas`}>
-                  <Text style={styles.barraNombre} numberOfLines={1}>
-                    {i + 1}. {d.nombre}
-                  </Text>
-                  <View style={styles.barraFondo}>
-                    <View style={[styles.barra, { width: `${(d.vistas / maxVistas) * 100}%` }]} />
-                  </View>
-                  <Text style={styles.barraValor}>{fmt(d.vistas)}</Text>
-                </View>
-              ))
+              <Ranking filas={m.destinosMasVistos.slice(0, 5).map((d) => ({ idDestino: d.idDestino, nombre: d.nombre, valor: d.vistas }))} unidad="vistas" />
             )}
+            <View style={styles.subseccion}>
+              <Text style={styles.subtitulo}>Más guardados en favoritos</Text>
+              {m.favoritosMasGuardados === undefined ? (
+                <Text style={styles.nota}>Disponible cuando se aplique la migración del panel en la base de datos.</Text>
+              ) : m.favoritosMasGuardados.length === 0 ? (
+                <Text style={styles.nota}>Nadie ha guardado destinos en favoritos todavía.</Text>
+              ) : (
+                <Ranking filas={m.favoritosMasGuardados.map((d) => ({ idDestino: d.idDestino, nombre: d.nombre, valor: d.favoritos }))} unidad="favoritos" />
+              )}
+            </View>
           </GlassPanel>
         </>
       )}
+
+      <SectionHeader titulo="Estado de la plataforma" />
+      <GlassPanel tono="strong" radius={20} style={styles.seccion}>
+        {plataforma.cargando ? (
+          <EsqueletoLista filas={3} etiqueta="Revisando los servicios" />
+        ) : (
+          <>
+            <FilaPlataforma
+              icono="dns"
+              nombre="Backend"
+              estado={plataforma.datos?.salud ? 'OK' : 'Sin respuesta'}
+              detalle={plataforma.datos?.salud ? 'La API responde.' : 'No se pudo consultar /v1/health.'}
+              tono={plataforma.datos?.salud ? TONO_OK : TONO_ERROR}
+            />
+            <FilaPlataforma
+              icono="insights"
+              nombre="Servicio de ML"
+              estado={estadoMl === 'ok' ? 'En uso' : estadoMl === 'respaldo' ? 'Respaldo' : estadoMl === 'heuristico' ? 'Desactivado' : 'Sin respuesta'}
+              detalle={
+                estadoMl === 'ok'
+                  ? `Modelo en uso: ${nombreModelo ?? 'el ganador'}.`
+                  : estadoMl === 'respaldo'
+                    ? `Responde un modelo de respaldo${nombreModelo ? ` (${nombreModelo})` : ''}.`
+                    : 'Las predicciones usan el respaldo heurístico (promedio histórico).'
+              }
+              tono={estadoMl === 'ok' ? TONO_OK : TONO_AVISO}
+            />
+            <FilaPlataforma
+              icono="cloud"
+              nombre="Clima"
+              estado={climaOk ? (estadoClima === 'desactualizado' ? 'Desactualizado' : 'Disponible') : 'No disponible'}
+              detalle={climaOk ? 'Pronóstico de Open-Meteo en caché.' : textoSinClima(clima?.motivoSinClima)}
+              tono={climaOk ? (estadoClima === 'desactualizado' ? TONO_AVISO : TONO_OK) : TONO_AVISO}
+            />
+          </>
+        )}
+      </GlassPanel>
+
+      <SectionHeader titulo="Accesos rápidos" />
+      <AccesosRapidos
+        accesos={[
+          { etiqueta: 'Destinos', icono: 'place', onPress: () => navigation.navigate('Destinos') },
+          { etiqueta: 'Usuarios', icono: 'group', onPress: () => navigation.navigate('Usuarios') },
+          { etiqueta: 'Modelos de ML', icono: 'insights', onPress: () => navigation.navigate('ModelosMl') },
+          { etiqueta: 'Comparar una predicción', icono: 'compare-arrows', onPress: () => navigation.navigate('ModelosMl', { comparar: true }) },
+        ]}
+      />
     </PantallaApilada>
   );
 }
 
 const styles = StyleSheet.create({
-  fila: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  menu: { overflow: 'hidden' },
-  cifra: { flexGrow: 1, flexBasis: '40%', alignItems: 'center' },
-  valor: { ...typography.headlineMd, fontFamily: typography.display.fontFamily, color: colors.textStrong },
-  etiqueta: { ...typography.labelMd, color: colors.textMuted, textAlign: 'center' },
-  nota: { ...typography.labelMd, color: colors.textMuted },
-  estadoFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: spacing.md },
-  divisor: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  presionada: { backgroundColor: colors.pressedOverlay },
-  estadoCifra: { ...typography.titleMd, fontFamily: typography.display.fontFamily, color: colors.textStrong, fontVariant: ['tabular-nums'] },
-  barraFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 6 },
-  barraNombre: { ...typography.bodyMd, color: colors.textStrong, width: 130 },
-  barraFondo: { flex: 1, height: 8, borderRadius: radius.full, backgroundColor: colors.track, overflow: 'hidden' },
-  barra: { height: '100%', borderRadius: radius.full, backgroundColor: colors.secondary },
-  barraValor: { ...typography.labelBold, color: colors.textMuted, minWidth: 28, textAlign: 'right' },
+  alertas: { gap: spacing.sm },
+  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  actividad: { flexGrow: 1, flexBasis: '45%', minWidth: 0 },
+  actividadInterior: { gap: spacing.xs },
+  actividadValor: { ...typography.headlineMd, fontFamily: typography.display.fontFamily, color: colors.textStrong, fontVariant: ['tabular-nums'] },
+  actividadEtiqueta: { ...typography.labelBold, fontSize: 13, lineHeight: 17, color: colors.textMuted },
+  nota: { ...typography.bodyMd, color: colors.textMuted },
+  seccion: { gap: spacing.md },
+  subseccion: { gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: spacing.md },
+  subtitulo: { ...typography.titleMd, fontSize: 16, color: colors.textStrong },
+  rankingFila: { gap: 4 },
+  rankingNombre: { ...typography.bodyMd, color: colors.textStrong },
+  rankingBarraFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  rankingFondo: { flex: 1, height: 8, borderRadius: radius.full, backgroundColor: colors.track, overflow: 'hidden' },
+  rankingBarra: { height: '100%', borderRadius: radius.full, backgroundColor: colors.secondary },
+  rankingValor: { ...typography.labelBold, color: colors.textMuted, minWidth: 32, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  plataformaFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.gutter, minHeight: 52 },
+  plataformaIcono: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  plataformaTextos: { flex: 1, gap: 2 },
+  plataformaNombre: { ...typography.titleMd, fontSize: 16, color: colors.textStrong },
 });

@@ -1,7 +1,7 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { CategoriaDestino } from '../services/tipos';
+import type { CategoriaDestino, EstadoDestino, EstadoTicket, PrioridadTicket } from '../services/tipos';
 import type { GrupoOcupacion } from '../utils/resumenOcupacion';
 
 export type AuthStackParamList = {
@@ -12,7 +12,7 @@ export type AuthStackParamList = {
 
 /**
  * Todas las pestañas posibles; cada rol muestra solo las suyas (RootNavigator):
- * turista: Inicio, Explorar, Mapa, Favoritos, Perfil · técnico: Tickets, Perfil ·
+ * turista: Inicio, Explorar, Mapa, Favoritos, Perfil · técnico: Inicio (su panel), Tickets, Perfil ·
  * administrador: Panel, Tickets, Destinos, Usuarios, Perfil.
  */
 export type TabsParamList = {
@@ -26,8 +26,10 @@ export type TabsParamList = {
   Mapa: { destinoId?: number } | undefined;
   Favoritos: undefined;
   Panel: undefined;
-  Tickets: undefined;
-  Destinos: undefined;
+  /** Filtro con el que se abre la lista (desde las cifras de los paneles). */
+  Tickets: { estado?: EstadoTicket; prioridad?: PrioridadTicket; mios?: boolean; sinAsignar?: boolean } | undefined;
+  /** estado: abre la lista filtrada (p. ej. los cerrados temporalmente desde el Panel). */
+  Destinos: { estado?: EstadoDestino } | undefined;
   Usuarios: undefined;
   Perfil: undefined;
 };
@@ -44,7 +46,8 @@ export type AppStackParamList = {
   /** Sin id: crear un destino nuevo. */
   EditarDestino: { id?: number } | undefined;
   /** Panel del administrador: comparativa de los modelos de ML. */
-  ModelosMl: undefined;
+  /** comparar: abre directamente el selector de "Comparar una predicción". */
+  ModelosMl: { comparar?: boolean } | undefined;
 };
 
 export type OnboardingStackParamList = {

@@ -98,7 +98,7 @@ export const colors = {
   glassOpaque: 'rgba(255,255,255,0.97)',
   glassDarkOpaque: 'rgba(0,27,61,0.94)',
   /** Fondo del número dentro de un chip activo (sobre navy o turquesa). */
-  chipCuentaActiva: 'rgba(255,255,255,0.22)',
+  chipCuentaActiva: 'rgba(0,20,48,0.28)', // número blanco: 9,0:1 sobre turquesa y 18,4:1 sobre navy
 
   /** Tintes ambientales del fondo (turquesa arriba, arena a la derecha). */
   ambientTurquoise: 'rgba(179,235,255,0.75)',

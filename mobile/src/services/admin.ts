@@ -8,6 +8,7 @@ import type {
   MetricasAdmin,
   ResultadoAviso,
   Rol,
+  SaludBackend,
   UsuarioAdmin,
 } from './tipos';
 
@@ -40,3 +41,6 @@ export const obtenerModelosMl = () => solicitud<ComparativaModelos>('/admin/mode
 /** La misma predicción con los tres modelos y el baseline. */
 export const compararModelosMl = (idDestino: number, fecha: string, hora: string) =>
   solicitud<ComparacionPrediccion>('/admin/modelos/comparar', { metodo: 'POST', cuerpo: { idDestino, fecha, hora }, autenticado: true });
+
+/** Estado público del backend (GET /v1/health): clima y proveedor de predicción configurado. */
+export const obtenerSaludBackend = () => solicitud<SaludBackend>('/health');

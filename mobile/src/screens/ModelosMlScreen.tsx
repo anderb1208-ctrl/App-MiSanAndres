@@ -75,7 +75,7 @@ function Fila({ m, respaldo, ultima }: { m: FilaTabla; respaldo: boolean; ultima
 }
 
 /** Panel del administrador: comparativa de los tres modelos de ML y el baseline, y una predicción comparada. */
-export function ModelosMlScreen(_props: AppScreenProps<'ModelosMl'>) {
+export function ModelosMlScreen({ route }: AppScreenProps<'ModelosMl'>) {
   const insets = useSafeAreaInsets();
   const modelos = useAsync(obtenerModelosMl, []);
   const destinos = useAsync(listarDestinosAdmin, []);
@@ -83,7 +83,8 @@ export function ModelosMlScreen(_props: AppScreenProps<'ModelosMl'>) {
   const [destino, setDestino] = useState<Destino | null>(null);
   const [dia, setDia] = useState<(typeof DIAS)[number]['valor']>('hoy');
   const [hora, setHora] = useState('12:00');
-  const [eligiendo, setEligiendo] = useState(false);
+  // "Comparar una predicción" desde los accesos rápidos del Panel: abre el selector de destino.
+  const [eligiendo, setEligiendo] = useState(Boolean(route.params?.comparar));
   const [comparando, setComparando] = useState(false);
   const [comparacion, setComparacion] = useState<ComparacionPrediccion | null>(null);
   const [errorComparar, setErrorComparar] = useState<string | null>(null);
