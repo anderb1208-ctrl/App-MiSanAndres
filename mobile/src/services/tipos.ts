@@ -470,3 +470,57 @@ export interface ResultadoAviso {
   tokensDesactivados: number;
   error: string | null;
 }
+
+// ---- Modelos de ML (panel del administrador) ----
+
+export interface ModeloMl {
+  clave: string;
+  nombre: string;
+  mae: number | null;
+  rmse: number | null;
+  r2: number | null;
+  tamanoMb: number | null;
+  ganador: boolean;
+  activo: boolean;
+  disponible: boolean;
+}
+
+export interface ComparativaModelos {
+  ganador: string | null;
+  activo: string | null;
+  /** true si atiende un respaldo porque el ganador no cargó. */
+  respaldo: boolean;
+  modelos: ModeloMl[];
+  baseline: { clave: string; nombre: string; mae: number | null; rmse: number | null; r2: number | null } | null;
+  motivo: string | null;
+  criterio: string | null;
+  datosSimulados: boolean;
+  mensajeOrigen: string | null;
+  fechaComparacion: string | null;
+}
+
+export interface ResultadoComparado {
+  clave: string;
+  nombre: string;
+  ganador: boolean;
+  activo: boolean;
+  disponible: boolean;
+  porcentaje: number | null;
+  nivel: NivelOcupacion | null;
+  personasEstimadas: number | null;
+  error: string | null;
+}
+
+export interface ComparacionPrediccion {
+  destinoId: number;
+  nombre: string;
+  fecha: string;
+  hora: string;
+  estado: EstadoAtencion;
+  ganador: string | null;
+  /** false si no había pronóstico para esa hora (el modelo usa el clima típico del mes). */
+  conClima: boolean;
+  datosSimulados: boolean;
+  mensajeOrigen: string | null;
+  resultados: ResultadoComparado[];
+}

@@ -43,6 +43,8 @@ export type AppStackParamList = {
   Historial: undefined;
   /** Sin id: crear un destino nuevo. */
   EditarDestino: { id?: number } | undefined;
+  /** Panel del administrador: comparativa de los modelos de ML. */
+  ModelosMl: undefined;
 };
 
 export type OnboardingStackParamList = {

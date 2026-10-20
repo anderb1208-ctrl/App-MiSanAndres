@@ -9,6 +9,7 @@ import { BienvenidaScreen } from '../screens/BienvenidaScreen';
 import { CreditosScreen } from '../screens/CreditosScreen';
 import { DestinosAdminScreen } from '../screens/DestinosAdminScreen';
 import { EditarDestinoScreen } from '../screens/EditarDestinoScreen';
+import { ModelosMlScreen } from '../screens/ModelosMlScreen';
 import { NuevoTicketScreen } from '../screens/NuevoTicketScreen';
 import { PanelScreen } from '../screens/PanelScreen';
 import { TicketDetalleScreen } from '../screens/TicketDetalleScreen';
@@ -138,6 +139,7 @@ export function RootNavigator() {
       <AppStack.Screen name="NuevoTicket" component={NuevoTicketScreen} />
       <AppStack.Screen name="Historial" component={HistorialScreen} />
       <AppStack.Screen name="EditarDestino" component={EditarDestinoScreen} />
+      <AppStack.Screen name="ModelosMl" component={ModelosMlScreen} />
     </AppStack.Navigator>
   );
 }

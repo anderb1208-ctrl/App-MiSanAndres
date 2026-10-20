@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { GlassPanel } from '../components/GlassPanel';
 import { PantallaApilada } from '../components/PantallaApilada';
 import { SectionHeader } from '../components/ScreenHeader';
+import { SelectRow } from '../components/SelectRow';
 import { EstadoCargando, EstadoError } from '../components/StateView';
 import { useAsync } from '../hooks/useAsync';
 import { useEspacioTabBar } from '../navigation/TabBar';
@@ -51,6 +52,17 @@ export function PanelScreen({ navigation }: TabScreenProps<'Panel'>) {
             ))}
           </View>
 
+          <GlassPanel tono="strong" padding={0} radius={20} style={styles.menu}>
+            <SelectRow
+              icono="insights"
+              etiqueta="Modelos de ML"
+              descripcion="Comparativa de los tres modelos y el que está en uso"
+              control="chevron"
+              divisor={false}
+              onPress={() => navigation.navigate('ModelosMl')}
+            />
+          </GlassPanel>
+
           <SectionHeader titulo="Destinos más vistos" />
           <GlassPanel tono="strong" radius={20}>
             {m.destinosMasVistos.length === 0 ? (
@@ -77,6 +89,7 @@ export function PanelScreen({ navigation }: TabScreenProps<'Panel'>) {
 
 const styles = StyleSheet.create({
   fila: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  menu: { overflow: 'hidden' },
   cifra: { flexGrow: 1, flexBasis: '28%', alignItems: 'center' },
   valor: { ...typography.headlineSm, fontFamily: typography.display.fontFamily, color: colors.textStrong },
   etiqueta: { ...typography.labelMd, color: colors.textSubtle, textAlign: 'center' },

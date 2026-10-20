@@ -1,5 +1,15 @@
 import { solicitud } from './api';
-import type { CamposDestino, Destino, EstadoDestino, MetricasAdmin, ResultadoAviso, Rol, UsuarioAdmin } from './tipos';
+import type {
+  CamposDestino,
+  ComparacionPrediccion,
+  ComparativaModelos,
+  Destino,
+  EstadoDestino,
+  MetricasAdmin,
+  ResultadoAviso,
+  Rol,
+  UsuarioAdmin,
+} from './tipos';
 
 /** Endpoints del panel del administrador (el backend y la base verifican el rol). */
 export const obtenerMetricas = () => solicitud<MetricasAdmin>('/admin/metricas', { autenticado: true });
@@ -23,3 +33,10 @@ export const cambiarEstadoDestino = (id: number, estado: EstadoDestino, cierre: 
     cuerpo: { estado, ...cierre },
     autenticado: true,
   });
+
+/** Los tres modelos de ML y el baseline (métricas y tamaño), el ganador y cuál está activo. */
+export const obtenerModelosMl = () => solicitud<ComparativaModelos>('/admin/modelos', { autenticado: true });
+
+/** La misma predicción con los tres modelos y el baseline. */
+export const compararModelosMl = (idDestino: number, fecha: string, hora: string) =>
+  solicitud<ComparacionPrediccion>('/admin/modelos/comparar', { metodo: 'POST', cuerpo: { idDestino, fecha, hora }, autenticado: true });
