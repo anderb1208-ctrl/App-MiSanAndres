@@ -97,6 +97,8 @@ export const colors = {
   /** Respaldo de los controles glass con "Reducir transparencia" activo. */
   glassOpaque: 'rgba(255,255,255,0.97)',
   glassDarkOpaque: 'rgba(0,27,61,0.94)',
+  /** Fondo del número dentro de un chip activo (sobre navy o turquesa). */
+  chipCuentaActiva: 'rgba(255,255,255,0.22)',
 
   /** Tintes ambientales del fondo (turquesa arriba, arena a la derecha). */
   ambientTurquoise: 'rgba(179,235,255,0.75)',
@@ -199,3 +201,17 @@ export const ticketColors = {
     alta: { fondo: '#fde7ef', borde: '#f6c3d5', texto: '#a3123f', punto: '#d81b60' },
   },
 } as const satisfies Record<string, Record<string, TonoChip>>;
+
+/**
+ * Banners del panel del administrador (vidrio con tinte sutil detrás del texto). Texto navy
+ * (≥ 12:1) e íconos ≥ 4,5:1 sobre su fondo. "aviso" es azul para no confundirse con el ámbar
+ * de la ocupación media.
+ */
+export const alertColors = {
+  alerta: { fondo: 'rgba(255,218,214,0.9)', borde: 'rgba(186,26,26,0.35)', icono: '#ba1a1a', fondoOpaco: '#ffdad6' },
+  aviso: { fondo: 'rgba(227,238,252,0.9)', borde: 'rgba(17,85,154,0.3)', icono: '#11559a', fondoOpaco: '#e3eefc' },
+  ok: { fondo: 'rgba(224,244,241,0.9)', borde: 'rgba(15,107,95,0.3)', icono: '#0f6b5f', fondoOpaco: '#e0f4f1' },
+} as const;
+
+/** Brillo al presionar una tarjeta tocable (capa blanca encima, nunca opacidad en el vidrio). */
+export const brilloPresion = { color: '#ffffff', opacidad: 0.22 } as const;

@@ -38,3 +38,8 @@ export function formatearFechaHora(iso: string): string {
 export function formatearMesAnio(iso: string): string {
   return new Intl.DateTimeFormat('es-CO', { timeZone: ZONA, month: 'long', year: 'numeric' }).format(new Date(iso));
 }
+
+/** "lunes, 20 de octubre" en hora de Colombia (encabezado de los paneles). */
+export function formatearFechaLarga(ahora: Date = new Date()): string {
+  return ahora.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', weekday: 'long', day: 'numeric', month: 'long' });
+}

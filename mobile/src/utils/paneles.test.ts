@@ -175,3 +175,11 @@ describe('panel del administrador', () => {
     expect(segmentosBarra({}, ['abierto'] as const)).toEqual({ total: 0, segmentos: [] });
   });
 });
+
+describe('formatearFechaLarga', () => {
+  it('usa el día de Colombia aunque en UTC ya sea el día siguiente', () => {
+    const { formatearFechaLarga } = jest.requireActual('./fecha') as typeof import('./fecha');
+    // 20 oct 2026, 02:00 UTC = 19 oct, 21:00 en Colombia.
+    expect(formatearFechaLarga(new Date('2026-10-20T02:00:00Z'))).toMatch(/lunes.*19.*octubre/);
+  });
+});

@@ -2,12 +2,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { mensajeDeError } from '../services/api';
-import { colors, motion, panelColors, radius, spacing, typography } from '../theme';
+import { colors, motion, panelColors, radius, shadows, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
 import { Button } from './Button';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
-import { SuperficieVidrio } from './SuperficieVidrio';
+import { Bloque, Esqueleto } from './Esqueleto';
+import { GrupoVidrio, SuperficieVidrio } from './SuperficieVidrio';
 
 /**
  * Superficie de los paneles resumen (Inicio, Panel del administrador, Tickets del técnico):
@@ -62,6 +63,7 @@ export function SeparadorPanel() {
 export interface CifraResumen {
   clave: string;
   valor: number | string;
+  /** Etiqueta completa: puede ocupar dos líneas, nunca se corta con puntos suspensivos. */
   etiqueta: string;
   icono?: NombreIcono;
   /** Lo que lee el lector de pantalla (por defecto "valor etiqueta"). */
@@ -80,23 +82,25 @@ interface Props {
 }
 
 /**
- * Panel resumen en el estilo del de Inicio: degradado azul, encabezado en azul medio y cifras en
- * tarjetas de vidrio (blanco translúcido con desenfoque), en dos columnas para pantallas angostas.
- * Cada cifra puede ser tocable (≥ 44 px). Incluye esqueleto y error con reintento.
+ * Tarjeta héroe de un panel: degradado azul sobre vidrio, encabezado en azul medio y cifras en
+ * una cuadrícula de 2 columnas (2 × 2; con un número impar, la última ocupa el ancho). Cada cifra
+ * es una tarjeta de vidrio (dentro de un GrupoVidrio, para que en iOS 26 se fusionen y animen
+ * juntas): número grande, etiqueta completa, ícono y flecha. Máximo dos capas de vidrio.
  */
 export function TarjetaResumen({ titulo, subtitulo, cifras, cargando = false, error, onReintentar, style }: Props) {
   return (
-    <PanelDegradado style={style}>
+    <PanelDegradado style={[styles.heroe, style]}>
       <EncabezadoPanel titulo={titulo} subtitulo={subtitulo} />
       {cargando ? (
-        <View style={styles.grilla} accessible accessibilityLabel={`Cargando ${titulo.toLowerCase()}`} accessibilityState={{ busy: true }}>
+        <Esqueleto etiqueta={`Cargando ${titulo.toLowerCase()}`} style={styles.grilla}>
           {cifras.map((c) => (
-            <View key={c.clave} style={[styles.cifra, styles.cifraEsqueleto]}>
-              <View style={[styles.bloque, { width: 36, height: 26 }]} />
-              <View style={[styles.bloque, { width: '70%', height: 12 }]} />
+            <View key={c.clave} style={[styles.celda, styles.cifra, styles.cifraEsqueleto]}>
+              <Bloque ancho={32} alto={32} radio={16} />
+              <Bloque ancho={44} alto={28} />
+              <Bloque ancho="75%" alto={12} />
             </View>
           ))}
-        </View>
+        </Esqueleto>
       ) : error ? (
         <View style={styles.error} accessibilityRole="alert">
           <Icon name="cloud-off" size={20} color={colors.error} />
@@ -110,11 +114,11 @@ export function TarjetaResumen({ titulo, subtitulo, cifras, cargando = false, er
           </View>
         </View>
       ) : (
-        <View style={styles.grilla}>
+        <GrupoVidrio espaciado={spacing.sm} style={styles.grilla}>
           {cifras.map((c) => (
             <Cifra key={c.clave} cifra={c} />
           ))}
-        </View>
+        </GrupoVidrio>
       )}
     </PanelDegradado>
   );
@@ -124,21 +128,16 @@ function Cifra({ cifra }: { cifra: CifraResumen }) {
   const contenido = (
     <SuperficieVidrio
       variante="tarjeta"
-      calidad="desenfoque"
       tinte={{ fondo: panelColors.vidrioFila, borde: panelColors.vidrioFilaBorde }}
       sombra={false}
       style={styles.cifra}
     >
       <View style={styles.cifraArriba}>
-        <Text style={styles.valor}>{cifra.valor}</Text>
-        {cifra.icono && <Icon name={cifra.icono} size={18} color={panelColors.encabezado} />}
+        <View style={styles.icono}>{cifra.icono && <Icon name={cifra.icono} size={18} color={panelColors.encabezado} />}</View>
+        {cifra.onPress && <Icon name="arrow-forward" size={18} color={panelColors.encabezado} />}
       </View>
-      <View style={styles.cifraAbajo}>
-        <Text style={styles.etiqueta} numberOfLines={2}>
-          {cifra.etiqueta}
-        </Text>
-        {cifra.onPress && <Icon name="chevron-right" size={16} color={panelColors.secundario} />}
-      </View>
+      <Text style={styles.valor}>{cifra.valor}</Text>
+      <Text style={styles.etiqueta}>{cifra.etiqueta}</Text>
     </SuperficieVidrio>
   );
   const accesible = cifra.accesible ?? `${cifra.valor} ${cifra.etiqueta}`;
@@ -150,7 +149,14 @@ function Cifra({ cifra }: { cifra: CifraResumen }) {
     );
   }
   return (
-    <PressableScale onPress={cifra.onPress} escala={motion.pressScale.button} accessibilityRole="button" accessibilityLabel={accesible} style={styles.celda}>
+    <PressableScale
+      onPress={cifra.onPress}
+      escala={motion.pressScale.button}
+      brillo={radius.xl}
+      accessibilityRole="button"
+      accessibilityLabel={accesible}
+      style={styles.celda}
+    >
       {contenido}
     </PressableScale>
   );
@@ -158,6 +164,7 @@ function Cifra({ cifra }: { cifra: CifraResumen }) {
 
 const styles = StyleSheet.create({
   panel: { padding: spacing.md, gap: spacing.gutter, borderRadius: radius.xxl },
+  heroe: shadows.lg,
   degradado: { borderRadius: radius.xxl },
   cabecera: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   cabeceraTextos: { flex: 1, gap: 2 },
@@ -166,14 +173,21 @@ const styles = StyleSheet.create({
   separador: { height: StyleSheet.hairlineWidth * 2, backgroundColor: panelColors.separador },
 
   grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  celda: { flexGrow: 1, flexBasis: '45%' },
-  cifra: { minHeight: 76, padding: spacing.gutter, borderRadius: radius.xl, justifyContent: 'space-between', gap: 4 },
-  cifraEsqueleto: { backgroundColor: panelColors.vidrioFila, flexGrow: 1, flexBasis: '45%' },
-  cifraArriba: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  cifraAbajo: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  valor: { ...typography.display, fontSize: 28, lineHeight: 32, color: colors.textStrong, fontVariant: ['tabular-nums'] },
-  etiqueta: { ...typography.labelBold, fontSize: 13, lineHeight: 17, color: panelColors.secundario, flex: 1 },
-  bloque: { backgroundColor: colors.track, borderRadius: radius.sm },
+  // Dos columnas: cada celda ocupa casi la mitad y crece; una impar al final llena la fila.
+  celda: { flexGrow: 1, flexBasis: '45%', minWidth: 0 },
+  cifra: { minHeight: 112, padding: spacing.gutter, borderRadius: radius.xl, gap: spacing.xs },
+  cifraEsqueleto: { backgroundColor: panelColors.vidrioFila },
+  cifraArriba: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
+  icono: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: panelColors.pildora,
+  },
+  valor: { ...typography.display, fontSize: 30, lineHeight: 34, color: colors.textStrong, fontVariant: ['tabular-nums'] },
+  etiqueta: { ...typography.labelBold, fontSize: 14, lineHeight: 18, color: panelColors.secundario },
 
   error: { flexDirection: 'row', gap: spacing.gutter },
   errorTextos: { flex: 1, gap: spacing.sm },
