@@ -15,6 +15,15 @@ import { listarDestinos } from '../services/destinos';
 import type { CategoriaDestino, Destino } from '../services/tipos';
 import { colors, radius, spacing, typography } from '../theme';
 import { CATEGORIAS, LISTA_CATEGORIAS } from '../utils/categorias';
+import { grupoOcupacion, type GrupoOcupacion } from '../utils/resumenOcupacion';
+
+/** Texto del filtro de ocupación que llega desde Inicio. */
+const ETIQUETA_FILTRO_OCUPACION: Record<GrupoOcupacion, string> = {
+  Bajo: 'Ocupación baja',
+  Medio: 'Ocupación media',
+  Alto: 'Ocupación alta',
+  Cerrado: 'Cerrados ahora',
+};
 
 /** Orden: abiertos de menor a mayor ocupación, luego sin datos y al final los cerrados. */
 const claveOrden = (d: Destino) => {
@@ -27,7 +36,8 @@ export function ExplorarScreen({ navigation, route }: TabScreenProps<'Explorar'>
   useBarraEstado('dark');
   const espacioInferior = useEspacioTabBar();
   const [categoria, setCategoria] = useState<CategoriaDestino>();
-  const [soloBaja, setSoloBaja] = useState(false);
+  // Filtro de ocupación: el chip "Solo ocupación baja" o el grupo elegido en Inicio.
+  const [ocupacion, setOcupacion] = useState<GrupoOcupacion>();
   const [busqueda, setBusqueda] = useState('');
   // Desde una insignia del pasaporte: solo los destinos que faltan por explorar.
   const [pendientes, setPendientes] = useState<{ ids: number[]; motivo: string } | null>(null);
@@ -36,27 +46,39 @@ export function ExplorarScreen({ navigation, route }: TabScreenProps<'Explorar'>
   useEffect(() => {
     if (!params?.pendientes) return;
     setCategoria(params.categoria);
-    setSoloBaja(false);
+    setOcupacion(undefined);
     setBusqueda('');
     setPendientes({ ids: params.pendientes, motivo: params.motivo ?? 'Lo que te falta por explorar' });
     // Se consumen para que volver a tocar la misma insignia los aplique de nuevo.
     navigation.setParams({ categoria: undefined, pendientes: undefined, motivo: undefined });
   }, [params, navigation]);
+
+  // Desde la barra de ocupación de Inicio: solo ese grupo, sin otros filtros.
+  useEffect(() => {
+    if (!params?.ocupacion) return;
+    setOcupacion(params.ocupacion);
+    setCategoria(undefined);
+    setBusqueda('');
+    setPendientes(null);
+    navigation.setParams({ ocupacion: undefined });
+  }, [params, navigation]);
   // La API busca por nombre (q) y aplica los filtros; se espera a que el usuario deje de escribir.
   const q = useValorDiferido(busqueda.trim()).slice(0, 100);
 
   const { datos, error, cargando, refrescando, recargar } = useAsync(
-    () => listarDestinos({ q: q || undefined, categoria, nivelOcupacion: soloBaja ? 'Bajo' : undefined }),
-    [q, categoria, soloBaja],
+    // Baja, media y alta las filtra la API; los cerrados se filtran aquí.
+    () => listarDestinos({ q: q || undefined, categoria, nivelOcupacion: ocupacion && ocupacion !== 'Cerrado' ? ocupacion : undefined }),
+    [q, categoria, ocupacion],
     { recargarAlEnfocar: true },
   );
 
   const destinos = useMemo(() => {
-    const lista = pendientes ? (datos ?? []).filter((d) => pendientes.ids.includes(d.id)) : (datos ?? []);
+    let lista = pendientes ? (datos ?? []).filter((d) => pendientes.ids.includes(d.id)) : (datos ?? []);
+    if (ocupacion === 'Cerrado') lista = lista.filter((d) => grupoOcupacion(d) === 'Cerrado');
     return [...lista].sort((a, b) => claveOrden(a) - claveOrden(b));
-  }, [datos, pendientes]);
+  }, [datos, pendientes, ocupacion]);
 
-  const hayFiltros = Boolean(categoria || soloBaja || busqueda.trim() || pendientes);
+  const hayFiltros = Boolean(categoria || ocupacion || busqueda.trim() || pendientes);
 
   const vacio = () => {
     if (cargando) return <EstadoCargando mensaje="Cargando destinos…" />;
@@ -78,7 +100,7 @@ export function ExplorarScreen({ navigation, route }: TabScreenProps<'Explorar'>
                 texto: 'Quitar filtros',
                 onPress: () => {
                   setCategoria(undefined);
-                  setSoloBaja(false);
+                  setOcupacion(undefined);
                   setBusqueda('');
                   setPendientes(null);
                 },
@@ -133,9 +155,19 @@ export function ExplorarScreen({ navigation, route }: TabScreenProps<'Explorar'>
           ))}
         </ScrollView>
         <View style={styles.filtroSecundario}>
-          <FilterChip acento="turquoise" compacto activo={soloBaja} onPress={() => setSoloBaja((v) => !v)}>
+          <FilterChip
+            acento="turquoise"
+            compacto
+            activo={ocupacion === 'Bajo'}
+            onPress={() => setOcupacion((o) => (o === 'Bajo' ? undefined : 'Bajo'))}
+          >
             Solo ocupación baja
           </FilterChip>
+          {ocupacion && ocupacion !== 'Bajo' && (
+            <FilterChip acento="turquoise" compacto activo icono="close" onPress={() => setOcupacion(undefined)}>
+              {`${ETIQUETA_FILTRO_OCUPACION[ocupacion]} · Quitar`}
+            </FilterChip>
+          )}
         </View>
         {pendientes && (
           <View style={styles.pendientes} accessibilityLiveRegion="polite">
@@ -160,6 +192,7 @@ export function ExplorarScreen({ navigation, route }: TabScreenProps<'Explorar'>
                 {destinos.length} {destinos.length === 1 ? 'destino' : 'destinos'}
                 {pendientes ? ' por explorar' : ''}
                 {categoria ? ` en ${CATEGORIAS[categoria].plural}` : ''}
+                {ocupacion && ocupacion !== 'Bajo' ? ` · ${ETIQUETA_FILTRO_OCUPACION[ocupacion].toLowerCase()}` : ''}
               </Text>
               <View style={styles.orden}>
                 <Icon name="swap-vert" size={16} color={colors.textSubtle} />
@@ -220,7 +253,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   chips: { gap: spacing.sm, paddingTop: spacing.gutter, paddingRight: spacing.screen },
-  filtroSecundario: { flexDirection: 'row', marginTop: 10 },
+  filtroSecundario: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: 10 },
   pendientes: {
     flexDirection: 'row',
     alignItems: 'center',

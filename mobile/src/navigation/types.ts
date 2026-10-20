@@ -2,6 +2,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CategoriaDestino } from '../services/tipos';
+import type { GrupoOcupacion } from '../utils/resumenOcupacion';
 
 export type AuthStackParamList = {
   Bienvenida: undefined;
@@ -16,8 +17,11 @@ export type AuthStackParamList = {
  */
 export type TabsParamList = {
   Inicio: undefined;
-  /** categoria y pendientes: desde una insignia del pasaporte, lo que falta por explorar. */
-  Explorar: { categoria?: CategoriaDestino; pendientes?: number[]; motivo?: string } | undefined;
+  /**
+   * categoria y pendientes: desde una insignia del pasaporte, lo que falta por explorar.
+   * ocupacion: desde la barra de distribución de Inicio (un nivel o los cerrados).
+   */
+  Explorar: { categoria?: CategoriaDestino; pendientes?: number[]; motivo?: string; ocupacion?: GrupoOcupacion } | undefined;
   /** destinoId: destino a resaltar al llegar desde el detalle. */
   Mapa: { destinoId?: number } | undefined;
   Favoritos: undefined;
