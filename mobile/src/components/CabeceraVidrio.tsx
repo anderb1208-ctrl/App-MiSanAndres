@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducirMovimiento } from '../hooks/useReducirMovimiento';
 import { colors, motion, spacing, typography } from '../theme';
 import { SANGRIA_BOTON_VOLVER, TAMANO_BOTON_VOLVER } from './BotonVolver';
-import { GlassControl } from './GlassControl';
+import { SuperficieVidrio } from './SuperficieVidrio';
 
 /** Alto total de la cabecera (incluye el área segura superior). */
 export const altoCabeceraVidrio = (insetSuperior: number) => insetSuperior + spacing.sm + TAMANO_BOTON_VOLVER + spacing.sm;
@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * Cabecera de vidrio que entra desde arriba cuando la foto del detalle sale de pantalla.
- * Liquid Glass en iOS 26+; desenfoque en iOS anterior; velo translúcido en Android (GlassControl).
+ * Liquid Glass en iOS 26+; desenfoque en iOS anterior; velo translúcido en Android (SuperficieVidrio).
  * Se anima con translateY y nunca con opacidad (la opacidad rompe Liquid Glass).
  * Los botones flotantes (volver, favorito) quedan encima. El título repite el nombre que ya
  * está en el contenido, así que se oculta a los lectores de pantalla.
@@ -46,13 +46,13 @@ export function CabeceraVidrio({ titulo, visible }: Props) {
       importantForAccessibility="no-hide-descendants"
       style={[styles.posicion, { height: alto, transform: [{ translateY }] }]}
     >
-      <GlassControl tono="claro" conSombra={false} style={[styles.vidrio, { paddingTop: insets.top + spacing.sm }]}>
+      <SuperficieVidrio variante="panel" sombra={false} style={[styles.vidrio, { paddingTop: insets.top + spacing.sm }]}>
         <View style={[styles.fila, { paddingHorizontal: margen }]}>
           <Text style={styles.titulo} numberOfLines={1}>
             {titulo}
           </Text>
         </View>
-      </GlassControl>
+      </SuperficieVidrio>
     </Animated.View>
   );
 }

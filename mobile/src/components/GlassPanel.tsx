@@ -1,7 +1,5 @@
-import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
 import {
-  Platform,
   StyleSheet,
   View,
   type AccessibilityActionEvent,
@@ -9,8 +7,10 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { blur, colors, radius as radios, shadows } from '../theme';
+import { colors, radius as radios, shadows } from '../theme';
+import type { CalidadVidrio } from '../utils/vidrio';
 import { PressableScale } from './PressableScale';
+import { bordeVidrio, FondoVidrio, useMedicionVidrio, useModoVidrio, type TinteVidrio } from './SuperficieVidrio';
 
 type Tono = 'normal' | 'strong' | 'dark';
 
@@ -19,6 +19,11 @@ interface Props {
   tono?: Tono;
   padding?: number;
   radius?: number;
+  /**
+   * desenfoque (por defecto): desenfoque en iOS, velo en Android; nunca Liquid Glass porque es
+   * contenido. ligera: solo velo, para elementos repetidos de listas largas.
+   */
+  calidad?: Exclude<CalidadVidrio, 'nativa'>;
   onPress?: () => void;
   accessibilityLabel?: string;
   /** Acciones extra para lectores de pantalla (p. ej. "Alertas" en una tarjeta tocable). */
@@ -27,48 +32,41 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-const FONDOS: Record<Tono, string> = {
-  normal: colors.glass,
-  strong: colors.glassStrong,
-  dark: colors.glassDark,
+const TINTES: Record<Tono, TinteVidrio | undefined> = {
+  normal: { fondo: colors.glass, borde: colors.glassBorder },
+  strong: { fondo: colors.glassStrong, borde: colors.glassBorder },
+  dark: undefined,
 };
 
 /**
- * Superficie "liquid glass": blanco translúcido, borde blanco fino y sombra navy.
- * En iOS agrega desenfoque real; en Android queda como superficie translúcida
- * (el desenfoque de Android requiere un BlurTargetView y no vale la pena aquí).
+ * Panel de contenido translúcido: blanco translúcido, borde blanco fino y sombra navy.
+ * Usa las mismas capas de vidrio que SuperficieVidrio (FondoVidrio), incluido el respaldo
+ * opaco de "Reducir transparencia".
  */
 export function GlassPanel({
   children,
   tono = 'normal',
   padding = 16,
   radius = radios.panel,
+  calidad = 'desenfoque',
   onPress,
   accessibilityLabel,
   accessibilityActions,
   onAccessibilityAction,
   style,
 }: Props) {
+  const modo = useModoVidrio(calidad);
+  useMedicionVidrio(modo);
+  const tonoVidrio = tono === 'dark' ? 'oscuro' : 'claro';
+  const tinte = TINTES[tono];
+
   const estilo: StyleProp<ViewStyle> = [
     styles.base,
     shadows.md,
-    {
-      padding,
-      borderRadius: radius,
-      backgroundColor: FONDOS[tono],
-      borderColor: tono === 'dark' ? colors.glassBorderDark : colors.glassBorder,
-    },
+    { padding, borderRadius: radius, borderColor: bordeVidrio(tonoVidrio, tinte) },
     style,
   ];
-
-  const fondo =
-    Platform.OS === 'ios' ? (
-      <BlurView
-        intensity={blur.panel}
-        tint={tono === 'dark' ? 'dark' : 'light'}
-        style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}
-      />
-    ) : null;
+  const fondo = <FondoVidrio modo={modo} tono={tonoVidrio} tinte={tinte} radio={radius} />;
 
   if (onPress) {
     return (

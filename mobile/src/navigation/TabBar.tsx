@@ -1,7 +1,7 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassControl } from '../components/GlassControl';
+import { SuperficieVidrio } from '../components/SuperficieVidrio';
 import { Icon } from '../components/Icon';
 import { colors, radius, sizes, spacing, typography } from '../theme';
 import type { NombreIcono } from '../utils/categorias';
@@ -32,7 +32,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { bottom } = useSafeAreaInsets();
 
   return (
-    <GlassControl style={[styles.contenedor, { bottom: Math.max(bottom, MARGEN_INFERIOR) }]} accessibilityRole="tablist">
+    <SuperficieVidrio
+      variante="panel"
+      sombra="lg"
+      style={[styles.contenedor, { bottom: Math.max(bottom, MARGEN_INFERIOR) }]}
+      accessibilityRole="tablist"
+    >
       {state.routes.map((ruta, indice) => {
         const activa = state.index === indice;
         const tab = TABS[ruta.name as keyof TabsParamList];
@@ -62,7 +67,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           </Pressable>
         );
       })}
-    </GlassControl>
+    </SuperficieVidrio>
   );
 }
 

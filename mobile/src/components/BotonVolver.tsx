@@ -6,7 +6,7 @@ import type { AppStackParamList } from '../navigation/types';
 import { useAuth } from '../store/AuthContext';
 import { colors, motion, spacing } from '../theme';
 import { pestanaDeInicio } from '../utils/navegacion';
-import { GlassControl } from './GlassControl';
+import { SuperficieVidrio } from './SuperficieVidrio';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
@@ -55,9 +55,9 @@ export function BotonVolver({ variante = 'claro', style }: Props) {
         hitSlop={8}
       >
         {/* Liquid Glass en iOS 26+; desenfoque en iOS anterior; velo translúcido en Android. */}
-        <GlassControl tono={v.tono} conSombra={false} style={styles.boton}>
+        <SuperficieVidrio variante="chip" tono={v.tono} style={styles.boton}>
           <Icon name="arrow-back" size={22} color={v.icono} />
-        </GlassControl>
+        </SuperficieVidrio>
       </PressableScale>
     </View>
   );

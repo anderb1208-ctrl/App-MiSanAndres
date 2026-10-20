@@ -4,7 +4,7 @@ import type { Destino } from '../services/tipos';
 import { useAuth } from '../store/AuthContext';
 import { useFavoritos } from '../store/FavoritosContext';
 import { colors, motion, sizes } from '../theme';
-import { GlassControl } from './GlassControl';
+import { SuperficieVidrio } from './SuperficieVidrio';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
@@ -60,9 +60,9 @@ export function BotonFavorito({ destino, tono = 'claro', tamano = 22, style }: P
     return (
       <View pointerEvents="box-none" style={style}>
         <PressableScale onPress={() => void alPresionar()} disabled={ocupado} hitSlop={8} escala={motion.pressScale.icon} {...accesibilidad}>
-          <GlassControl tono="oscuro" conSombra={false} style={[styles.glass, { width: lado, height: lado }]}>
+          <SuperficieVidrio variante="chip" tono="oscuro" style={[styles.glass, { width: lado, height: lado }]}>
             {icono}
-          </GlassControl>
+          </SuperficieVidrio>
         </PressableScale>
       </View>
     );

@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotonFavorito } from '../components/BotonFavorito';
 import { Button } from '../components/Button';
 import { altoCabeceraVidrio, CabeceraVidrio } from '../components/CabeceraVidrio';
-import { GlassControl } from '../components/GlassControl';
+import { SuperficieVidrio } from '../components/SuperficieVidrio';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { ImagenDestino } from '../components/ImagenDestino';
@@ -360,7 +360,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
       <BotonFavorito destino={d} tono="glass" tamano={24} style={[styles.favorito, { top: insets.top + spacing.sm }]} />
 
       {/* Acciones flotantes relacionadas: un solo grupo de vidrio. */}
-      <GlassControl style={[styles.barraAcciones, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
+      <SuperficieVidrio variante="panel" sombra="lg" style={[styles.barraAcciones, { bottom: Math.max(insets.bottom, spacing.gutter) + 6 }]}>
         <Button
           tamano="lg"
           icono="directions"
@@ -372,7 +372,7 @@ export function DetalleDestinoScreen({ navigation, route }: AppScreenProps<'Deta
         <Button tamano="lg" variante="glass" icono="map" style={styles.accion} onPress={verEnMapa}>
           Ver en el mapa
         </Button>
-      </GlassControl>
+      </SuperficieVidrio>
     </View>
   );
 }

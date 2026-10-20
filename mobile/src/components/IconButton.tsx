@@ -1,6 +1,6 @@
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, motion, radius, sizes } from '../theme';
-import { GlassControl } from './GlassControl';
+import { SuperficieVidrio } from './SuperficieVidrio';
 import type { NombreIcono } from '../utils/categorias';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -37,9 +37,9 @@ export function IconButton({ icono, etiqueta, onPress, tono = 'glass', flotante 
         hitSlop={6}
         style={style}
       >
-        <GlassControl tono={oscuro ? 'oscuro' : 'claro'} style={styles.flotante}>
+        <SuperficieVidrio variante="chip" tono={oscuro ? 'oscuro' : 'claro'} sombra="lg" style={styles.flotante}>
           <Icon name={icono} size={sizes.iconSm + 2} color={oscuro ? colors.white : colors.textStrong} />
-        </GlassControl>
+        </SuperficieVidrio>
       </PressableScale>
     );
   }

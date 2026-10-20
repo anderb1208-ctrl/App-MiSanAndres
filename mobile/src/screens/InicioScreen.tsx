@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClimaIsla } from '../components/ClimaIsla';
 import { DestinoCard } from '../components/DestinoCard';
 import { FilterChip } from '../components/FilterChip';
-import { GlassControl } from '../components/GlassControl';
+import { SuperficieVidrio } from '../components/SuperficieVidrio';
 import { GlassPanel } from '../components/GlassPanel';
 import { Icon } from '../components/Icon';
 import { PressableScale } from '../components/PressableScale';
@@ -175,13 +175,13 @@ export function InicioScreen({ navigation }: TabScreenProps<'Inicio'>) {
               accessibilityLabel="Mi perfil"
               hitSlop={4}
             >
-              <GlassControl tono="oscuro" conSombra={false} style={styles.avatar}>
+              <SuperficieVidrio variante="chip" tono="oscuro" style={styles.avatar}>
                 {nombre ? (
                   <Text style={styles.avatarTexto}>{nombre.charAt(0).toUpperCase()}</Text>
                 ) : (
                   <Icon name="person" size={22} color={colors.white} />
                 )}
-              </GlassControl>
+              </SuperficieVidrio>
             </PressableScale>
           </View>
           <View style={styles.saludo}>
