@@ -83,5 +83,5 @@ const styles = StyleSheet.create({
   contenido: { paddingBottom: spacing.xl },
   cuerpo: { paddingHorizontal: spacing.screen, gap: spacing.md },
   menu: { overflow: 'hidden' },
-  nota: { ...typography.labelMd, color: colors.textSubtle, textAlign: 'center' },
+  nota: { ...typography.labelMd, color: colors.textMuted, textAlign: 'center' },
 });

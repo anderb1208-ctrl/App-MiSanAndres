@@ -146,7 +146,7 @@ export function RangoPresupuesto({ valor, onCambio, onCambioFinal, oscuro = fals
 
 const styles = StyleSheet.create({
   valor: { ...typography.titleMd },
-  ayuda: { ...typography.labelMd, color: colors.textSubtle, marginBottom: spacing.sm },
+  ayuda: { ...typography.labelMd, color: colors.textMuted, marginBottom: spacing.sm },
   ayudaOscura: { color: colors.textOnDarkMuted },
   contenedor: { height: PUNTA + 8, justifyContent: 'center' },
   pista: {
@@ -170,5 +170,5 @@ const styles = StyleSheet.create({
     borderColor: colors.secondary,
   },
   extremos: { flexDirection: 'row', justifyContent: 'space-between' },
-  extremo: { ...typography.labelMd, color: colors.textSubtle },
+  extremo: { ...typography.labelMd, color: colors.textMuted },
 });

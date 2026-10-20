@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.surfaceLow,
   },
-  horaTexto: { ...typography.labelMd, color: colors.textSubtle },
+  horaTexto: { ...typography.labelMd, color: colors.textMuted },
   horaTemp: { ...typography.labelBold, color: colors.textStrong },
-  horaLluvia: { ...typography.labelMd, fontSize: 11, color: colors.secondary },
-  atribucion: { ...typography.labelMd, fontSize: 11, color: colors.textSubtle, marginTop: spacing.xs, textDecorationLine: 'underline' },
+  horaLluvia: { ...typography.labelMd, fontSize: 12, color: colors.secondary },
+  atribucion: { ...typography.labelMd, fontSize: 12, color: colors.textMuted, marginTop: spacing.xs, textDecorationLine: 'underline' },
 });

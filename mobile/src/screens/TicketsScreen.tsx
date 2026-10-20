@@ -160,8 +160,8 @@ const styles = StyleSheet.create({
   filtros: { gap: spacing.sm, paddingRight: spacing.screen },
   filaSuperior: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   asunto: { ...typography.titleMd, color: colors.textStrong, flex: 1 },
-  numero: { ...typography.labelMd, color: colors.textSubtle },
+  numero: { ...typography.labelMd, color: colors.textMuted },
   meta: { ...typography.bodyMd, color: colors.textMuted, marginTop: 4 },
   etiquetas: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, flexWrap: 'wrap' },
-  fecha: { ...typography.labelMd, color: colors.textSubtle, marginTop: spacing.sm },
+  fecha: { ...typography.labelMd, color: colors.textMuted, marginTop: spacing.sm },
 });

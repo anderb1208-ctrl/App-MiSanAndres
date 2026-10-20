@@ -103,5 +103,5 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   error: { ...typography.labelMd, color: colors.error, paddingLeft: spacing.xs },
-  ayuda: { ...typography.labelMd, color: colors.textSubtle, paddingLeft: spacing.xs },
+  ayuda: { ...typography.labelMd, color: colors.textMuted, paddingLeft: spacing.xs },
 });

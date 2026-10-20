@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
   anillo: { width: TAMANO, height: TAMANO },
   anilloCentro: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   anilloValor: { ...typography.headlineSm, fontFamily: typography.display.fontFamily, color: colors.textStrong },
-  anilloTotal: { ...typography.bodyMd, color: colors.textSubtle },
-  anilloEtiqueta: { ...typography.labelMd, color: colors.textSubtle },
+  anilloTotal: { ...typography.bodyMd, color: colors.textMuted },
+  anilloEtiqueta: { ...typography.labelMd, color: colors.textMuted },
   titulo: { ...typography.titleMd, color: colors.textStrong },
   subtitulo: { ...typography.bodyMd, color: colors.textMuted, marginTop: 2 },
   ganadas: { ...typography.labelBold, color: colors.secondary, marginTop: spacing.sm },
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   dato: { flex: 1, alignItems: 'center', gap: 2 },
   datoValor: { ...typography.titleMd, color: colors.textStrong },
-  datoEtiqueta: { ...typography.labelMd, color: colors.textSubtle, textAlign: 'center' },
+  datoEtiqueta: { ...typography.labelMd, color: colors.textMuted, textAlign: 'center' },
   insignias: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   insignia: {
     // Tres por fila; en pantallas angostas el texto baja a dos líneas sin cortarse.
@@ -233,8 +233,8 @@ const styles = StyleSheet.create({
   textoBloqueado: { color: colors.textMuted },
   barra: { alignSelf: 'stretch', height: 4, borderRadius: 2, backgroundColor: colors.track, overflow: 'hidden' },
   barraRelleno: { height: 4, borderRadius: 2, backgroundColor: colors.secondary },
-  insigniaProgreso: { ...typography.labelMd, fontSize: 11, color: colors.textSubtle },
+  insigniaProgreso: { ...typography.labelMd, fontSize: 12, color: colors.textMuted },
   verTodas: { alignSelf: 'center', marginTop: spacing.sm, minHeight: 44, justifyContent: 'center' },
   verTodasTexto: { ...typography.labelBold, color: colors.textLink },
-  nota: { ...typography.labelMd, fontSize: 11, color: colors.textSubtle, marginTop: spacing.sm, textAlign: 'center' },
+  nota: { ...typography.labelMd, fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center' },
 });

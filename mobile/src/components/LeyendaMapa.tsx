@@ -23,7 +23,7 @@ export function LeyendaMapa({ style }: { style?: StyleProp<ViewStyle> }) {
 }
 
 const styles = StyleSheet.create({
-  titulo: { ...typography.labelBold, fontSize: 11, color: colors.textMuted, marginBottom: 4 },
+  titulo: { ...typography.labelBold, fontSize: 12, color: colors.textMuted, marginBottom: 4 },
   items: { gap: 3 },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
   punto: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: mapColors.borde },

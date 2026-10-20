@@ -98,7 +98,7 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
                 y={y(v) + 4}
                 fontSize={10}
                 fontFamily={fonts.medium}
-                fill={colors.textSubtle}
+                fill={colors.textMuted}
                 textAnchor="end"
               >
                 {`${v}%`}
@@ -201,7 +201,7 @@ export function OcupacionChart({ tipica, registros = [], horaActual, alto = 190 
                 y={alto - 6}
                 fontSize={10}
                 fontFamily={h === horaActual ? fonts.bold : fonts.medium}
-                fill={h === horaActual ? colors.primary : colors.textSubtle}
+                fill={h === horaActual ? colors.primary : colors.textMuted}
                 textAnchor="middle"
               >
                 {`${String(h).padStart(2, '0')}h`}

@@ -24,7 +24,7 @@ export function IndicadorOcupacion({ ocupacion, variante = 'badge', mostrarPorce
   if (!ocupacion) {
     return variante === 'badge' ? (
       <View style={[styles.badge, styles.sinDatos]}>
-        <Text style={[styles.badgeTexto, { color: colors.textSubtle }]}>Sin datos de ocupación</Text>
+        <Text style={[styles.badgeTexto, { color: colors.textMuted }]}>Sin datos de ocupación</Text>
       </View>
     ) : (
       <Text style={styles.sinDatosBarra}>Aún no hay datos suficientes para estimar la ocupación.</Text>

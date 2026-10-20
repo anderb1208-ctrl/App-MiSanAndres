@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   menu: { overflow: 'hidden' },
   cifra: { flexGrow: 1, flexBasis: '28%', alignItems: 'center' },
   valor: { ...typography.headlineSm, fontFamily: typography.display.fontFamily, color: colors.textStrong },
-  etiqueta: { ...typography.labelMd, color: colors.textSubtle, textAlign: 'center' },
+  etiqueta: { ...typography.labelMd, color: colors.textMuted, textAlign: 'center' },
   nota: { ...typography.labelMd, color: colors.textMuted },
   barraFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 6 },
   barraNombre: { ...typography.bodyMd, color: colors.textStrong, width: '42%' },

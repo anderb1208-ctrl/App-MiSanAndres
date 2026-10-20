@@ -265,5 +265,5 @@ const styles = StyleSheet.create({
   menu: { overflow: 'hidden' },
   creditos: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md },
   creditosTexto: { ...typography.labelBold, color: colors.textLink, textDecorationLine: 'underline' },
-  servidor: { ...typography.labelMd, fontSize: 11, color: colors.textSubtle, textAlign: 'center' },
+  servidor: { ...typography.labelMd, fontSize: 12, color: colors.textMuted, textAlign: 'center' },
 });

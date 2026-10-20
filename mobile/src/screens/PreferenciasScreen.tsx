@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   grupo: { overflow: 'hidden', marginBottom: spacing.sm },
   rango: { padding: spacing.md },
   error: { ...typography.labelMd, color: colors.error },
-  ayuda: { ...typography.labelMd, color: colors.textSubtle, marginTop: -spacing.xs },
+  ayuda: { ...typography.labelMd, color: colors.textMuted, marginTop: -spacing.xs },
   enlacePeligro: { ...typography.labelBold, fontSize: 14, color: colors.error, textAlign: 'center', marginTop: spacing.lg },
   enlace: { ...typography.labelBold, fontSize: 14, color: colors.textLink, textAlign: 'center', marginTop: spacing.lg },
   barra: {

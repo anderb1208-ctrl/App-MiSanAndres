@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   resumen: { gap: 4, marginBottom: spacing.gutter },
   resumenFila: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   resumenTexto: { ...typography.labelMd, color: colors.textMuted },
-  resumenNota: { ...typography.labelMd, color: colors.textSubtle },
+  resumenNota: { ...typography.labelMd, color: colors.textMuted },
   fila: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   pin: {
     width: 44,

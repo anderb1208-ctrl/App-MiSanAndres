@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   credito: { position: 'absolute', left: spacing.screen, right: spacing.screen, bottom: 44, alignItems: 'flex-start' },
   creditoTexto: {
     ...typography.labelMd,
-    fontSize: 11,
+    fontSize: 12,
     color: colors.white,
     paddingHorizontal: 10,
     paddingVertical: 3,
