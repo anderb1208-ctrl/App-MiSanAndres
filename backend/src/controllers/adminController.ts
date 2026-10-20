@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type {
+  CuerpoCompararModelos,
   CuerpoEditarDestino,
   CuerpoEstadoDestino,
   CuerpoNuevoDestino,
@@ -8,6 +9,7 @@ import type {
   ParamsIdUsuario,
 } from '../middleware/esquemas';
 import * as adminService from '../services/adminService';
+import * as modelosMlService from '../services/modelosMlService';
 
 export async function usuarios(_req: Request, res: Response) {
   res.json(await adminService.listarUsuarios(res.locals.db));
@@ -42,4 +44,15 @@ export async function estadoDestino(_req: Request, res: Response) {
   const { id } = res.locals.validado.params as ParamsId;
   const cuerpo = res.locals.validado.body as CuerpoEstadoDestino;
   res.json(await adminService.cambiarEstadoDestino(res.locals.db, id, cuerpo));
+}
+
+/** Comparativa de los tres modelos de ML y el baseline (consulta GET /modelo del servicio de ML). */
+export async function modelosMl(_req: Request, res: Response) {
+  res.json(await modelosMlService.listarModelos());
+}
+
+/** La misma predicción con los tres modelos y el baseline, lado a lado. */
+export async function compararModelosMl(_req: Request, res: Response) {
+  const { idDestino, fecha, hora } = res.locals.validado.body as CuerpoCompararModelos;
+  res.json(await modelosMlService.compararPrediccion(res.locals.db, idDestino, fecha, hora));
 }

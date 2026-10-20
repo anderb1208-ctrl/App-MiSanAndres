@@ -309,6 +309,17 @@ Content-Type: application/json
 GET {{baseUrl}}/admin/metricas
 Authorization: Bearer {{token}}
 
+### Modelos de ML: los tres modelos y el baseline (MAE, RMSE, R², tamaño), el ganador y el activo. 503 si el ML no responde.
+GET {{baseUrl}}/admin/modelos
+Authorization: Bearer {{token}}
+
+### Comparar una predicción con los tres modelos y el baseline (destino, fecha y hora de Colombia)
+POST {{baseUrl}}/admin/modelos/comparar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "idDestino": 5, "fecha": "2026-12-26", "hora": "12:00" }
+
 ### Destinos (incluye los ocultos)
 GET {{baseUrl}}/admin/destinos
 Authorization: Bearer {{token}}
@@ -385,11 +396,12 @@ GET http://localhost:3000/destinos/johnny-cay.jpg
 @mlUrl = http://localhost:8000
 @mlKey = cambia-esta-clave
 
-### Estado del servicio y del modelo (modelo ganador, origen simulado/real, métricas)
+### Estado del servicio (público): modelo activo, si es respaldo, métricas y memoria del proceso
 GET {{mlUrl}}/health
 
-### Modelo ganador y comparativa de los tres modelos (Ridge, Random Forest, HistGradientBoosting) y el baseline
+### Los tres modelos (ridge, random_forest, gradient_boosting) con métricas y tamaño, el ganador, el activo y el baseline
 GET {{mlUrl}}/modelo
+X-API-Key: {{mlKey}}
 
 ### Una predicción
 POST {{mlUrl}}/predict
@@ -397,6 +409,20 @@ X-API-Key: {{mlKey}}
 Content-Type: application/json
 
 { "id_destino": 5, "fecha": "2026-12-26", "hora": "12:00", "clima": { "temperatura": 29, "precipitacion": 0, "viento": 20 } }
+
+### Una predicción con un candidato concreto (ridge | random_forest | gradient_boosting); se carga bajo demanda
+POST {{mlUrl}}/predict
+X-API-Key: {{mlKey}}
+Content-Type: application/json
+
+{ "id_destino": 5, "fecha": "2026-12-26", "hora": "12:00", "modelo": "random_forest" }
+
+### La misma consulta con los tres modelos y el baseline, lado a lado (el ganador marcado)
+POST {{mlUrl}}/comparar
+X-API-Key: {{mlKey}}
+Content-Type: application/json
+
+{ "id_destino": 5, "fecha": "2026-12-26", "hora": "12:00" }
 
 ### Varias predicciones (lo que usa el backend)
 POST {{mlUrl}}/predict/lote

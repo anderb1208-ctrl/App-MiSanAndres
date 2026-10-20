@@ -329,3 +329,11 @@ export type CuerpoOcultarResena = z.infer<typeof cuerpoOcultarResena>;
 
 export const consultaResenasAdmin = z.object({ idDestino: idPositivo.optional() });
 export type ConsultaResenasAdmin = z.infer<typeof consultaResenasAdmin>;
+
+/** Comparar una predicción con los tres modelos de ML (panel del administrador). */
+export const cuerpoCompararModelos = z.strictObject({
+  idDestino: z.number({ error: 'Debe ser un número entero positivo.' }).int(MENSAJE_ID).positive(MENSAJE_ID),
+  fecha,
+  hora,
+});
+export type CuerpoCompararModelos = z.infer<typeof cuerpoCompararModelos>;

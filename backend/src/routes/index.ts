@@ -189,6 +189,15 @@ privadas.patch(
   validar({ params: e.paramsId, body: e.cuerpoEstadoDestino }),
   adminController.estadoDestino,
 );
+// Modelos de ML: comparativa y comparación de una predicción. Las predicciones normales usan solo el ganador.
+privadas.get('/admin/modelos', requerirAuth, admin, adminController.modelosMl);
+privadas.post(
+  '/admin/modelos/comparar',
+  requerirAuth,
+  admin,
+  validar({ body: e.cuerpoCompararModelos }),
+  adminController.compararModelosMl,
+);
 
 export const rutasV1 = Router();
 rutasV1.use(publicas);
