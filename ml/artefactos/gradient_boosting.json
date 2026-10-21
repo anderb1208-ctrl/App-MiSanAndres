@@ -1,0 +1,83 @@
+{
+  "fecha_entrenamiento": "2026-10-21T00:00:50+00:00",
+  "origen_datos": "simulado",
+  "origen_dato": "simulado_calibrado",
+  "datos_sinteticos": true,
+  "listo_para_produccion": false,
+  "advertencias": [
+    "Entrenado con datos SIMULADOS (calibrados con datos reales): las predicciones son una demostración, no reflejan la afluencia real."
+  ],
+  "archivo_datos": "dataset_ocupacion_san_andres.csv",
+  "filas": 208068,
+  "filas_entrenamiento": 182329,
+  "filas_prueba": 25739,
+  "rango_fechas": [
+    "2024-10-01 06:00:00-05:00",
+    "2026-10-18 22:00:00-05:00"
+  ],
+  "corte_validacion": "2026-07-19",
+  "metricas": {
+    "modelo": {
+      "mae": 4.493,
+      "rmse": 6.476,
+      "r2": 0.8994
+    },
+    "baseline": {
+      "mae": 5.97,
+      "rmse": 9.498,
+      "r2": 0.7836
+    }
+  },
+  "columnas": [
+    "id_destino",
+    "categoria",
+    "capacidad",
+    "hora",
+    "hora_sin",
+    "hora_cos",
+    "hora_sin2",
+    "hora_cos2",
+    "mes",
+    "mes_sin",
+    "mes_cos",
+    "dia_semana",
+    "es_fin_de_semana",
+    "es_festivo",
+    "es_puente",
+    "temporada_alta",
+    "clima_faltante",
+    "temperatura",
+    "precipitacion",
+    "viento"
+  ],
+  "umbrales_nivel": {
+    "bajo_menor_que": 40,
+    "alto_mayor_que": 70
+  },
+  "modelo": {
+    "clave": "gradient_boosting",
+    "nombre": "HistGradientBoosting",
+    "hiperparametros": {
+      "min_samples_leaf": 50,
+      "max_leaf_nodes": 31,
+      "max_iter": 400,
+      "learning_rate": 0.1,
+      "l2_regularization": 1.0
+    }
+  },
+  "algoritmo": "HistGradientBoostingRegressor({'min_samples_leaf': 50, 'max_leaf_nodes': 31, 'max_iter': 400, 'learning_rate': 0.1, 'l2_regularization': 1.0})",
+  "es_ganador": true,
+  "seleccion": {
+    "ganador": "gradient_boosting",
+    "nombre": "HistGradientBoosting",
+    "motivo": "Menor RMSE en la prueba (6.48 puntos). Ningún otro modelo quedó a menos del 2%.",
+    "criterio": "Menor RMSE en la prueba (últimos 3 meses); si la diferencia es menor al 2%, el más liviano. Restricciones: ≤ 50 MB y < 100 ms por predicción."
+  },
+  "reduccion": null,
+  "artefacto": {
+    "archivo": "gradient_boosting.joblib",
+    "tamano_mb": 0.65,
+    "versionado": true,
+    "motivo": null
+  }
+}

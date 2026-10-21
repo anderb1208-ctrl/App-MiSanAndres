@@ -132,7 +132,14 @@ Todos comparten un `ImputadorClimatologia`: si el backend manda clima nulo (fech
 
 Resultados de la última comparación (datos **simulados**; prueba de 25.739 filas). Las cifras exactas están en el reporte; se regeneran con `python entrenar_modelo.py --comparar`:
 
-<!-- RESULTADOS -->
+| Modelo | MAE | RMSE | R² | RMSE con clima nulo | Archivo | En producción |
+| --- | --- | --- | --- | --- | --- | --- |
+| Ridge | 6,39 | 8,94 | 0,809 | 10,48 | 0,01 MB | respaldo 2 |
+| Random Forest (reducido) | 4,61 | 6,72 | 0,892 | 9,93 | 15,1 MB | respaldo 1 |
+| **HistGradientBoosting** 🏆 | **4,49** | **6,48** | **0,899** | 9,61 | 0,65 MB | **en uso** |
+| Baseline | 5,97 | 9,50 | 0,784 | 9,50 | — | referencia de `/comparar` |
+
+El Random Forest se redujo para versionarlo: de profundidad 18 a 16 y compresión LZMA (de 27,9 MB a 15,1 MB), con un RMSE solo 1,0 % peor (6,72 frente a 6,65; el límite era 2 %). Memoria del servicio con el ganador cargado: ~175 MB en reposo y ~320 MB de pico durante `/comparar`, que carga el bosque bajo demanda y lo libera.
 
 Con datos simulados los modelos aprenden los supuestos del simulador: estas cifras comparan los modelos entre sí y muestran que el sistema funciona, no la precisión que tendrán con datos reales. `listo_para_produccion` solo es `true` con datos **reales**, al menos **4 semanas por destino** y si el modelo supera al baseline.
 

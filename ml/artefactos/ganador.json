@@ -1,5 +1,6 @@
 {
-  "modelo": "hist_gradient_boosting",
+  "modelo": "gradient_boosting",
+  "nombre": "HistGradientBoosting",
   "hiperparametros": {
     "min_samples_leaf": 50,
     "max_leaf_nodes": 31,
@@ -7,10 +8,42 @@
     "learning_rate": 0.1,
     "l2_regularization": 1.0
   },
-  "fecha_comparacion": "2026-10-19T22:01:57+00:00",
+  "fecha_comparacion": "2026-10-21T00:00:50+00:00",
   "origen_datos": "simulado",
+  "origen_dato": "simulado_calibrado",
+  "datos_sinteticos": true,
+  "listo_para_produccion": false,
+  "advertencias": [
+    "Entrenado con datos SIMULADOS (calibrados con datos reales): las predicciones son una demostración, no reflejan la afluencia real."
+  ],
+  "corte_validacion": "2026-07-19",
+  "orden_respaldo": [
+    "gradient_boosting",
+    "random_forest",
+    "ridge"
+  ],
+  "artefactos": {
+    "ridge": {
+      "archivo": "ridge.joblib",
+      "tamano_mb": 0.01,
+      "versionado": true,
+      "motivo": null
+    },
+    "random_forest": {
+      "archivo": "random_forest.joblib",
+      "tamano_mb": 15.12,
+      "versionado": true,
+      "motivo": null
+    },
+    "gradient_boosting": {
+      "archivo": "gradient_boosting.joblib",
+      "tamano_mb": 0.65,
+      "versionado": true,
+      "motivo": null
+    }
+  },
   "seleccion": {
-    "ganador": "hist_gradient_boosting",
+    "ganador": "gradient_boosting",
     "nombre": "HistGradientBoosting",
     "motivo": "Menor RMSE en la prueba (6.48 puntos). Ningún otro modelo quedó a menos del 2%.",
     "criterio": "Menor RMSE en la prueba (últimos 3 meses); si la diferencia es menor al 2%, el más liviano. Restricciones: ≤ 50 MB y < 100 ms por predicción."
@@ -35,50 +68,76 @@
         "alta": 6.728,
         "normal": 6.347
       },
-      "tiempo_entrenamiento_s": 9.9,
+      "tiempo_entrenamiento_s": 4.0,
       "tamano_mb": 0.01,
       "memoria_mb": 1.1,
-      "ms_prediccion": 20.74,
+      "ms_prediccion": 8.27,
       "hiperparametros": {
         "alpha": 1.0
       },
       "cumple_restricciones": true,
+      "reduccion": null,
       "ganador": false
     },
     {
       "clave": "random_forest",
       "nombre": "Random Forest",
-      "mae": 4.601,
-      "rmse": 6.652,
-      "r2": 0.8939,
-      "rmse_sin_clima": 9.885,
+      "mae": 4.613,
+      "rmse": 6.718,
+      "r2": 0.8917,
+      "rmse_sin_clima": 9.927,
       "mae_por_categoria": {
-        "actividad": 5.501,
-        "cayo": 6.639,
-        "cultura": 3.284,
-        "gastronomia": 5.12,
-        "naturaleza": 3.409,
-        "playa": 3.807
+        "actividad": 5.474,
+        "cayo": 6.669,
+        "cultura": 3.303,
+        "gastronomia": 5.174,
+        "naturaleza": 3.389,
+        "playa": 3.822
       },
       "mae_por_temporada": {
-        "alta": 4.82,
-        "normal": 4.575
+        "alta": 4.869,
+        "normal": 4.582
       },
-      "tiempo_entrenamiento_s": 103.2,
-      "tamano_mb": 27.94,
-      "memoria_mb": 89.4,
-      "ms_prediccion": 17.57,
+      "tiempo_entrenamiento_s": 72.7,
+      "tamano_mb": 14.15,
+      "memoria_mb": 74.4,
+      "ms_prediccion": 16.19,
       "hiperparametros": {
         "n_estimators": 100,
         "min_samples_leaf": 10,
         "max_features": 1.0,
-        "max_depth": 18
+        "max_depth": 16
       },
       "cumple_restricciones": true,
+      "reduccion": {
+        "original": {
+          "rmse": 6.652,
+          "tamano_mb": 18.94,
+          "hiperparametros": {
+            "n_estimators": 100,
+            "min_samples_leaf": 10,
+            "max_features": 1.0,
+            "max_depth": 18
+          }
+        },
+        "probadas": [
+          {
+            "ajuste": {
+              "max_depth": 16
+            },
+            "rmse": 6.718,
+            "tamano_mb": 14.15
+          }
+        ],
+        "limite_rmse": 6.785,
+        "objetivo_mb": 15,
+        "aplicada": true,
+        "motivo": "De 18.94 MB a 14.15 MB con RMSE 6.718 (antes 6.652; límite 6.785)."
+      },
       "ganador": false
     },
     {
-      "clave": "hist_gradient_boosting",
+      "clave": "gradient_boosting",
       "nombre": "HistGradientBoosting",
       "mae": 4.493,
       "rmse": 6.476,
@@ -96,10 +155,10 @@
         "alta": 5.886,
         "normal": 4.323
       },
-      "tiempo_entrenamiento_s": 11.1,
+      "tiempo_entrenamiento_s": 7.4,
       "tamano_mb": 0.64,
       "memoria_mb": 4.3,
-      "ms_prediccion": 17.53,
+      "ms_prediccion": 11.2,
       "hiperparametros": {
         "min_samples_leaf": 50,
         "max_leaf_nodes": 31,
@@ -108,6 +167,7 @@
         "l2_regularization": 1.0
       },
       "cumple_restricciones": true,
+      "reduccion": null,
       "ganador": true
     },
     {
@@ -135,6 +195,7 @@
       "memoria_mb": null,
       "cumple_restricciones": null,
       "hiperparametros": {},
+      "reduccion": null,
       "ganador": false
     }
   ]

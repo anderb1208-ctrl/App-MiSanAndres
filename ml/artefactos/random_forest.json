@@ -1,0 +1,101 @@
+{
+  "fecha_entrenamiento": "2026-10-21T00:00:50+00:00",
+  "origen_datos": "simulado",
+  "origen_dato": "simulado_calibrado",
+  "datos_sinteticos": true,
+  "listo_para_produccion": false,
+  "advertencias": [
+    "Entrenado con datos SIMULADOS (calibrados con datos reales): las predicciones son una demostración, no reflejan la afluencia real."
+  ],
+  "archivo_datos": "dataset_ocupacion_san_andres.csv",
+  "filas": 208068,
+  "filas_entrenamiento": 182329,
+  "filas_prueba": 25739,
+  "rango_fechas": [
+    "2024-10-01 06:00:00-05:00",
+    "2026-10-18 22:00:00-05:00"
+  ],
+  "corte_validacion": "2026-07-19",
+  "metricas": {
+    "modelo": {
+      "mae": 4.613,
+      "rmse": 6.718,
+      "r2": 0.8917
+    },
+    "baseline": {
+      "mae": 5.97,
+      "rmse": 9.498,
+      "r2": 0.7836
+    }
+  },
+  "columnas": [
+    "id_destino",
+    "categoria",
+    "capacidad",
+    "hora",
+    "hora_sin",
+    "hora_cos",
+    "hora_sin2",
+    "hora_cos2",
+    "mes",
+    "mes_sin",
+    "mes_cos",
+    "dia_semana",
+    "es_fin_de_semana",
+    "es_festivo",
+    "es_puente",
+    "temporada_alta",
+    "clima_faltante",
+    "temperatura",
+    "precipitacion",
+    "viento"
+  ],
+  "umbrales_nivel": {
+    "bajo_menor_que": 40,
+    "alto_mayor_que": 70
+  },
+  "modelo": {
+    "clave": "random_forest",
+    "nombre": "Random Forest",
+    "hiperparametros": {
+      "n_estimators": 100,
+      "min_samples_leaf": 10,
+      "max_features": 1.0,
+      "max_depth": 16
+    }
+  },
+  "algoritmo": "RandomForestRegressor({'n_estimators': 100, 'min_samples_leaf': 10, 'max_features': 1.0, 'max_depth': 16})",
+  "es_ganador": false,
+  "seleccion": null,
+  "reduccion": {
+    "original": {
+      "rmse": 6.652,
+      "tamano_mb": 18.94,
+      "hiperparametros": {
+        "n_estimators": 100,
+        "min_samples_leaf": 10,
+        "max_features": 1.0,
+        "max_depth": 18
+      }
+    },
+    "probadas": [
+      {
+        "ajuste": {
+          "max_depth": 16
+        },
+        "rmse": 6.718,
+        "tamano_mb": 14.15
+      }
+    ],
+    "limite_rmse": 6.785,
+    "objetivo_mb": 15,
+    "aplicada": true,
+    "motivo": "De 18.94 MB a 14.15 MB con RMSE 6.718 (antes 6.652; límite 6.785)."
+  },
+  "artefacto": {
+    "archivo": "random_forest.joblib",
+    "tamano_mb": 15.12,
+    "versionado": true,
+    "motivo": null
+  }
+}

@@ -14,7 +14,7 @@ El modelo debe poder desplegarse en el plan gratuito de Render (512 MB de memori
 
 ## 2. Datos
 
-No existen mediciones públicas de cuántas personas hay por hora en cada lugar de San Andrés, así que se construyó un **dataset simulado calibrado con datos reales** (`ml/datos/dataset_ocupacion_san_andres.csv`, generado con semilla fija por `ml/generar_dataset_simulado.py`):
+No existen mediciones públicas de cuántas personas hay por hora en cada lugar de San Andrés, así que se construyó un **dataset simulado calibrado con datos reales** (`ml/datos/dataset_ocupacion_san_andres.csv`, generado con semilla fija por `ml/misanandres_ml/datos/generar_dataset_simulado.py`):
 
 - **Cobertura**: los 30 destinos del catálogo, hora por hora y solo dentro de su horario de atención, del 1 de octubre de 2024 al 18 de octubre de 2026 (24,5 meses, 209.440 filas, sin huecos).
 - **Datos reales usados como ancla**:
@@ -24,7 +24,7 @@ No existen mediciones públicas de cuántas personas hay por hora en cada lugar 
   - **Capacidad de carga de Johnny Cay** (800 personas simultáneas, plan de manejo de CORALINA y fallo judicial) y el **cierre judicial de El Acuario** (23 de agosto de 2025, seis meses), con los descansos trimestrales ordenados para Haynes Cay.
 - **Supuestos explícitos** para lo que no se encontró: perfil horario por categoría (playas con pico al mediodía, cayos atados a las salidas de lanchas, restaurantes en almuerzo y cena), efecto del día de la semana, festivos y puentes, efecto de la lluvia (fuerte al aire libre, mínimo bajo techo), viento y mar picado en cayos y actividades en el mar, cierres por mal tiempo, ruido con autocorrelación y saturación suave cerca del 100 %.
 
-La coherencia del dataset se verificó con `ml/validar_dataset.py` y `ml/calidad_dataset.py` ([reporte](../ml/reportes/calidad_dataset.md)): nunca supera la capacidad (14 filas de 209.440 llegan al 95 %, todas en temporada alta), los promedios por categoría y mes están entre 18 % y 58 %, la lluvia correlaciona negativamente con la ocupación al aire libre (r = −0,53) y la ocupación mensual sigue la curva oficial de llegadas (r = 0,87). La tabla completa de parámetros, con su tipo (real, estimado o inventado coherente) y su fuente, está en [`ml/datos/FUENTES.md`](../ml/datos/FUENTES.md).
+La coherencia del dataset se verificó con `ml/misanandres_ml/datos/validar_dataset.py` y `calidad_dataset.py` ([reporte](../ml/reportes/calidad_dataset.md)): nunca supera la capacidad (14 filas de 209.440 llegan al 95 %, todas en temporada alta), los promedios por categoría y mes están entre 18 % y 58 %, la lluvia correlaciona negativamente con la ocupación al aire libre (r = −0,53) y la ocupación mensual sigue la curva oficial de llegadas (r = 0,87). La tabla completa de parámetros, con su tipo (real, estimado o inventado coherente) y su fuente, está en [`ml/datos/FUENTES.md`](../ml/datos/FUENTES.md).
 
 ## 3. Metodología
 
@@ -55,14 +55,16 @@ Prueba: últimos 3 meses (25.739 filas). MAE y RMSE en puntos porcentuales de oc
 
 | Modelo | MAE | RMSE | R² | RMSE con clima nulo | Entrenamiento | Archivo | Predicción | Memoria al cargar |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Ridge | 6,39 | 8,94 | 0,808 | 10,48 | 10 s | 0,01 MB | ~21 ms | 1 MB |
-| Random Forest | 4,60 | 6,65 | 0,894 | 9,88 | 103 s | 27,9 MB | ~18 ms | 89 MB |
-| **HistGradientBoosting** | **4,49** | **6,48** | **0,899** | 9,61 | 11 s | 0,64 MB | ~18 ms | 4 MB |
+| Ridge | 6,39 | 8,94 | 0,809 | 10,48 | 4 s | 0,01 MB | ~8 ms | 1 MB |
+| Random Forest (reducido para versionarlo) | 4,61 | 6,72 | 0,892 | 9,93 | 73 s | 15,1 MB | ~16 ms | 74 MB |
+| **HistGradientBoosting** | **4,49** | **6,48** | **0,899** | 9,61 | 7 s | 0,65 MB | ~11 ms | 4 MB |
 | Baseline (promedio por destino y hora) | 5,97 | 9,50 | 0,784 | 9,50 | — | — | — | — |
 
-Hiperparámetros elegidos: Ridge `alpha = 1`; Random Forest 100 árboles, profundidad 18, hojas de al menos 10 filas, todas las variables por división; HistGradientBoosting 400 iteraciones, tasa de aprendizaje 0,1, 31 hojas por árbol, hojas de al menos 50 filas y regularización L2 = 1.
+Hiperparámetros elegidos: Ridge `alpha = 1`; Random Forest 100 árboles, profundidad 16 (la búsqueda eligió 18; se redujo para que el archivo quepa en git, ver abajo), hojas de al menos 10 filas, todas las variables por división; HistGradientBoosting 400 iteraciones, tasa de aprendizaje 0,1, 31 hojas por árbol, hojas de al menos 50 filas y regularización L2 = 1.
 
-**Ganador: HistGradientBoosting.** Tiene el menor RMSE (6,48 frente a 6,65 de Random Forest, una diferencia del 2,6 %, mayor que la tolerancia del 2 %) y, además, es 40 veces más liviano que el bosque, entrena unas 9 veces más rápido y cabe con holgura en la memoria de Render. Ridge queda claramente atrás (no captura bien la interacción entre la lluvia y el tipo de lugar), aunque supera al baseline en RMSE.
+**Ganador: HistGradientBoosting.** Tiene el menor RMSE (6,48 frente a 6,65 del Random Forest sin reducir, una diferencia del 2,6 %, mayor que la tolerancia del 2 %; 6,72 con el bosque reducido) y, además, es más de 20 veces más liviano que el bosque, entrena unas 10 veces más rápido y cabe con holgura en la memoria de Render.
+
+**Reducción del Random Forest.** Con profundidad 18 el archivo pesaba 27,9 MB (zlib). Para versionarlo se probó, en orden, menos profundidad y compresión LZMA, aceptando solo cambios que no empeoraran su RMSE más de un 2 %: con profundidad 16 y LZMA pesa 15,1 MB y su RMSE pasa de 6,65 a 6,72 (+1,0 %). El ganador no cambia. Ridge queda claramente atrás (no captura bien la interacción entre la lluvia y el tipo de lugar), aunque supera al baseline en RMSE.
 
 Por categoría (MAE), HistGradientBoosting y Random Forest quedan muy parejos: HistGradientBoosting es mejor en playas (3,63), restaurantes (4,89) y cultura (2,98), y Random Forest por pocas centésimas en actividades, cayos y naturaleza. En cultura, donde la ocupación casi no depende del clima, el baseline (2,85) es tan bueno como los modelos. El error es mayor en cayos (6,7) y actividades en el mar, que dependen del viento y de los cierres por mal tiempo. En temporada alta (en la prueba, el receso de octubre) el error sube porque son pocos días y la demanda de ese año fue mayor que la de los anteriores. El reporte completo, con el MAE por categoría y por temporada y los gráficos (métricas por modelo, real frente a predicho en una semana e importancia de variables), está en [`ml/reportes/comparacion_modelos.md`](../ml/reportes/comparacion_modelos.md).
 
@@ -70,9 +72,15 @@ Las variables más importantes del ganador (por permutación) son el destino, la
 
 ## 5. Integración
 
-El modelo ganador se reentrena con todas las filas y se guarda en `ml/modelos/modelo_ocupacion.joblib` (versionado, < 1 MB) con sus metadatos: ganador, hiperparámetros, métricas de los cuatro, origen del dato (`simulado_calibrado`) y fecha. El servicio de ML (FastAPI) lo expone en `POST /predict` y `POST /predict/lote`, que indican qué modelo respondió, y en `GET /modelo`, que devuelve el ganador y la comparativa. El backend pasa el nombre del modelo en cada predicción (`modelo`) y la app lo muestra en el detalle del destino: "Estimado con HistGradientBoosting · datos simulados". Si el servicio de ML no responde, el backend usa el cálculo heurístico (promedio histórico más factores) y la app lo indica igual.
+**Los tres modelos se entrenaron, se compararon y quedan guardados.** Cada uno se reentrena con todas las filas y se guarda en `ml/artefactos/` (versionado en git como evidencia): `ridge.joblib`, `random_forest.joblib` y `gradient_boosting.joblib`, cada uno con su `.json` de metadatos, más `ganador.json` (cuál gana, por qué, orden de respaldo y comparativa) y `baseline.json`.
 
-Todo se reproduce con dos comandos: `python generar_dataset_simulado.py` y `python entrenar_modelo.py --comparar`.
+- **En producción atiende solo el ganador, HistGradientBoosting**, porque tiene el menor RMSE y es el más liviano de los dos mejores. Es el único que el servicio carga al arrancar (~175 MB de memoria en total).
+- **Los otros dos quedan de respaldo y como evidencia.** Si el archivo del ganador falta o no carga, el servicio usa automáticamente el siguiente mejor por RMSE (Random Forest y luego Ridge), lo registra en los logs y responde `respaldo: true`. También se pueden consultar bajo demanda (`POST /predict` con `modelo`, o `POST /comparar`, que devuelve los tres y el baseline lado a lado); se cargan uno a la vez y se liberan, para no pasar los 512 MB de Render gratis.
+- El administrador ve la comparativa en la app (Panel → Modelos de ML, vía `GET /v1/admin/modelos`), y el turista solo ve "Estimado con HistGradientBoosting · datos simulados".
+
+El servicio de ML (FastAPI) expone `POST /predict` y `POST /predict/lote`, que indican qué modelo respondió (`modelo_usado`), y `GET /modelo`, que lista los tres con sus métricas, el ganador y el activo. El backend pasa el nombre del modelo en cada predicción (`modelo`) y la app lo muestra en el detalle del destino: "Estimado con HistGradientBoosting · datos simulados". Si el servicio de ML no responde, el backend usa el cálculo heurístico (promedio histórico más factores) y la app lo indica igual.
+
+Todo se reproduce con dos comandos desde `ml/`: `python -m misanandres_ml.datos.generar_dataset_simulado` y `python entrenar_modelo.py --comparar`.
 
 ## 6. Limitaciones
 
