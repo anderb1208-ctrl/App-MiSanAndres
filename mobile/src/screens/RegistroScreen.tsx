@@ -2,26 +2,15 @@ import { useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { AuthSheet } from '../components/AuthSheet';
 import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { TextField } from '../components/TextField';
 import { useBarraEstado } from '../hooks/useBarraEstado';
 import type { AuthScreenProps } from '../navigation/types';
 import { ErrorAuth, registrarse } from '../services/auth';
 import { colors, spacing, typography } from '../theme';
+import { requisitosContrasena, validarContrasena } from '../utils/contrasena';
 import { IMAGENES } from '../utils/imagenes';
-import {
-  type Fortaleza,
-  fortalezaContrasena,
-  MIN_CONTRASENA,
-  validarContrasena,
-  validarCorreo,
-  validarNombre,
-} from '../utils/validacion';
-
-const FORTALEZA: Record<Fortaleza, { texto: string; color: string; partes: number }> = {
-  debil: { texto: 'Débil', color: colors.error, partes: 1 },
-  media: { texto: 'Aceptable', color: colors.tertiary, partes: 2 },
-  fuerte: { texto: 'Fuerte', color: colors.secondary, partes: 3 },
-};
+import { validarCorreo, validarNombre } from '../utils/validacion';
 
 interface Errores {
   nombre?: string;
@@ -42,7 +31,7 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
   const campoCorreo = useRef<TextInput>(null);
   const campoContrasena = useRef<TextInput>(null);
   const campoConfirmacion = useRef<TextInput>(null);
-  const fortaleza = FORTALEZA[fortalezaContrasena(contrasena)];
+  const requisitos = requisitosContrasena(contrasena);
 
   /** Al editar un campo se borra su error (y el error general). */
   const cambiar = (setter: (v: string) => void, campo: keyof Errores) => (v: string) => {
@@ -74,7 +63,9 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
       }
       // Con sesión inmediata, AuthContext lleva a la configuración de preferencias.
     } catch (e) {
-      setErrorGeneral(e instanceof ErrorAuth ? e.message : 'No pudimos crear tu cuenta. Intenta de nuevo.');
+      // El error de Supabase va bajo su campo (correo ya registrado, contraseña rechazada); si no, arriba del botón.
+      if (e instanceof ErrorAuth && e.campo) setErrores((prev) => ({ ...prev, [e.campo!]: e.message }));
+      else setErrorGeneral(e instanceof ErrorAuth ? e.message : 'No pudimos crear tu cuenta. Intenta de nuevo.');
       setEnviando(false);
     }
   };
@@ -120,21 +111,30 @@ export function RegistroScreen({ navigation }: AuthScreenProps<'Registro'>) {
           value={contrasena}
           onChangeText={cambiar(setContrasena, 'contrasena')}
           error={errores.contrasena}
-          ayuda={`Mínimo ${MIN_CONTRASENA} caracteres, con letras y números`}
           contrasena
           autoComplete="new-password"
           textContentType="newPassword"
           returnKeyType="next"
           onSubmitEditing={() => campoConfirmacion.current?.focus()}
         />
-        {contrasena ? (
-          <View style={styles.fortaleza} accessibilityLabel={`Fortaleza de la contraseña: ${fortaleza.texto}`}>
-            {[1, 2, 3].map((n) => (
-              <View key={n} style={[styles.segmento, { backgroundColor: n <= fortaleza.partes ? fortaleza.color : colors.track }]} />
-            ))}
-            <Text style={[styles.fortalezaTexto, { color: fortaleza.color }]}>{fortaleza.texto}</Text>
-          </View>
-        ) : null}
+        {/* Los dos requisitos de la política; cada uno se marca al cumplirse. */}
+        <View style={styles.requisitos} accessibilityLiveRegion="polite">
+          {requisitos.map((r) => (
+            <View
+              key={r.clave}
+              style={styles.requisito}
+              accessible
+              accessibilityLabel={`${r.texto}: ${r.cumple ? 'cumple' : 'no cumple'}`}
+            >
+              <Icon
+                name={r.cumple ? 'check-circle' : 'radio-button-unchecked'}
+                size={18}
+                color={r.cumple ? colors.secondary : colors.textMuted}
+              />
+              <Text style={[styles.requisitoTexto, r.cumple && styles.requisitoCumplido]}>{r.texto}</Text>
+            </View>
+          ))}
+        </View>
         <TextField
           ref={campoConfirmacion}
           etiqueta="Confirmar contraseña"
@@ -173,9 +173,10 @@ const styles = StyleSheet.create({
   subtitulo: { ...typography.bodyMd, color: colors.textMuted, marginTop: 4, marginBottom: spacing.lg },
   formulario: { gap: 14 },
   errorGeneral: { ...typography.bodyMd, color: colors.error, textAlign: 'center' },
-  fortaleza: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -6 },
-  segmento: { flex: 1, height: 4, borderRadius: 2 },
-  fortalezaTexto: { ...typography.labelBold, minWidth: 70, textAlign: 'right' },
+  requisitos: { gap: 4, marginTop: -6 },
+  requisito: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  requisitoTexto: { ...typography.bodyMd, color: colors.textMuted },
+  requisitoCumplido: { color: colors.textStrong },
   boton: { marginTop: spacing.sm },
   pie: { marginTop: 'auto', paddingTop: spacing.lg, flexDirection: 'row', justifyContent: 'center', gap: 4 },
   pieTexto: { ...typography.bodyMd, color: colors.textMuted },

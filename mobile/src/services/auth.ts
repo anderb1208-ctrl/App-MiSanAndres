@@ -1,44 +1,27 @@
-import { AuthError, type Session } from '@supabase/supabase-js';
+import type { AuthError, Session } from '@supabase/supabase-js';
+import { traducirErrorAuth, type CampoAuth } from './erroresAuth';
 import { supabase } from './supabase';
 
-/** Traduce los errores de Supabase Auth a mensajes para el usuario. */
-function mensajeAuth(error: AuthError): string {
-  switch (error.code) {
-    case 'invalid_credentials':
-      return 'Correo o contraseña incorrectos.';
-    case 'email_not_confirmed':
-      return 'Confirma tu correo con el enlace que te enviamos antes de iniciar sesión.';
-    case 'user_already_exists':
-    case 'email_exists':
-      return 'Ya existe una cuenta con este correo.';
-    case 'weak_password':
-      return 'La contraseña es muy débil. Usa al menos 8 caracteres.';
-    case 'over_email_send_rate_limit':
-    case 'over_request_rate_limit':
-      return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
-    case 'email_address_invalid':
-      return 'El correo no es válido.';
-    case 'user_banned':
-      return 'Esta cuenta está bloqueada. Escríbenos si crees que es un error.';
-    case 'signup_disabled':
-      return 'El registro de cuentas nuevas está desactivado en este momento.';
-    case 'same_password':
-      return 'La nueva contraseña debe ser distinta de la anterior.';
-    case 'session_expired':
-    case 'refresh_token_not_found':
-      return 'Tu sesión venció. Inicia sesión de nuevo.';
-    default:
-      return error.status === 0 || !error.status
-        ? 'No pudimos conectar. Verifica tu conexión e intenta de nuevo.'
-        : 'No pudimos completar la operación. Intenta de nuevo.';
+/** Error de autenticación ya traducido; `campo` indica a qué campo del formulario se refiere. */
+export class ErrorAuth extends Error {
+  constructor(
+    mensaje: string,
+    readonly campo?: CampoAuth,
+  ) {
+    super(mensaje);
+    this.name = 'ErrorAuth';
   }
 }
 
-export class ErrorAuth extends Error {}
+const errorAuth = (error: AuthError) => {
+  const { mensaje, campo } = traducirErrorAuth(error);
+  return new ErrorAuth(mensaje, campo);
+};
+
 
 export async function iniciarSesion(correo: string, contrasena: string): Promise<void> {
   const { error } = await supabase.auth.signInWithPassword({ email: correo.trim().toLowerCase(), password: contrasena });
-  if (error) throw new ErrorAuth(mensajeAuth(error));
+  if (error) throw errorAuth(error);
 }
 
 /**
@@ -55,10 +38,10 @@ export async function registrarse(
     password: contrasena,
     options: { data: { nombre } },
   });
-  if (error) throw new ErrorAuth(mensajeAuth(error));
+  if (error) throw errorAuth(error);
   // Con confirmación activa y correo ya registrado, Supabase responde sin error pero sin identidades.
   if (data.user && data.user.identities?.length === 0) {
-    throw new ErrorAuth('Ya existe una cuenta con este correo.');
+    throw new ErrorAuth('Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.', 'correo');
   }
   return { requiereConfirmacion: !data.session };
 }
@@ -76,7 +59,7 @@ export async function cerrarSesion(): Promise<void> {
 /** Envía el correo para restablecer la contraseña. */
 export async function recuperarContrasena(correo: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(correo.trim().toLowerCase());
-  if (error) throw new ErrorAuth(mensajeAuth(error));
+  if (error) throw errorAuth(error);
 }
 
 export async function obtenerSesion(): Promise<Session | null> {

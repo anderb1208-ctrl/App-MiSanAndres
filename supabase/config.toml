@@ -1,0 +1,14 @@
+# Configuración de la CLI de Supabase (desarrollo local con `supabase start`).
+# El proyecto alojado NO se configura con este archivo: sus opciones de Auth se cambian en el
+# panel (Authentication → Sign In / Providers → Email). Mantén ambos con los mismos valores.
+project_id = "misanandres"
+
+[auth]
+# Política de contraseña de MiSanAndrés (igual en app, backend y Supabase):
+# mínimo 8 caracteres y al menos un número.
+minimum_password_length = 8
+# "" = sin requisitos de tipos de caracteres (ni mayúsculas, ni minúsculas, ni símbolos).
+# Supabase no tiene una opción "solo números": "letters_digits" exigiría también letras y
+# rechazaría "12345678". El número lo exigen la app (mobile/src/utils/contrasena.ts) y el
+# backend (backend/src/utils/contrasena.ts).
+password_requirements = ""

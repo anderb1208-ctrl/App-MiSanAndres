@@ -17,6 +17,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import type { Database, RolUsuario } from '../src/models/database.types';
+import { MIN_CONTRASENA, validarContrasena } from '../src/utils/contrasena';
 
 export const USUARIOS_DEMO: { correo: string; nombre: string; rol: RolUsuario }[] = [
   { correo: 'turista@misanandres.test', nombre: 'Turista de prueba', rol: 'turista' },
@@ -31,8 +32,11 @@ async function main() {
   const contrasenaDe = (rol: RolUsuario) => process.env[`DEMO_PASSWORD_${rol.toUpperCase()}`] || process.env.DEMO_PASSWORD;
   for (const demo of USUARIOS_DEMO) {
     const c = contrasenaDe(demo.rol);
-    if (!c || c.length < 8) {
-      throw new Error(`Define DEMO_PASSWORD_${demo.rol.toUpperCase()} o DEMO_PASSWORD (mínimo 8 caracteres) solo para esta ejecución.`);
+    const invalida = validarContrasena(c ?? '');
+    if (invalida) {
+      throw new Error(
+        `DEMO_PASSWORD_${demo.rol.toUpperCase()} o DEMO_PASSWORD: ${invalida} (mínimo ${MIN_CONTRASENA} caracteres y al menos un número; defínela solo para esta ejecución).`,
+      );
     }
   }
 
