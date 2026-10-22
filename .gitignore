@@ -82,9 +82,10 @@ graphify-out/
 # ==========================================
 # Material local que no forma parte del repositorio
 # ==========================================
-# Prototipo visual de referencia y plantilla del entregable convertida a Markdown
-docs/referencia-frontend/
-docs/Entregable2_MiSanAndres.md
+# Documentación del proyecto (entregable, decisiones, datos por verificar, revisión de
+# ubicaciones y referencia visual): se guarda en cada PC, no en el repositorio. La app, el
+# backend y el servicio de ML no la usan; los scripts de ubicaciones la crean si falta.
+docs/
 
 # ==========================================
 # Archivos temporales

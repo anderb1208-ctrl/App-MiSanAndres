@@ -2,8 +2,8 @@
  * Estado de las ubicaciones (ubicaciones.json) y archivos que se generan a partir
  * de él: migración SQL, seed, página de revisión y tabla de datos por verificar.
  */
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import type { Categoria, Confianza, Fuente, Punto, Tierra } from './geo';
 import { paginaRevision } from './revisionHtml';
 
@@ -187,7 +187,15 @@ ${filas.join('\n')}
 ${FIN_DOC}`;
 }
 
+/**
+ * docs/ es material local (no está en el repositorio): si datos-por-verificar.md no existe en
+ * esta copia, se avisa y se sigue; la base, el seed y las migraciones se actualizan igual.
+ */
 export function escribirDoc(ubicaciones: Ubicacion[]) {
+  if (!existsSync(RUTAS.datosPorVerificar)) {
+    console.warn('Aviso: no existe docs/datos-por-verificar.md en esta copia; no se actualiza su tabla de ubicaciones.');
+    return;
+  }
   const doc = readFileSync(RUTAS.datosPorVerificar, 'utf8').replace(/\r\n/g, '\n');
   const i = doc.indexOf(INICIO_DOC);
   if (i < 0) throw new Error(`Falta el marcador ${INICIO_DOC} en docs/datos-por-verificar.md.`);
@@ -197,5 +205,6 @@ export function escribirDoc(ubicaciones: Ubicacion[]) {
 
 export function escribirRevision(ubicaciones: Ubicacion[], tierra: Tierra, ahora = new Date()) {
   const generado = ahora.toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'medium', timeStyle: 'short' });
+  mkdirSync(dirname(RUTAS.revision), { recursive: true }); // docs/ puede no existir (no está en el repositorio)
   writeFileSync(RUTAS.revision, paginaRevision(ubicaciones, tierra, generado), 'utf8');
 }

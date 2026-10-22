@@ -26,7 +26,7 @@ App móvil de turismo para San Andrés (Colombia) que recomienda destinos según
                                            └──────────────────────┘
 ```
 
-Opcionalmente, el backend llama al **servicio de ML** (`ml/`, `POST /predict/lote` con API key) para la predicción de ocupación; ver [Proveedores de predicción](#proveedores-de-predicción). El servicio usa el **ganador de una comparación de tres modelos** (Ridge, Random Forest y HistGradientBoosting; hoy gana HistGradientBoosting) entrenados con **datos de ocupación simulados** calibrados con datos reales (clima observado, festivos, llegadas oficiales de turistas): ver [`ml/README.md`](ml/README.md) y [`docs/seleccion-de-modelo.md`](docs/seleccion-de-modelo.md).
+Opcionalmente, el backend llama al **servicio de ML** (`ml/`, `POST /predict/lote` con API key) para la predicción de ocupación; ver [Proveedores de predicción](#proveedores-de-predicción). El servicio usa el **ganador de una comparación de tres modelos** (Ridge, Random Forest y HistGradientBoosting; hoy gana HistGradientBoosting) entrenados con **datos de ocupación simulados** calibrados con datos reales (clima observado, festivos, llegadas oficiales de turistas): ver [`ml/README.md`](ml/README.md) y `docs/seleccion-de-modelo.md` (documentación local, no está en GitHub).
 
 ```
 App ──▶ Backend ──▶ Servicio ML (FastAPI)  GET /modelo · POST /predict · POST /predict/lote
@@ -116,7 +116,7 @@ Un solo repositorio con un subproyecto independiente por componente (`backend/`,
 │   ├── migrations/              # Migraciones SQL versionadas
 │   ├── seed.sql                 # Datos de prueba de San Andrés (ocupación sintética)
 │   └── clima_hora.sql           # Clima real de las últimas 4 semanas (generado)
-└── docs/
+└── docs/                 # documentación local (entregable y notas): no se sube a GitHub
     ├── Entregable2_MiSanAndres.docx  # Documento de diseño (entregable)
     ├── cambios-al-diseno.md          # Diferencias entre el diseño y lo implementado
     ├── datos-sinteticos.md           # Supuestos de la ocupación sintética
@@ -173,7 +173,7 @@ Base: `/v1`. Las rutas marcadas con 🔒 requieren `Authorization: Bearer <token
 - `supabase/seed.sql` carga datos de prueba (destinos, catálogo de preferencias y ocupación simulada). **Borra datos: usarlo solo en desarrollo.**
 - Las migraciones se aplican con el MCP de Supabase, que registra cada una con la marca de tiempo del momento en que se aplicó. Por eso los números de versión que muestra Supabase **no coinciden** con los de los archivos locales; los nombres y el contenido sí. El orden de los archivos en `supabase/migrations/` es el que manda.
 - `supabase/clima_hora.sql` carga el clima real por hora de las últimas 4 semanas (datos para entrenar el modelo). Se regenera con `npm run clima:historico` en `backend/`; el orden de carga está en `docs/datos-sinteticos.md`.
-- Los cambios respecto al documento de diseño están en `docs/cambios-al-diseno.md`.
+- Los cambios respecto al documento de diseño están en `docs/cambios-al-diseno.md` (documentación local, no está en GitHub).
 
 ## Predicción de ocupación
 
@@ -227,7 +227,7 @@ Las ubicaciones se calculan con datos de **[OpenStreetMap](https://www.openstree
 
 ### Revisar y corregir
 
-1. Abre `docs/revision-ubicaciones.html` con doble clic (necesita internet para el mapa). Los marcadores tienen el color de su confianza; arrástralos al punto de acceso correcto o márcalos como revisados. La capa satelital ayuda a ver muelles y entradas.
+1. Abre `docs/revision-ubicaciones.html` (la genera el script anterior en tu copia local) con doble clic (necesita internet para el mapa). Los marcadores tienen el color de su confianza; arrástralos al punto de acceso correcto o márcalos como revisados. La capa satelital ayuda a ver muelles y entradas.
 2. Pulsa **Copiar correcciones** y guarda el texto como `correcciones.json` (o usa **Descargar JSON**).
 3. Aplica (desde `backend/`): `npm run ubicaciones:corregir -- ruta/correcciones.json`. Los destinos incluidos quedan como `manual` y verificados; genera la migración y actualiza el seed y la página. Rechaza puntos en el agua o fuera del cuadro.
 4. Aplica la migración en Supabase y comprueba con `npm run verificar:ubicaciones`, que falla si algún destino activo cae fuera de tierra o fuera del cuadro de San Andrés (`-- --local` revisa `ubicaciones.json` sin conectarse a la base).
@@ -381,7 +381,7 @@ npm run usuarios:demo     # turista@, tecnico@ y admin@misanandres.test, con su 
 Remove-Item Env:DEMO_PASSWORD
 ```
 
-Las contraseñas nunca se guardan en el repositorio. Para promover a mano a un usuario existente, ver `docs/usuarios-y-roles.md`.
+Las contraseñas nunca se guardan en el repositorio. Para promover a mano a un usuario existente, ver `docs/usuarios-y-roles.md` (documentación local, no está en GitHub).
 
 ### Notificaciones
 
@@ -394,7 +394,7 @@ Para las push remotas: `npx eas init` (crea el proyecto y su id), poner `EAS_PRO
 
 ### Presupuesto y reseñas
 
-Los precios por persona de los destinos son **estimados** (`docs/datos-por-verificar.md`) y la app los marca así. El presupuesto se define en Preferencias o como filtro rápido en Inicio, con una barra de rango en JS puro (funciona en Expo Go). No hay reseñas de ejemplo: la razón "Buena calificación" solo aparece con 3 o más reseñas reales.
+Los precios por persona de los destinos son **estimados** (`docs/datos-por-verificar.md` (documentación local, no está en GitHub)) y la app los marca así. El presupuesto se define en Preferencias o como filtro rápido en Inicio, con una barra de rango en JS puro (funciona en Expo Go). No hay reseñas de ejemplo: la razón "Buena calificación" solo aparece con 3 o más reseñas reales.
 
 ### Problemas frecuentes
 
